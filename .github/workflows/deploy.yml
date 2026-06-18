@@ -3,7 +3,7 @@ name: Deploy to crofund.org/new/
 on:
   push:
     branches:
-      - main
+      - master
 
 jobs:
   deploy:
