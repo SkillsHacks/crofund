@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Withdrawal Initiated</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .banner {
+            background-color: #059669;
+            text-align: center;
+            padding: 30px;
+            color: white;
+        }
+        .banner h1 {
+            margin: 0;
+            font-size: 28px;
+            font-weight: 600;
+        }
+        .content {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 30px 20px;
+        }
+        .details-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+        }
+        .details-table th, .details-table td {
+            border: 1px solid #e5e7eb;
+            padding: 10px;
+            text-align: left;
+        }
+        .details-table th {
+            background-color: #f3f4f6;
+        }
+        .footer {
+            background-color: #f3f4f6;
+            text-align: center;
+            padding: 20px;
+            font-size: 12px;
+            color: #666;
+        }
+    </style>
+</head>
+<body>
+    <div class="banner">
+        <h1>{company_name}</h1>
+    </div>
+    
+    <div class="content">
+        <p>Dear {name},</p>
+
+        <p>We are writing to confirm that we have received your withdrawal request. Please find the details of your transaction below:</p>
+
+        <table class="details-table">
+            <tr>
+                <th>Amount</th>
+                <td><strong>${amount}</strong></td>
+            </tr>
+            <tr>
+                <th>Withdrawal Method</th>
+                <td>{method}</td>
+            </tr>
+        </table>
+
+        <div style="background-color: #e8f5e9; padding: 15px; border-left: 4px solid #4caf50; margin: 20px 0;">
+            <p style="margin: 0; color: #1b5e20; font-weight: 500;">
+                Your request is currently being processed. Funds are typically credited within <strong>4 to 6 business days</strong>. You will receive a notification once the transaction is complete.
+            </p>
+        </div>
+
+        <p>If you have any questions or require further assistance, please do not hesitate to contact our support team at <a href="mailto:support@crofund.org">support@crofund.org</a>.</p>
+
+        <p>Thank you for choosing {company_name}.<br>
+        Sincerely,<br>
+        The {company_name} Team</p>
+    </div>
+
+    {disclaimer}
+
+    <div class="footer">
+        <div style="margin-bottom: 20px;">
+            <a href="https://facebook.com/your-page" style="text-decoration: none; margin: 0 10px;">
+                <img src="https://cdn-icons-png.flaticon.com/32/174/174848.png" alt="Facebook" width="32" height="32">
+            </a>
+            <a href="https://twitter.com/your-handle" style="text-decoration: none; margin: 0 10px;">
+                <img src="https://cdn-icons-png.flaticon.com/32/733/733579.png" alt="Twitter" width="32" height="32">
+            </a>
+            <a href="https://instagram.com/your-profile" style="text-decoration: none; margin: 0 10px;">
+                <img src="https://cdn-icons-png.flaticon.com/32/174/174855.png" alt="Instagram" width="32" height="32">
+            </a>
+            <a href="https://linkedin.com/company/your-company" style="text-decoration: none; margin: 0 10px;">
+                <img src="https://cdn-icons-png.flaticon.com/32/174/174857.png" alt="LinkedIn" width="32" height="32">
+            </a>
+        </div>
+        <p>This is an automated message. Please do not reply directly to this email.</p>
+        <p>&copy; {current_year} {company_name}. All rights reserved.</p>
+    </div>
+</body>
+</html>

@@ -1,0 +1,18 @@
+{
+    "require": {
+        "paypal/paypal-checkout-sdk": "^1.0",
+        "league/omnipay": "^3.2",
+        "omnipay/paypal": "^3.0",
+        "phpmailer/phpmailer": "^6.10",
+        "stripe/stripe-php": "^17.5",
+        "dodopayments/client": "^3.6"
+    },
+    "config": {
+        "allow-plugins": {
+            "php-http/discovery": true
+        },
+        "audit": {
+            "block-insecure": false
+        }
+    }
+}

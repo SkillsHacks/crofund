@@ -1,0 +1,8 @@
+# Simple .htaccess for Stripe directory
+# Allow all access to PHP files
+<Files "*.php">
+    Require all granted
+</Files>
+
+# Prevent directory listing
+Options -Indexes 
