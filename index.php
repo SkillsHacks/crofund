@@ -29,7 +29,7 @@ require_once __DIR__ . '/config/Database.php';
     <meta property="og:description" content="Start your fundraiser today or help others in need. Secure, easy, and trusted platform for all types of causes.">
     <meta property="og:url" content="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"; ?>">
     
-    <title>CroFunding - Fundraising for Everyone</title>
+    <title>CroFundingg - Fundraising for Everyone</title>
     
     <!-- Tailwind CSS via CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
