@@ -35,23 +35,25 @@ ob_start();
     
     <!-- Donation Amount Section -->
     <div class="form-section">
-        <div class="form-section-title">
-            <i class="fas fa-dollar-sign text-emerald-600 text-sm"></i>
-            <h3 class="text-base font-bold text-gray-900">Donation Amount</h3>
+        <div class="form-section-title mb-3">
+            <div class="w-8 h-8 bg-emerald-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-dollar-sign text-emerald-700 text-sm"></i>
+            </div>
+            <h3 class="text-sm md:text-base font-bold text-slate-900">Donation Amount</h3>
         </div>
         
         <!-- Quick Amount Buttons -->
-        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2 mb-3">
-            <button type="button" class="donation-amount-btn px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:border-emerald-500 hover:text-emerald-600" data-amount="25">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-4">
+            <button type="button" class="donation-amount-btn py-3.5 border-2 border-slate-200 rounded-2xl text-sm md:text-base font-semibold text-slate-700 bg-white hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-all duration-200 active:scale-[0.98]" data-amount="25">
                 $25
             </button>
-            <button type="button" class="donation-amount-btn px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:border-emerald-500 hover:text-emerald-600" data-amount="50">
+            <button type="button" class="donation-amount-btn py-3.5 border-2 border-slate-200 rounded-2xl text-sm md:text-base font-semibold text-slate-700 bg-white hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-all duration-200 active:scale-[0.98]" data-amount="50">
                 $50
             </button>
-            <button type="button" class="donation-amount-btn px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:border-emerald-500 hover:text-emerald-600" data-amount="100">
+            <button type="button" class="donation-amount-btn py-3.5 border-2 border-slate-200 rounded-2xl text-sm md:text-base font-semibold text-slate-700 bg-white hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-all duration-200 active:scale-[0.98]" data-amount="100">
                 $100
             </button>
-            <button type="button" class="donation-amount-btn px-3 py-2 border-2 border-gray-300 rounded-lg text-sm font-semibold text-gray-700 hover:border-emerald-500 hover:text-emerald-600" data-amount="250">
+            <button type="button" class="donation-amount-btn py-3.5 border-2 border-slate-200 rounded-2xl text-sm md:text-base font-semibold text-slate-700 bg-white hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-all duration-200 active:scale-[0.98]" data-amount="250">
                 $250
             </button>
         </div>
@@ -60,10 +62,10 @@ ob_start();
         <div class="input-group">
             <i class="input-icon fas fa-dollar-sign"></i>
             <input type="number" min="5" step="0.01" autocomplete="off" id="onlyNumber" 
-                   class="w-full input-with-icon border-2 border-gray-300 rounded-lg px-3 py-2 pl-9 text-sm font-medium focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 focus:outline-none transition-all" 
+                   class="w-full input-with-icon border-2 border-slate-200 rounded-2xl px-4 py-3.5 pl-10 text-sm md:text-base font-medium text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all duration-200" 
                    name="amount" value="" placeholder="Enter custom amount" required>
         </div>
-        <p class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+        <p class="text-xs md:text-sm text-slate-500 mt-2.5 flex items-center gap-1.5">
             <i class="fas fa-info-circle text-emerald-600 text-xs"></i>
             Minimum donation amount is $5 USD
         </p>
@@ -71,22 +73,24 @@ ob_start();
 
     <!-- Donor Information Section -->
     <div class="form-section">
-        <div class="form-section-title">
-            <i class="fas fa-user text-emerald-600 text-sm"></i>
-            <h3 class="text-base font-bold text-gray-900">Your Information</h3>
+        <div class="form-section-title mb-3">
+            <div class="w-8 h-8 bg-blue-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-user text-blue-700 text-sm"></i>
+            </div>
+            <h3 class="text-sm md:text-base font-bold text-slate-900">Your Information</h3>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             <div class="input-group">
                 <i class="input-icon fas fa-user"></i>
                 <input type="text" id="cardholder-name" value="" name="full_name" 
-                       class="w-full input-with-icon border-2 border-gray-300 rounded-lg px-3 py-2 pl-9 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all" 
+                       class="w-full input-with-icon border-2 border-slate-200 rounded-2xl px-4 py-3.5 pl-10 text-sm md:text-base text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all duration-200" 
                        placeholder="Full Name" required>
             </div>
             <div class="input-group">
                 <i class="input-icon fas fa-envelope"></i>
                 <input type="email" id="cardholder-email" value="" name="email" 
-                       class="w-full input-with-icon border-2 border-gray-300 rounded-lg px-3 py-2 pl-9 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all" 
+                       class="w-full input-with-icon border-2 border-slate-200 rounded-2xl px-4 py-3.5 pl-10 text-sm md:text-base text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all duration-200" 
                        placeholder="Email Address" required>
             </div>
         </div>
@@ -94,15 +98,17 @@ ob_start();
 
     <!-- Location Information Section -->
     <div class="form-section">
-        <div class="form-section-title">
-            <i class="fas fa-map-marker-alt text-emerald-600 text-sm"></i>
-            <h3 class="text-base font-bold text-gray-900">Location</h3>
+        <div class="form-section-title mb-3">
+            <div class="w-8 h-8 bg-purple-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-map-marker-alt text-purple-700 text-sm"></i>
+            </div>
+            <h3 class="text-sm md:text-base font-bold text-slate-900">Location</h3>
         </div>
         
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3.5">
             <div class="input-group">
                 <i class="input-icon fas fa-globe"></i>
-                <select id="country" name="country" class="w-full input-with-icon border-2 border-gray-300 rounded-lg px-3 py-2 pl-9 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all appearance-none bg-white" required>
+                <select id="country" name="country" class="w-full input-with-icon border-2 border-slate-200 rounded-2xl px-4 py-3.5 pl-10 text-sm md:text-base text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 appearance-none" required>
                     <option value="">Select Country</option>
                     <option value="US">United States</option>
                     <option value="CA">Canada</option>
@@ -132,7 +138,7 @@ ob_start();
             <div class="input-group">
                 <i class="input-icon fas fa-mail-bulk"></i>
                 <input type="text" id="postal_code" value="" name="postal_code" 
-                       class="w-full input-with-icon border-2 border-gray-300 rounded-lg px-3 py-2 pl-9 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all" 
+                       class="w-full input-with-icon border-2 border-slate-200 rounded-2xl px-4 py-3.5 pl-10 text-sm md:text-base text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all duration-200" 
                        placeholder="Postal Code">
             </div>
         </div>
@@ -145,12 +151,14 @@ ob_start();
 
     <!-- Comment Section -->
     <div class="form-section">
-        <div class="form-section-title">
-            <i class="fas fa-comment text-emerald-600 text-sm"></i>
-            <h3 class="text-base font-bold text-gray-900">Leave a Message (Optional)</h3>
+        <div class="form-section-title mb-3">
+            <div class="w-8 h-8 bg-pink-100 rounded-xl flex items-center justify-center">
+                <i class="fas fa-comment text-pink-700 text-sm"></i>
+            </div>
+            <h3 class="text-sm md:text-base font-bold text-slate-900">Leave a Message (Optional)</h3>
         </div>
         <textarea id="comment" name="comment" rows="3"
-                  class="w-full border-2 border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-all resize-none" 
+                  class="w-full border-2 border-slate-200 rounded-2xl px-4 py-3.5 text-sm md:text-base text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 resize-none" 
                   placeholder="Share why you're donating or leave an encouraging message..."></textarea>
     </div>
 
@@ -159,18 +167,18 @@ ob_start();
     <input type="hidden" name="anonymous" value="0">
 
     <!-- Error Messages -->
-    <div class="hidden" id="errorDonation" class="mb-6">
-        <div class="bg-red-50 border-2 border-red-200 rounded-xl p-4">
-            <ul class="text-sm text-red-700" id="showErrorsDonation"></ul>
+    <div class="hidden" id="errorDonation" class="mb-5">
+        <div class="bg-red-50 border border-red-200 rounded-2xl p-4">
+            <ul class="text-xs md:text-sm text-red-700" id="showErrorsDonation"></ul>
         </div>
     </div>
 
     <!-- Success Messages -->
-    <div class="hidden" id="showDonationMessages" class="mb-6"></div>
+    <div class="hidden" id="showDonationMessages" class="mb-5"></div>
 
     <!-- Submit Button -->
     <button type="submit" id="buttonDonation" 
-            class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-2.5 px-4 rounded-lg hover:from-emerald-700 hover:to-teal-700 focus:ring-2 focus:ring-emerald-300 transition-all text-sm font-semibold shadow-md hover:shadow-lg transform hover:scale-[1.01]">
+            class="w-full bg-gradient-to-br from-emerald-600 to-teal-600 text-white py-3.5 px-4 rounded-2xl hover:from-emerald-700 hover:to-teal-700 focus:ring-4 focus:ring-emerald-500/30 transition-all duration-200 text-sm md:text-base font-semibold shadow-lg hover:shadow-xl active:scale-[0.98]">
         <i class="fas fa-heart mr-2"></i> Complete Donation
     </button>
 </form>

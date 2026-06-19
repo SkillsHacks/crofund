@@ -43,109 +43,6 @@ if (!isset($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
-// Handle payment completion from Dodo Payments
-if (isset($_GET['payment']) && $_GET['payment'] === 'success' && isset($_SESSION['pending_donation'])) {
-    require_once __DIR__ . '/../config/dodo_config.php';
-    
-    try {
-        // Get the session_id from the URL or session
-        $sessionId = $_GET['session_id'] ?? $_SESSION['dodo_session_id'] ?? null;
-        
-        if ($sessionId) {
-            // Initialize Dodo Payments client
-            $client = getDodoClient();
-            
-            // Retrieve checkout session status
-            $sessionStatus = $client->checkoutSessions->retrieve($sessionId);
-            
-            // Check if payment was successful
-            if ($sessionStatus && isset($sessionStatus->paymentStatus)) {
-                $paymentStatus = is_object($sessionStatus) 
-                    ? ($sessionStatus->paymentStatus ?? null)
-                    : ($sessionStatus['paymentStatus'] ?? null);
-                
-                // Payment statuses: 'succeeded', 'processing', 'failed', etc.
-                if ($paymentStatus === 'succeeded' || $paymentStatus === 'completed') {
-                    $pendingDonation = $_SESSION['pending_donation'];
-                    
-                    // Get payment ID if available
-                    $paymentId = is_object($sessionStatus) 
-                        ? ($sessionStatus->paymentID ?? null)
-                        : ($sessionStatus['paymentID'] ?? null);
-                    
-                    // Prepare donation data
-                    $donationData = [
-                        'campaign_id' => $pendingDonation['campaign_id'],
-                        'donor_name' => $pendingDonation['donor_name'],
-                        'donor_email' => $pendingDonation['donor_email'],
-                        'amount' => $pendingDonation['amount'],
-                        'payment_gateway' => 'dodo_payments',
-                        'status' => 'completed',
-                        'country' => $pendingDonation['country'] ?? '',
-                        'postal_code' => $pendingDonation['postal_code'] ?? '',
-                        'comment' => $pendingDonation['message'] ?? '',
-                        'anonymous' => $pendingDonation['anonymous'] ?? 0,
-                        'transaction_id' => $paymentId,
-                        'gateway_response' => json_encode($sessionStatus),
-                        'created_at' => date('Y-m-d H:i:s')
-                    ];
-                    
-                    // Check if donation was already processed (prevent duplicates)
-                    $db = Database::getInstance();
-                    $checkStmt = $db->prepare("SELECT id FROM donations WHERE transaction_id = ? AND payment_gateway = 'dodo_payments'");
-                    $checkStmt->execute([$paymentId ?: $sessionId]);
-                    $existingDonation = $checkStmt->fetch();
-                    
-                    if (!$existingDonation) {
-                        // Create donation record
-                        $donationId = $campaign->createDonation($donationData);
-                        
-                        if ($donationId) {
-                            // Clear pending donation and session ID
-                            unset($_SESSION['pending_donation']);
-                            unset($_SESSION['dodo_session_id']);
-                            
-                            // Set success message
-                            $_SESSION['donation_success'] = 'Thank you! Your donation has been processed successfully.';
-                            
-                            error_log("Donation processed successfully: Donation ID $donationId, Amount: {$pendingDonation['amount']}");
-                        } else {
-                            error_log("Failed to create donation record for session: $sessionId");
-                            $_SESSION['donation_error'] = 'Payment was successful, but there was an issue recording your donation. Please contact support.';
-                        }
-                    } else {
-                        // Donation already processed
-                        unset($_SESSION['pending_donation']);
-                        unset($_SESSION['dodo_session_id']);
-                        $_SESSION['donation_success'] = 'Thank you! Your donation has already been processed.';
-                    }
-                } else {
-                    error_log("Payment not completed. Status: $paymentStatus for session: $sessionId");
-                    $_SESSION['donation_error'] = 'Payment was not completed successfully.';
-                }
-            } else {
-                error_log("Could not retrieve payment status for session: $sessionId");
-                $_SESSION['donation_error'] = 'Could not verify payment status. Please contact support.';
-            }
-        } else {
-            error_log("No session ID found for payment completion");
-            $_SESSION['donation_error'] = 'Payment session not found. Please contact support.';
-        }
-    } catch (Exception $e) {
-        error_log("Error processing Dodo Payments completion: " . $e->getMessage());
-        $_SESSION['donation_error'] = 'There was an error processing your payment. Please contact support.';
-    }
-    
-    // Redirect to remove payment parameters from URL
-    header("Location: " . BASE_URL . "/campaigns/public-view.php?id=" . $campaignId);
-    exit();
-}
-
-// Store session_id if provided in URL (Dodo Payments might return it)
-if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
-    $_SESSION['dodo_session_id'] = $_GET['session_id'];
-}
-
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -289,34 +186,77 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
       width: 100%;
       height: 100%;
       overflow-y: auto;
-      background-color: rgba(0, 0, 0, 0.5);
-      backdrop-filter: blur(4px);
+      background-color: rgba(0, 0, 0, 0.4);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
     }
     .donation-modal.active {
       display: flex;
       align-items: center;
       justify-content: center;
-      padding: 2rem;
+      padding: 1rem;
     }
     .donation-modal-content {
       background-color: white;
-      border-radius: 1.5rem;
-      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
-      max-width: 800px;
+      border-radius: 2rem;
+      box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+      max-width: 600px;
       width: 100%;
-      max-height: 90vh;
+      max-height: 92vh;
       overflow-y: auto;
       position: relative;
-      animation: modalSlideIn 0.3s ease-out;
+      animation: modalSlideUp 0.4s cubic-bezier(0.16, 1, 0.3, 1);
     }
-    @keyframes modalSlideIn {
+    @keyframes modalSlideUp {
       from {
         opacity: 0;
-        transform: translateY(-20px);
+        transform: translateY(30px) scale(0.95);
       }
       to {
         opacity: 1;
-        transform: translateY(0);
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    /* Apple-inspired form styles */
+    .form-section {
+      margin-bottom: 1.5rem;
+    }
+    .form-section-title {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+    }
+    .input-group {
+      position: relative;
+    }
+    .input-icon {
+      position: absolute;
+      left: 0.875rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: #9ca3af;
+      font-size: 0.875rem;
+    }
+    .input-with-icon {
+      padding-left: 2.5rem !important;
+    }
+
+    /* Active state for quick amount buttons */
+    .donation-amount-btn.active {
+      border-color: #10b981 !important;
+      background-color: #10b981 !important;
+      color: white !important;
+    }
+
+    /* Responsive text sizes */
+    @media (max-width: 640px) {
+      .donation-modal.active {
+        padding: 0.75rem;
+      }
+      .donation-modal-content {
+        border-radius: 1.5rem;
       }
     }
   </style>
@@ -749,24 +689,24 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
 <!-- Donation Modal -->
 <div id="donationModal" class="donation-modal">
   <div class="donation-modal-content">
-    <div class="sticky top-0 bg-white border-b border-slate-200 p-6 flex items-center justify-between z-10">
+    <div class="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-slate-100 px-6 py-5 flex items-center justify-between z-10">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
-          <i class="fas fa-heart text-white text-sm"></i>
+        <div class="w-12 h-12 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-2xl flex items-center justify-center shadow-lg">
+          <i class="fas fa-heart text-white text-lg"></i>
         </div>
         <div>
-          <h2 class="text-xl font-bold text-slate-900">Make Your Donation</h2>
-          <p class="text-sm text-slate-600">Support this campaign with a secure donation</p>
+          <h2 class="text-xl md:text-2xl font-bold text-slate-900 tracking-tight">Make Your Donation</h2>
+          <p class="text-xs md:text-sm text-slate-500">Support this campaign with a secure donation</p>
         </div>
       </div>
-      <button onclick="closeDonationModal()" class="text-slate-400 hover:text-slate-700 transition-colors p-2 hover:bg-slate-50 rounded-lg">
-        <i class="fas fa-times text-2xl"></i>
+      <button onclick="closeDonationModal()" class="w-10 h-10 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all rounded-full">
+        <i class="fas fa-times text-xl"></i>
       </button>
     </div>
-    <div class="p-6">
-      <div id="donationFormLoader" class="text-center py-12">
-        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-600 border-t-transparent"></div>
-        <p class="mt-4 text-slate-600">Loading donation form...</p>
+    <div class="px-6 py-6">
+      <div id="donationFormLoader" class="text-center py-16">
+        <div class="inline-block animate-spin rounded-full h-14 w-14 border-4 border-emerald-200 border-t-emerald-600"></div>
+        <p class="mt-5 text-sm text-slate-500">Loading donation form...</p>
       </div>
       <div id="donationFormContainer" class="hidden"></div>
     </div>
@@ -855,7 +795,7 @@ function initializeDonationForm() {
     $('.donation-amount-btn').removeClass('active');
   });
   
-  // Handle form submission - create Dodo Payments checkout session
+  // Handle form submission - create Stripe checkout session
   $('#formDonation').off('submit').on('submit', function(e) {
     e.preventDefault();
     
@@ -869,9 +809,9 @@ function initializeDonationForm() {
     // Show loading state
     $('#buttonDonation').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Processing...');
     
-    // Create Dodo Payments checkout session
+    // Create Stripe checkout session
     $.ajax({
-      url: URL_BASE + '/campaigns/create-dodo-checkout.php',
+      url: URL_BASE + '/stripe/checkout-session.php',
       type: 'POST',
       data: {
         campaign_id: campaignId,
@@ -886,9 +826,9 @@ function initializeDonationForm() {
       },
       dataType: 'json',
       success: function(response) {
-        if (response.success && response.checkout_url) {
-          // Redirect to Dodo Payments checkout
-          window.location.href = response.checkout_url;
+        if (response.success && response.url) {
+          // Redirect to Stripe checkout
+          window.location.href = response.url;
         } else {
           showError(response.error || 'Failed to create checkout session. Please try again.');
           $('#buttonDonation').prop('disabled', false).html('<i class="fas fa-heart mr-2"></i> Complete Donation');

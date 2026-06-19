@@ -38,18 +38,10 @@ function getSetting($key) {
     return $stmt->fetchColumn();
 }
 
-define('PAYPAL_CLIENT_ID', getSetting('paypal_client_id'));
-define('PAYPAL_CLIENT_SECRET', getSetting('paypal_client_secret'));
-define('PAYPAL_MODE', getSetting('paypal_mode'));
-
-// Stripe Configuration
-define('STRIPE_PUBLISHABLE_KEY', getSetting('stripe_publishable_key') ?: 'pk_live_51Rx7ePFKSGgzQnUoWNAjdtTHyb0EkfvwgcIZNqAgBEX023B8ivkBUfnVSeitwCNAFIypL1XE44DtAUnrx8LeKcnI004Fcj5HpE');
-define('STRIPE_SECRET_KEY', getSetting('stripe_secret_key') ?: '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');
-define('STRIPE_WEBHOOK_SECRET', getSetting('stripe_webhook_secret') ?: 'whsec_your_webhook_secret_here'); 
-
-define('DODO_PAYMENTS_API_KEY', getSetting('dodo_payments_api_key') ?: '');
-define('DODO_PAYMENTS_PRODUCT_ID', getSetting('dodo_payments_product_id') ?: '');
-define('DODO_PAYMENTS_MODE', getSetting('dodo_payments_mode') ?: 'live'); // 'test' or 'live'
+// Stripe Configuration (TEST MODE - Replace with your actual test keys)
+define('STRIPE_PUBLISHABLE_KEY', getSetting('stripe_publishable_key') ?: 'pk_test_51RyDlT2eCSr0a8MYts58DRWjz8nmgKZtDfZHbqpKKIDmZ3xIMmS0BxSusnJHfdFr4m8sNCErBcIFsGTxu4ps09Dm00GfAnw5qg');
+define('STRIPE_SECRET_KEY', getSetting('stripe_secret_key') ?: 'sk_test_51RyDlT2eCSr0a8MYGvXjLMvduV7taSpA6Uxfr1EyNUE84CLTAYe9vqj3PE5jHTOSC4PiM4Dcsz5Q8HVUO6r9aE5S00eg5OFNyE');
+define('STRIPE_WEBHOOK_SECRET', getSetting('stripe_webhook_secret') ?: 'whsec_your_webhook_secret_here');
 
 define('AVATAR_UPLOAD_PATH', __DIR__ . '/../uploads/avatars/');
 define('AVATAR_URL_PATH', 'uploads/avatars/');
