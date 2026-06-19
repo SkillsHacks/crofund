@@ -152,7 +152,7 @@ include '../components/header.php';
                             <p class="mt-2 text-base sm:text-lg text-gray-600">Launch your fundraising campaign and start making a difference.</p>
                         </div>
                         <!-- Back Button -->
-                        <a href="<?php echo BASE_URL; ?>/campaigns" 
+                        <a href="<?php echo BASE_URL; ?>/dashboard.php" 
                            class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                             <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>

@@ -30,6 +30,8 @@ jobs:
             .github/**
             README.md
             api/config/config.php
+            config/config.php
+            config/Database.php
             database/schema.sql
             uploads/**
             public/assests/**

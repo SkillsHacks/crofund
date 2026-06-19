@@ -3,35 +3,24 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/User.php';
 require_once __DIR__ . '/../config/Mail.php';
 
-// Start session if not already started
 if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// Create User instance
 $userObj = new User();
-
-// Check if user is logged in
 if (!$userObj->isLoggedIn()) {
     $_SESSION['error'] = "Please login to access this page.";
     header("Location: " . BASE_URL . "/login.php");
     exit();
 }
 
-// Get current user data
 $userData = $userObj->getCurrentUser();
 
-// Handle verification request
 if (isset($_POST['send_verification'])) {
     if (!$userData['is_verified']) {
         try {
-            // Generate new verification token
             $verificationToken = bin2hex(random_bytes(32));
-            
-            // Update token using the proper method
             $userObj->updateVerificationToken($userData['id'], $verificationToken);
-
-            // Send verification email using Mail class
             $verificationLink = BASE_URL . "/account/verify.php?token=" . $verificationToken;
             $mailer = new Mail();
             
@@ -44,10 +33,12 @@ if (isset($_POST['send_verification'])) {
             $_SESSION['error'] = "An error occurred: " . $e->getMessage();
         }
         
-        header("Location: verification.php");
+        header("Location: " . BASE_URL . "/account/verification.php");
         exit();
     }
 }
+
+include '../components/header.php';
 ?>
 
 <!DOCTYPE html>
@@ -57,30 +48,42 @@ if (isset($_POST['send_verification'])) {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Email Verification - <?php echo SITE_NAME; ?></title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <?php include '../components/header.php'; ?>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857'
+                        }
+                    }
+                }
+            }
+        }
+    </script>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <?php include '../components/sidebar.php'; ?>
-
-    <!-- Main Content -->
-    <div class="lg:pl-64 flex flex-col flex-1">
-        <!-- Top Navigation -->
-        <div class="sticky top-0 z-10 flex-shrink-0 h-16 bg-white border-b border-gray-200">
-            <div class="flex justify-between items-center h-full px-4 sm:px-6 lg:px-8">
-                <h1 class="text-2xl font-semibold text-gray-900">Email Verification</h1>
-            </div>
-        </div>
-
-        <!-- Main Content Area -->
-        <main class="flex-1 pb-8">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div class="flex h-screen pt-16">
+        <?php include '../components/sidebar.php'; ?>
+        
+        <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
+            <div class="p-3 sm:p-6">
                 <div class="bg-white rounded-lg shadow-sm overflow-hidden">
-                    <div class="p-6">
-                        <?php include '../includes/alerts.php'; ?>
+                    <div class="p-3 sm:p-6">
+                        <?php 
+                        $alertPath = __DIR__ . '/../includes/alerts.php';
+                        if (file_exists($alertPath)) {
+                            include $alertPath; 
+                        }
+                        ?>
 
-                        <div class="space-y-4">
+                        <div class="space-y-3 sm:space-y-4">
                             <?php if ($userData['is_verified']): ?>
-                                <div class="p-4 bg-green-50 rounded-lg border border-green-200">
+                                <div class="p-3 sm:p-4 bg-green-50 rounded-lg border border-green-200">
                                     <div class="flex">
                                         <div class="flex-shrink-0">
                                             <svg class="h-5 w-5 text-green-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -88,13 +91,13 @@ if (isset($_POST['send_verification'])) {
                                             </svg>
                                         </div>
                                         <div class="ml-3">
-                                            <h3 class="text-sm font-medium text-green-800">Verification Status</h3>
-                                            <p class="mt-2 text-sm text-green-700">Your email address has been successfully verified!</p>
+                                            <h3 class="text-xs sm:text-sm font-medium text-green-800">Verification Status</h3>
+                                            <p class="mt-1 sm:mt-2 text-xs sm:text-sm text-green-700">Your email address has been successfully verified!</p>
                                         </div>
                                     </div>
                                 </div>
                             <?php else: ?>
-                                <div class="p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                                <div class="p-3 sm:p-4 bg-yellow-50 rounded-lg border border-yellow-200">
                                     <div class="flex">
                                         <div class="flex-shrink-0">
                                             <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -102,15 +105,15 @@ if (isset($_POST['send_verification'])) {
                                             </svg>
                                         </div>
                                         <div class="ml-3">
-                                            <h3 class="text-sm font-medium text-yellow-800">Verification Required</h3>
-                                            <p class="mt-2 text-sm text-yellow-700">Your email address needs to be verified to access all features.</p>
+                                            <h3 class="text-xs sm:text-sm font-medium text-yellow-800">Verification Required</h3>
+                                            <p class="mt-1 sm:mt-2 text-xs sm:text-sm text-yellow-700">Your email address needs to be verified to access all features.</p>
                                         </div>
                                     </div>
-                                    <form method="POST" class="mt-6">
+                                    <form method="POST" class="mt-4 sm:mt-6">
                                         <button type="submit" 
-                                                name="send_verification" 
-                                                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-200">
-                                            <svg class="mr-2 h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                            name="send_verification" 
+                                            class="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent text-xs sm:text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-200">
+                                            <svg class="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                             </svg>
                                             Send Verification Email

@@ -2,136 +2,142 @@
 session_start();
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/Campaign.php';
+require_once __DIR__ . '/../../config/Database.php'; // Directly include Database to get total count
 
 header('Content-Type: application/json');
 
 try {
     // Get filter parameters
     $category = $_GET['category'] ?? 'all';
-    $sort = $_GET['sort'] ?? ''; // No default sorting
+    $sort = $_GET['sort'] ?? '';
     $page = (int)($_GET['page'] ?? 1);
-    
+    $perPage = (int)($_GET['per_page'] ?? 12);
+
     // Initialize Campaign object
     $campaign = new Campaign();
-    
-    // Get filtered campaigns
-    $result = $campaign->getBrowseCampaigns($category, $sort, $page, 1000); // Large number to show all campaigns
+
+    // Get campaigns via Campaign's method
+    $result = $campaign->getBrowseCampaigns($category, $sort, $page, $perPage);
     $campaigns = $result['campaigns'] ?? [];
-    
+
+    // Get total count for pagination - using Database class directly
+    $db = Database::getInstance();
+    $countSql = "SELECT COUNT(*) as total FROM campaigns WHERE status = 'active'";
+    $countParams = [];
+    if ($category !== 'all') {
+        $countSql .= " AND category = ?";
+        $countParams[] = $category;
+    }
+    $countResult = $db->fetchOne($countSql, $countParams);
+    $totalCount = (int)($countResult['total'] ?? 0);
+    $totalPages = (int)ceil($totalCount / $perPage);
+
     // Generate HTML for campaigns
     $html = '';
-    
+
     if (empty($campaigns)) {
         $html = '
-        <div class="col-span-2 text-center py-12">
-          <div class="text-gray-500">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-            </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">No campaigns found</h3>
-            <p class="mt-1 text-sm text-gray-500">Try adjusting your filters or check back later.</p>
-          </div>
-        </div>';
+          <div class="col-span-full text-center py-16">
+            <div class="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <svg class="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+            </div>
+            <h3 class="text-lg font-semibold text-slate-900 mb-2">No campaigns found</h3>
+            <p class="text-slate-600">Try adjusting your filters or check back later.</p>
+          </div>';
     } else {
-        foreach ($campaigns as $index => $camp) {
+        foreach ($campaigns as $camp) {
             $title = htmlspecialchars($camp['title'] ?? '');
             $description = htmlspecialchars($camp['description'] ?? '');
-            $category = htmlspecialchars($camp['category'] ?? '');
+            $campCategory = htmlspecialchars($camp['category'] ?? '');
             $current = (float)($camp['current_amount'] ?? 0);
             $goal = (float)($camp['goal_amount'] ?? 0);
             $donors = (int)($camp['donor_count'] ?? 0);
             $id = (int)($camp['id'] ?? 0);
             $percent = $goal > 0 ? min(($current / $goal) * 100, 100) : 0;
             $imageUrl = !empty($camp['image_path']) ? BASE_URL . '/' . ltrim($camp['image_path'], '/') : BASE_URL . '/assets/images/default-campaign.jpg';
-            
+
             $html .= '
-            <div class="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden max-w-md mx-auto" x-data="{ expanded: false }">
-              <div class="flex flex-row sm:flex-col">
-                <!-- Image -->
-                <div class="w-1/4 h-32 sm:w-full sm:h-48 overflow-hidden relative">
-                  <img src="' . $imageUrl . '" alt="' . $title . '" class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105" onerror="this.src=\'' . BASE_URL . '/assets/images/default-campaign.jpg\'" />
-                  <span class="absolute top-3 right-3 px-2 py-1 text-xs font-semibold text-white bg-emerald-500 rounded-full shadow">
-                    ' . $category . '
-                  </span>
+          <div class="group bg-white rounded-2xl border border-slate-100 shadow-soft hover:shadow-medium transition-all duration-300 overflow-hidden flex flex-col">
+            <!-- Image -->
+            <a href="public-view.php?id=' . $id . '" class="block relative h-56 overflow-hidden flex-shrink-0">
+              <img src="' . $imageUrl . '" alt="' . $title . '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src=\'' . BASE_URL . '/assets/images/default-campaign.jpg\'" />
+              <span class="absolute top-4 left-4 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-xl shadow">
+                ' . $campCategory . '
+              </span>
+            </a>
+
+            <!-- Content -->
+            <div class="p-6 flex flex-col flex-1 campaign-card-content">
+              <h3 class="text-lg font-semibold text-slate-900 mb-3 line-clamp-2 group-hover:text-emerald-700 transition-colors flex-shrink-0">
+                <a href="public-view.php?id=' . $id . '">
+                  ' . $title . '
+                </a>
+              </h3>
+
+              <div class="text-slate-600 text-sm line-clamp-3 mb-6 flex-grow min-h-[4.5rem]">
+                ' . $description . '
+              </div>
+
+              <!-- Progress Section -->
+              <div class="mb-4 flex-shrink-0">
+                <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden mb-3">
+                  <div class="h-full bg-emerald-600 rounded-full" style="width: ' . round($percent) . '%"></div>
                 </div>
-
-                <!-- Content -->
-                <div class="w-3/4 sm:w-full p-3 sm:p-6 flex flex-col justify-between">
-                  <h3 class="text-sm sm:text-lg font-semibold text-gray-900 mb-1 group-hover:text-emerald-600 leading-snug line-clamp-2" title="' . $title . '">
-                    ' . $title . '
-                  </h3>
-
-                  <div class="relative mb-3 text-xs text-gray-600 flex-1">
-                    <p :class="{ \'line-clamp-3\': !expanded }">' . $description . '</p>';
-                    
-            if (strlen($camp['description']) > 140) {
-                $html .= '
-                    <button @click="expanded = !expanded" class="mt-1 text-emerald-600 hover:text-emerald-700 text-xs font-medium flex items-center">
-                      <span x-text="expanded ? \'Show Less\' : \'Read More\'"></span>
-                      <svg class="w-4 h-4 ml-1 transition-transform" :class="{ \'rotate-180\': expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                      </svg>
-                    </button>';
-            }
-            
-            $html .= '
-                  </div>
-
-                  <!-- Updated Progress Section with Donors Inline -->
-                  <div class="mb-3">
-                    <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                      <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full" style="width: ' . round($percent) . '%"></div>
-                    </div>
-                    <div class="flex justify-between items-center mt-2 text-xs text-gray-700">
-                      <span><strong>$' . number_format($current, 2) . '</strong> <span class="text-gray-500">of $' . number_format($goal, 2) . '</span></span>
-                      <div class="flex items-center gap-2 text-emerald-600 font-semibold">
-                        <span>' . round($percent) . '%</span>
-                        <span class="text-gray-400">|</span>
-                        <span class="text-gray-600">' . $donors . ' donors</span>
-                      </div>
-                    </div>
-                  </div>
-
-                  <div class="flex justify-between pt-2 border-t border-gray-100">
-                    <div class="flex space-x-2">
-                      <button onclick="copyShareLink(' . $id . ', \'' . addslashes($title) . '\')" class="px-3 py-1 text-xs font-medium text-gray-700 border border-gray-300 rounded hover:bg-gray-100">Share</button>
-                      <a href="public-view.php?id=' . $id . '" class="px-4 py-1.5 text-xs font-medium text-white rounded bg-emerald-600 hover:bg-emerald-700 transition">Donate</a>
-                    </div>
-                  </div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-slate-600"><strong class="text-slate-900">$' . number_format($current, 2) . '</strong> of $' . number_format($goal, 2) . '</span>
+                  <span class="font-semibold text-emerald-700">' . round($percent) . '%</span>
                 </div>
               </div>
-            </div>';
+
+              <div class="flex items-center justify-between pt-4 border-t border-slate-100 flex-shrink-0">
+                <div class="flex items-center text-slate-600 text-sm">
+                  <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                  </svg>
+                  ' . $donors . ' donors
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="copyShareLink(' . $id . ', \'' . addslashes($title) . '\')" class="px-3 py-1.5 text-xs font-semibold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors whitespace-nowrap">
+                    Share
+                  </button>
+                  <a href="public-view.php?id=' . $id . '" class="px-4 py-1.5 text-xs font-semibold text-white rounded-xl bg-emerald-600 hover:bg-emerald-700 transition-colors whitespace-nowrap">
+                    Donate
+                  </a>
+                </div>
+              </div>
+            </div>
+          </div>';
         }
     }
-    
+
     // Return success response
     echo json_encode([
         'success' => true,
         'html' => $html,
         'count' => count($campaigns),
+        'total_count' => $totalCount,
+        'total_pages' => $totalPages,
+        'current_page' => $page,
+        'per_page' => $perPage,
         'filters' => [
-            'category' => $category,
             'sort' => $sort,
-            'page' => $page
+            'category' => $category
         ]
     ]);
-    
+
 } catch (Exception $e) {
     // Return error response
+    error_log("Error in filter_campaigns.php: " . $e->getMessage());
     echo json_encode([
         'success' => false,
         'error' => $e->getMessage(),
-        'html' => '
-        <div class="col-span-2 text-center py-12">
-          <div class="text-gray-500">
-            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
-            </svg>
-            <h3 class="mt-2 text-sm font-medium text-gray-900">Error loading campaigns</h3>
-            <p class="mt-1 text-sm text-gray-500">Please try again later.</p>
-          </div>
-        </div>',
-        'count' => 0
+        'html' => '',
+        'count' => 0,
+        'total_count' => 0,
+        'total_pages' => 1,
+        'current_page' => 1
     ]);
 }
-?> 
+?>

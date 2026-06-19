@@ -10,14 +10,32 @@ $campaign = new Campaign();
 $category = $_GET['category'] ?? 'all';
 $sort = $_GET['sort'] ?? ''; // No default sorting
 $page = (int)($_GET['page'] ?? 1);
+$perPage = 12;
+
+// Require Database to get total count
+require_once __DIR__ . '/../config/Database.php';
 
 // Get campaigns with filters
 try {
-    $result = $campaign->getBrowseCampaigns($category, $sort, $page, 1000); // Large number to show all campaigns
+    $result = $campaign->getBrowseCampaigns($category, $sort, $page, $perPage);
     $campaigns = $result['campaigns'] ?? [];
+
+    // Calculate total and total pages using Database directly
+    $db = Database::getInstance();
+    $countSql = "SELECT COUNT(*) as total FROM campaigns WHERE status = 'active'";
+    $countParams = [];
+    if ($category !== 'all') {
+        $countSql .= " AND category = ?";
+        $countParams[] = $category;
+    }
+    $countResult = $db->fetchOne($countSql, $countParams);
+    $total = (int)($countResult['total'] ?? 0);
+    $totalPages = (int)ceil($total / $perPage);
 } catch (Exception $e) {
     error_log("Error loading campaigns: " . $e->getMessage());
     $campaigns = [];
+    $total = 0;
+    $totalPages = 1;
 }
 
 ?>
@@ -28,112 +46,139 @@ try {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>Browse Fundraisers - CroFunding</title>
+  
   <script src="https://cdn.tailwindcss.com"></script>
-  <script defer src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
   <script>
     const BASE_URL = '<?php echo BASE_URL; ?>';
     tailwind.config = {
       theme: {
         extend: {
+          colors: {
+            emerald: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              300: '#6ee7b7',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          },
           fontFamily: {
             sans: ['Inter', 'sans-serif'],
-          },
-          animation: {
-            gradient: 'gradient 8s linear infinite',
-          },
-          keyframes: {
-            gradient: {
-              '0%, 100%': {
-                'background-size': '200% 200%',
-                'background-position': 'left center',
-              },
-              '50%': {
-                'background-size': '200% 200%',
-                'background-position': 'right center',
-              },
-            },
-          },
+          }
         },
       },
     };
   </script>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght=400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     .line-clamp-2 {
       display: -webkit-box;
       -webkit-line-clamp: 2;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      /* Fallback for other browsers */
+      display: -moz-box;
+      -moz-line-clamp: 2;
+      -moz-box-orient: vertical;
+      overflow: hidden;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
     .line-clamp-3 {
       display: -webkit-box;
       -webkit-line-clamp: 3;
       -webkit-box-orient: vertical;
       overflow: hidden;
+      /* Fallback for other browsers */
+      display: -moz-box;
+      -moz-line-clamp: 3;
+      -moz-box-orient: vertical;
+      overflow: hidden;
+      word-wrap: break-word;
+      overflow-wrap: break-word;
     }
     [x-cloak] {
       display: none !important;
     }
-    .loading {
-      opacity: 0.6;
-      pointer-events: none;
+    /* Ensure card content layout is consistent */
+    .campaign-card-content {
+      min-height: 0; /* Important for flexbox with overflow */
+    }
+    /* Prevent text overflow on all elements */
+    .campaign-card-content * {
+      word-wrap: break-word;
+      overflow-wrap: break-word;
+    }
+    /* Ensure progress bar is always visible */
+    .progress-container {
+      width: 100%;
+      overflow: hidden;
+    }
+    /* Ensure buttons stay visible and don't shrink */
+    .campaign-card-content button,
+    .campaign-card-content a {
+      flex-shrink: 0;
+    }
+    /* Ensure grid columns are properly sized */
+    #campaigns-container > div {
+      min-width: 0; /* Fix for flex overflow */
     }
   </style>
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-slate-50 font-sans">
 
 <?php include '../components/public-header.php'; ?>
 
-  <main class="py-12">
+  <main class="pt-20 pb-12 md:pt-28 md:pb-20">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
       <!-- Header -->
-      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 p-8 mb-12 animate-gradient">
-        <div class="relative z-10 text-center text-white">
-          <h1 class="text-4xl md:text-5xl font-bold mb-4">Browse Fundraisers</h1>
-          <p class="text-xl md:text-2xl text-emerald-50">Support amazing causes and make a difference today</p>
-        </div>
-        <div class="absolute inset-0 bg-black opacity-10"></div>
+      <div class="text-center mb-12">
+        <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-slate-900 mb-4">Browse Fundraisers</h1>
+        <p class="text-base sm:text-lg md:text-xl text-slate-600 max-w-2xl mx-auto">Discover and support impactful campaigns making a difference in communities worldwide</p>
       </div>
 
       <!-- Filters -->
-      <div class="mb-8 bg-white rounded-xl shadow-sm p-4">
-        <div class="flex flex-col sm:flex-row gap-4 justify-between items-center">
+      <div class="mb-10 bg-white rounded-2xl shadow-soft border border-slate-100 p-6">
+        <div class="flex flex-col sm:flex-row gap-4 items-center justify-between">
           <div class="flex flex-wrap gap-4 w-full sm:w-auto">
-            <select id="category-filter" class="rounded-lg border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors px-4 py-2 focus:ring-emerald-500 focus:border-emerald-500" onchange="filterCampaigns()">
+            <select id="category-filter" class="rounded-xl border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors px-4 py-3 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" onchange="filterCampaigns()">
               <option value="all" <?= $category === 'all' ? 'selected' : '' ?>>All Categories</option>
               <option value="medical" <?= $category === 'medical' ? 'selected' : '' ?>>Medical</option>
               <option value="education" <?= $category === 'education' ? 'selected' : '' ?>>Education</option>
               <option value="emergency" <?= $category === 'emergency' ? 'selected' : '' ?>>Emergency</option>
               <option value="community" <?= $category === 'community' ? 'selected' : '' ?>>Community</option>
             </select>
-            <select id="sort-filter" class="rounded-lg border-gray-300 bg-gray-50 hover:bg-gray-100 transition-colors px-4 py-2 focus:ring-emerald-500 focus:border-emerald-500" onchange="filterCampaigns()">
+            <select id="sort-filter" class="rounded-xl border-slate-200 bg-slate-50 hover:bg-slate-100 transition-colors px-4 py-3 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" onchange="filterCampaigns()">
               <option value="" <?= $sort === '' ? 'selected' : '' ?>>Sort by...</option>
               <option value="newest" <?= $sort === 'newest' ? 'selected' : '' ?>>Newest First</option>
               <option value="most-funded" <?= $sort === 'most-funded' ? 'selected' : '' ?>>Most Funded</option>
               <option value="ending-soon" <?= $sort === 'ending-soon' ? 'selected' : '' ?>>Ending Soon</option>
             </select>
             <?php if ($category !== 'all' || $sort !== ''): ?>
-            <button onclick="clearFilters()" class="px-4 py-2 text-sm font-medium text-gray-700 bg-gray-100 border border-gray-300 rounded-lg hover:bg-gray-200 transition-colors">
+            <button onclick="clearFilters()" class="px-4 py-3 text-sm font-semibold text-slate-700 bg-slate-100 border border-slate-200 rounded-xl hover:bg-slate-200 transition-colors">
               Clear Filters
             </button>
             <?php endif; ?>
           </div>
-          <div class="flex flex-col sm:flex-row items-center gap-2">
-            <div id="results-count" class="text-sm text-gray-600">
-              <?= count($campaigns) ?> campaigns found
-            </div>
+          <div class="flex items-center gap-2">
             <?php if ($category !== 'all' || $sort !== ''): ?>
             <div class="flex flex-wrap gap-2">
               <?php if ($category !== 'all'): ?>
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+              <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
                 Category: <?= ucfirst($category) ?>
-                <button onclick="removeFilter('category')" class="ml-1 text-emerald-600 hover:text-emerald-800">×</button>
+                <button onclick="removeFilter('category')" class="ml-1.5 text-emerald-600 hover:text-emerald-800">×</button>
               </span>
               <?php endif; ?>
               <?php if ($sort !== ''): ?>
-              <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <span class="inline-flex items-center px-3 py-1.5 rounded-full text-xs font-semibold bg-blue-100 text-blue-800">
                 Sort: <?= ucwords(str_replace('-', ' ', $sort)) ?>
-                <button onclick="removeFilter('sort')" class="ml-1 text-blue-600 hover:text-blue-800">×</button>
+                <button onclick="removeFilter('sort')" class="ml-1.5 text-blue-600 hover:text-blue-800">×</button>
               </span>
               <?php endif; ?>
             </div>
@@ -143,9 +188,9 @@ try {
       </div>
 
       <!-- Loading Spinner -->
-      <div id="loading-spinner" class="hidden text-center py-8">
+      <div id="loading-spinner" class="hidden text-center py-16">
         <div class="inline-flex items-center px-4 py-2 font-semibold leading-6 text-emerald-600 transition ease-in-out duration-150">
-          <svg class="animate-spin -ml-1 mr-3 h-5 w-5 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+          <svg class="animate-spin -ml-1 mr-3 h-6 w-6 text-emerald-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
             <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
             <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
           </svg>
@@ -154,16 +199,16 @@ try {
       </div>
 
       <!-- Campaigns Grid -->
-      <div id="campaigns-container" class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div id="campaigns-container" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
         <?php if (empty($campaigns)): ?>
-          <div class="col-span-2 text-center py-12">
-            <div class="text-gray-500">
-              <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <div class="col-span-full text-center py-16">
+            <div class="w-20 h-20 bg-slate-100 rounded-2xl flex items-center justify-center mx-auto mb-6">
+              <svg class="w-10 h-10 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
               </svg>
-              <h3 class="mt-2 text-sm font-medium text-gray-900">No campaigns found</h3>
-              <p class="mt-1 text-sm text-gray-500">Try adjusting your filters or check back later.</p>
             </div>
+            <h3 class="text-lg font-semibold text-slate-900 mb-2">No campaigns found</h3>
+            <p class="text-slate-600">Try adjusting your filters or check back later.</p>
           </div>
         <?php else: ?>
           <?php foreach ($campaigns as $index => $camp): 
@@ -177,56 +222,52 @@ try {
             $percent = $goal > 0 ? min(($current / $goal) * 100, 100) : 0;
             $imageUrl = !empty($camp['image_path']) ? BASE_URL . '/' . ltrim($camp['image_path'], '/') : BASE_URL . '/assets/images/default-campaign.jpg';
           ?>
-          <div class="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-200 overflow-hidden max-w-md mx-auto" x-data="{ expanded: false }">
-            <div class="flex flex-row sm:flex-col">
-              <!-- Image -->
-              <div class="w-1/3 h-32 sm:w-full sm:h-48 overflow-hidden relative">
-                <a href="public-view.php?id=<?= $id ?>" class="block w-full h-full cursor-pointer">
-                  <img src="<?= $imageUrl ?>" alt="<?= $title ?>" class="w-full h-full object-cover transition-transform duration-200 group-hover:scale-105" onerror="this.src='<?= BASE_URL ?>/assets/images/default-campaign.jpg'" />
+          <div class="group bg-white rounded-2xl border border-slate-100 shadow-soft hover:shadow-medium transition-all duration-300 overflow-hidden flex flex-col">
+            <!-- Image -->
+            <a href="public-view.php?id=<?= $id ?>" class="block relative h-56 overflow-hidden flex-shrink-0">
+              <img src="<?= $imageUrl ?>" alt="<?= $title ?>" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='<?= BASE_URL ?>/assets/images/default-campaign.jpg'" />
+              <span class="absolute top-4 left-4 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-xl shadow">
+                <?= $category ?>
+              </span>
+            </a>
+
+            <!-- Content -->
+            <div class="p-6 flex flex-col flex-1 campaign-card-content">
+              <h3 class="text-lg font-semibold text-slate-900 mb-3 line-clamp-2 group-hover:text-emerald-700 transition-colors flex-shrink-0">
+                <a href="public-view.php?id=<?= $id ?>">
+                  <?= $title ?>
                 </a>
-                <span class="absolute top-3 right-3 px-2 py-1 text-xs font-semibold text-white bg-emerald-500 rounded-full shadow">
-                  <?= $category ?>
-                </span>
+              </h3>
+
+              <div class="text-slate-600 text-sm line-clamp-3 mb-6 flex-grow min-h-[4.5rem]">
+                <?= $description ?>
               </div>
 
-              <!-- Content -->
-              <div class="w-3/4 sm:w-full p-3 sm:p-6 flex flex-col justify-between">
-                <h3 class="text-sm sm:text-lg font-semibold text-gray-900 mb-1 group-hover:text-emerald-600 leading-snug line-clamp-2" title="<?= $title ?>">
-                  <?= $title ?>
-                </h3>
+              <!-- Progress Section -->
+              <div class="mb-4 flex-shrink-0">
+                <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden mb-3">
+                  <div class="h-full bg-emerald-600 rounded-full" style="width: <?= round($percent) ?>%"></div>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                  <span class="text-slate-600"><strong class="text-slate-900">$<?= number_format($current, 2) ?></strong> of $<?= number_format($goal, 2) ?></span>
+                  <span class="font-semibold text-emerald-700"><?= round($percent) ?>%</span>
+                </div>
+              </div>
 
-                <div class="relative mb-3 text-xs text-gray-600 flex-1">
-                  <p :class="{ 'line-clamp-3': !expanded }"><?= $description ?></p>
-                  <?php if (strlen($camp['description']) > 140): ?>
-                  <button @click="expanded = !expanded" class="mt-1 text-emerald-600 hover:text-emerald-700 text-xs font-medium flex items-center">
-                    <span x-text="expanded ? 'Show Less' : 'Read More'"></span>
-                    <svg class="w-4 h-4 ml-1 transition-transform" :class="{ 'rotate-180': expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-                    </svg>
+              <div class="flex items-center justify-between pt-4 border-t border-slate-100 flex-shrink-0">
+                <div class="flex items-center text-slate-600 text-sm">
+                  <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                  </svg>
+                  <?= $donors ?> donors
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="copyShareLink(<?= $id ?>, '<?= addslashes($title) ?>')" class="px-3 py-1.5 text-xs font-semibold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors whitespace-nowrap">
+                    Share
                   </button>
-                  <?php endif; ?>
-                </div>
-
-                <!-- Updated Progress Section with Donors Inline -->
-                <div class="mb-3">
-                  <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
-                    <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full" style="width: <?= round($percent) ?>%"></div>
-                  </div>
-                  <div class="flex justify-between items-center mt-2 text-xs text-gray-700">
-                    <span><strong>$<?= number_format($current, 2) ?></strong> <span class="text-gray-500">of $<?= number_format($goal, 2) ?></span></span>
-                    <div class="flex items-center gap-2 text-emerald-600 font-semibold">
-                      <span><?= round($percent) ?>%</span>
-                      <span class="text-gray-400">|</span>
-                      <span class="text-gray-600"><?= $donors ?> donors</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="flex justify-between pt-2 border-t border-gray-100">
-                  <div class="flex space-x-2">
-                    <button onclick="copyShareLink(<?= $id ?>, '<?= addslashes($title) ?>')" class="px-3 py-1 text-xs font-medium text-gray-700 border border-gray-300 rounded hover:bg-gray-100">Share</button>
-                    <a href="public-view.php?id=<?= $id ?>" class="px-4 py-1.5 text-xs font-medium text-white rounded bg-emerald-600 hover:bg-emerald-700 transition">Donate</a>
-                  </div>
+                  <a href="public-view.php?id=<?= $id ?>" class="px-4 py-1.5 text-xs font-semibold text-white rounded-xl bg-emerald-600 hover:bg-emerald-700 transition-colors whitespace-nowrap">
+                    Donate
+                  </a>
                 </div>
               </div>
             </div>
@@ -234,11 +275,69 @@ try {
           <?php endforeach; ?>
         <?php endif; ?>
       </div>
+      
+      <!-- Pagination Controls -->
+      <?php if ($totalPages > 1): ?>
+      <div id="pagination-container" class="mt-12 flex items-center justify-center">
+        <nav class="flex items-center gap-2 flex-wrap">
+          <!-- Previous Button -->
+          <button id="prev-page" onclick="goToPage(<?= $page - 1 ?>)" 
+            class="px-3 py-2 sm:px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            <?= $page <= 1 ? 'disabled' : '' ?>>
+            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span class="hidden sm:inline ml-1.5">Previous</span>
+          </button>
+          
+          <!-- Page Numbers -->
+          <div id="page-numbers" class="flex items-center gap-1">
+            <?php for ($i = 1; $i <= $totalPages; $i++): ?>
+              <?php 
+                // On mobile: show first, last, current, and 1 around current
+                // On desktop: show first, last, current, and 2 around current
+                $showOnMobile = (
+                  $i === 1 || 
+                  $i === $totalPages || 
+                  $i === $page || 
+                  $i === $page - 1 || 
+                  $i === $page + 1
+                );
+                $showOnDesktop = (
+                  $i === 1 || 
+                  $i === $totalPages || 
+                  ($i >= $page - 2 && $i <= $page + 2)
+                );
+                if ($showOnMobile || $showOnDesktop): 
+              ?>
+                <?php if ($i > 1 && !in_array($i - 1, [1, $page - 2, $page - 1, $page, $page + 1, $page + 2, $totalPages])): ?>
+                  <span class="px-2 py-2 text-slate-400 sm:px-3">...</span>
+                <?php endif; ?>
+                <button onclick="goToPage(<?= $i ?>)" 
+                  class="px-3 py-2 sm:px-4 rounded-xl text-sm font-semibold transition-colors <?= $i === $page ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-50 border border-slate-200' ?> <?php if (!$showOnMobile): ?> hidden sm:inline-flex <?php endif; ?>">
+                  <?= $i ?>
+                </button>
+              <?php endif; ?>
+            <?php endfor; ?>
+          </div>
+          
+          <!-- Next Button -->
+          <button id="next-page" onclick="goToPage(<?= $page + 1 ?>)" 
+            class="px-3 py-2 sm:px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            <?= $page >= $totalPages ? 'disabled' : '' ?>>
+            <span class="hidden sm:inline mr-1.5">Next</span>
+            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </nav>
+      </div>
+      <?php endif; ?>
     </div>
   </main>
 
   <!-- Share Toast -->
-  <div id="share-toast" class="fixed bottom-4 right-4 bg-gray-900 text-white px-6 py-3 rounded-xl shadow-lg transform translate-y-full opacity-0 transition-all duration-300 z-50">
+  <div id="share-toast" class="fixed bottom-6 right-6 bg-slate-900 text-white px-6 py-3 rounded-xl opacity-0 pointer-events-none transition-all duration-300 z-50 shadow-large">
     <div class="flex items-center">
       <svg class="w-5 h-5 text-emerald-400 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
@@ -248,7 +347,9 @@ try {
   </div>
 
   <script>
-    // AOS animations removed for smoother scrolling
+    // Global state
+    let currentPage = <?= $page ?>;
+    let totalPages = <?= $totalPages ?>;
     
     // Ensure DOM is loaded before running scripts
     document.addEventListener('DOMContentLoaded', function() {
@@ -256,106 +357,188 @@ try {
     });
 
     function copyShareLink(campaignId, title) {
-      const url = `${BASE_URL}/public-view.php?id=${campaignId}`;
+      const url = `${BASE_URL}/campaigns/public-view.php?id=${campaignId}`;
       navigator.clipboard.writeText(url).then(() => {
         const toast = document.getElementById('share-toast');
-        toast.classList.remove('translate-y-full', 'opacity-0');
-        toast.classList.add('translate-y-0', 'opacity-100');
+        toast.style.opacity = '1';
+        toast.style.pointerEvents = 'auto';
         setTimeout(() => {
-          toast.classList.add('translate-y-full', 'opacity-0');
-          toast.classList.remove('translate-y-0', 'opacity-100');
-        }, 2000);
+          toast.style.opacity = '0';
+          toast.style.pointerEvents = 'none';
+        }, 2500);
       });
     }
-
-    function filterCampaigns() {
+    
+    function goToPage(page) {
+      if (page < 1 || page > totalPages) return;
+      
       const category = document.getElementById('category-filter').value;
       const sort = document.getElementById('sort-filter').value;
       
       // Show loading state
       const container = document.getElementById('campaigns-container');
       const spinner = document.getElementById('loading-spinner');
-      const resultsCount = document.getElementById('results-count');
       
-      // Check if elements exist before using them
-      if (!container || !spinner || !resultsCount) {
+      if (!container || !spinner) {
         console.error('Required elements not found');
         return;
       }
       
-      container.classList.add('loading');
+      container.classList.add('opacity-50');
       spinner.classList.remove('hidden');
-      resultsCount.textContent = 'Loading...';
       
       // Build URL with parameters
       const url = new URL(window.location);
       url.searchParams.set('category', category);
       url.searchParams.set('sort', sort);
-      url.searchParams.set('page', '1'); // Reset to first page when filtering
+      url.searchParams.set('page', page.toString());
       
       // Update URL without reloading
       window.history.pushState({}, '', url);
       
-      // Fetch filtered campaigns
-      fetch(`${BASE_URL}/campaigns/api/filter_campaigns.php?category=${category}&sort=${sort}`)
+      // Fetch campaigns for this page
+      fetch(`${BASE_URL}/campaigns/api/filter_campaigns.php?category=${encodeURIComponent(category)}&sort=${encodeURIComponent(sort)}&page=${page}`)
         .then(response => response.json())
         .then(data => {
           if (data.success) {
             container.innerHTML = data.html;
-            if (resultsCount) resultsCount.textContent = `${data.count} campaigns found`;
-            
-                         // AOS refresh removed for smoother performance
+            currentPage = data.current_page;
+            totalPages = data.total_pages;
+            updatePaginationUI();
           } else {
             container.innerHTML = `
-              <div class="col-span-2 text-center py-12">
-                <div class="text-gray-500">
-                  <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <div class="col-span-full text-center py-16">
+                <div class="w-20 h-20 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                  <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                   </svg>
-                  <h3 class="mt-2 text-sm font-medium text-gray-900">Error loading campaigns</h3>
-                  <p class="mt-1 text-sm text-gray-500">Please try again later.</p>
                 </div>
+                <h3 class="text-lg font-semibold text-slate-900 mb-2">Error loading campaigns</h3>
+                <p class="text-slate-600">Please try again later.</p>
               </div>
             `;
-            if (resultsCount) resultsCount.textContent = 'Error loading campaigns';
           }
         })
         .catch(error => {
           console.error('Error:', error);
           container.innerHTML = `
-            <div class="col-span-2 text-center py-12">
-              <div class="text-gray-500">
-                <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="col-span-full text-center py-16">
+              <div class="w-20 h-20 bg-red-50 rounded-2xl flex items-center justify-center mx-auto mb-6">
+                <svg class="w-10 h-10 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                 </svg>
-                <h3 class="mt-2 text-sm font-medium text-gray-900">Error loading campaigns</h3>
-                <p class="mt-1 text-sm text-gray-500">Please try again later.</p>
               </div>
+              <h3 class="text-lg font-semibold text-slate-900 mb-2">Error loading campaigns</h3>
+              <p class="text-slate-600">Please try again later.</p>
             </div>
           `;
-          if (resultsCount) resultsCount.textContent = 'Error loading campaigns';
         })
         .finally(() => {
-          if (container) container.classList.remove('loading');
+          if (container) container.classList.remove('opacity-50');
           if (spinner) spinner.classList.add('hidden');
         });
-     }
+    }
 
-     function clearFilters() {
-       document.getElementById('category-filter').value = 'all';
-       document.getElementById('sort-filter').value = '';
-       filterCampaigns();
-     }
+    function filterCampaigns() {
+      goToPage(1);
+    }
+    
+    function updatePaginationUI() {
+      const paginationContainer = document.getElementById('pagination-container');
+      if (!paginationContainer) return;
+      
+      // If only one page, hide pagination
+      if (totalPages <= 1) {
+        paginationContainer.innerHTML = '';
+        return;
+      }
+      
+      // Build pagination HTML
+      let html = `
+        <nav class="flex items-center gap-2 flex-wrap">
+          <!-- Previous Button -->
+          <button onclick="goToPage(${currentPage - 1})" 
+            class="px-3 py-2 sm:px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            ${currentPage <= 1 ? 'disabled' : ''}>
+            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+            </svg>
+            <span class="hidden sm:inline ml-1.5">Previous</span>
+          </button>
+          
+          <!-- Page Numbers -->
+          <div class="flex items-center gap-1">
+      `;
+      
+      for (let i = 1; i <= totalPages; i++) {
+        // Show first, last, current, and 1 around current on mobile
+        // Show first, last, current, and 2 around current on desktop
+        const showOnMobile = (
+          i === 1 || 
+          i === totalPages || 
+          i === currentPage || 
+          i === currentPage - 1 || 
+          i === currentPage + 1
+        );
+        const showOnDesktop = (
+          i === 1 || 
+          i === totalPages || 
+          (i >= currentPage - 2 && i <= currentPage + 2)
+        );
+        
+        if (showOnMobile || showOnDesktop) {
+          // Add ellipsis if needed
+          if (i > 1) {
+            const prevPagesToShow = [1, currentPage - 2, currentPage - 1, currentPage, currentPage + 1, currentPage + 2, totalPages];
+            if (!prevPagesToShow.includes(i - 1)) {
+              html += `<span class="px-2 py-2 text-slate-400 sm:px-3">...</span>`;
+            }
+          }
+          
+          const hiddenOnMobileClass = !showOnMobile ? 'hidden sm:inline-flex' : '';
+          
+          html += `
+            <button onclick="goToPage(${i})" 
+              class="px-3 py-2 sm:px-4 rounded-xl text-sm font-semibold transition-colors ${i === currentPage ? 'bg-emerald-600 text-white' : 'text-slate-700 hover:bg-slate-50 border border-slate-200'} ${hiddenOnMobileClass}">
+              ${i}
+            </button>
+          `;
+        }
+      }
+      
+      html += `
+          </div>
+          
+          <!-- Next Button -->
+          <button onclick="goToPage(${currentPage + 1})" 
+            class="px-3 py-2 sm:px-4 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50 transition-colors disabled:opacity-50 disabled:pointer-events-none"
+            ${currentPage >= totalPages ? 'disabled' : ''}>
+            <span class="hidden sm:inline mr-1.5">Next</span>
+            <svg class="w-4 h-4 inline" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+            </svg>
+          </button>
+        </nav>
+      `;
+      
+      paginationContainer.innerHTML = html;
+    }
 
-     function removeFilter(type) {
-       if (type === 'category') {
-         document.getElementById('category-filter').value = 'all';
-       } else if (type === 'sort') {
-         document.getElementById('sort-filter').value = '';
-       }
-       filterCampaigns();
-     }
-   </script>
+    function clearFilters() {
+      document.getElementById('category-filter').value = 'all';
+      document.getElementById('sort-filter').value = '';
+      filterCampaigns();
+    }
+
+    function removeFilter(type) {
+      if (type === 'category') {
+        document.getElementById('category-filter').value = 'all';
+      } else if (type === 'sort') {
+        document.getElementById('sort-filter').value = '';
+      }
+      filterCampaigns();
+    }
+  </script>
 </body>
 </html>
 

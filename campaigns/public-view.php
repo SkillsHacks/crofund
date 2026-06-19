@@ -7,7 +7,7 @@ require_once __DIR__ . '/../config/Campaign.php';
 
 
 if (!isset($_GET['id'])) {
-    header("Location: " . BASE_URL . "/campaigns/browse.php");
+    header("Location: " . BASE_URL . "/campaigns/view_compaigns.php");
     exit();
 }
 
@@ -35,7 +35,7 @@ $donors = $campaign->getCampaignDonors($campaignId, $perPage, $offset);
 
 if (!$details) {
     $_SESSION['error'] = "Campaign not found";
-    header("Location: " . BASE_URL . "/campaigns/browse.php");
+    header("Location: " . BASE_URL . "/campaigns/view_compaigns.php");
     exit();
 }
 
@@ -111,7 +111,7 @@ if (isset($_GET['payment']) && $_GET['payment'] === 'success' && isset($_SESSION
                             error_log("Donation processed successfully: Donation ID $donationId, Amount: {$pendingDonation['amount']}");
                         } else {
                             error_log("Failed to create donation record for session: $sessionId");
-                            $_SESSION['donation_error'] = 'Payment was successful but there was an issue recording your donation. Please contact support.';
+                            $_SESSION['donation_error'] = 'Payment was successful, but there was an issue recording your donation. Please contact support.';
                         }
                     } else {
                         // Donation already processed
@@ -146,9 +146,7 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
     $_SESSION['dodo_session_id'] = $_GET['session_id'];
 }
 
-
 ?>
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -185,7 +183,7 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:image:alt" content="<?php echo htmlspecialchars($details['title']); ?> - Campaign Image">
-  <meta property="og:url" content="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"; ?>">
+  <meta property="og:url" content="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://" . $_SERVER['HTTP_HOST'] . $_SERVER['REQUEST_URI']; ?>">
   <meta property="og:type" content="website">
   <meta property="og:site_name" content="CroFunding">
   <meta property="og:locale" content="en_US">
@@ -212,93 +210,40 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
   
   <script src="https://cdn.tailwindcss.com"></script>
   <script defer src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-  <link rel="icon" href="<?php echo BASE_URL; ?>/assets/images/Logo.png" type="image/x-icon">
-  
-  <!-- jQuery for payment processing -->
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-  
-  <!-- SweetAlert2 for notifications -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
-  
-  <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-  
-  <!-- Bootstrap Icons -->
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.7.2/font/bootstrap-icons.css">
-  
-  <!-- Dodo Payments will be handled server-side -->
-  
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="icon" href="<?php echo BASE_URL; ?>/assets/images/Logo.png" type="image/x-icon">
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            emerald: {
+              50: '#ecfdf5',
+              100: '#d1fae5',
+              200: '#a7f3d0',
+              300: '#6ee7b7',
+              400: '#34d399',
+              500: '#10b981',
+              600: '#059669',
+              700: '#047857',
+              800: '#065f46',
+              900: '#064e3b',
+            }
+          },
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+          }
+        },
+      },
+    };
+  </script>
+
   <style>
-    /* Enhanced styles for mature platform layout */
-    .campaign-hero {
-      position: relative;
-      height: 500px;
-      overflow: hidden;
-    }
-    
-    @media (max-width: 768px) {
-      .campaign-hero {
-        height: 300px;
-      }
-    }
-    
-    @media (max-width: 640px) {
-      .campaign-hero {
-        height: 250px;
-      }
-    }
-    
-    .campaign-hero img {
-      width: 100%;
-      height: 100%;
-      object-fit: contain;
-      object-position: center center;
-      transition: transform 0.3s ease;
-      background-color: #f3f4f6; /* Light gray background for empty space */
-    }
-    
-    .campaign-hero::after {
-      content: '';
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      height: 200px;
-      background: linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 100%);
-      pointer-events: none;
-    }
-    
-    /* Mobile Responsive Styles */
-    @media (max-width: 768px) {
-      .campaign-hero img {
-        object-fit: cover; /* Better fill on mobile */
-        min-height: 100%;
-        width: 100%;
-        height: 100%;
-      }
-      
-      .campaign-hero::after {
-        height: 120px; /* Smaller gradient on mobile */
-      }
-    }
-    
-    @media (max-width: 640px) {
-      .campaign-hero::after {
-        height: 100px;
-      }
-    }
-    
-    .stat-card {
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    
-    .stat-card:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 10px 25px rgba(0,0,0,0.1);
-    }
-    
     .donor-avatar {
       width: 48px;
       height: 48px;
@@ -309,56 +254,32 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
       color: white;
       font-weight: 600;
       font-size: 18px;
+      border-radius: 50%;
     }
-    
     .sticky-donation {
       position: sticky;
       top: 100px;
     }
-    
     @media (max-width: 1024px) {
       .sticky-donation {
         position: relative;
         top: 0;
       }
     }
-    
-    .progress-bar-container {
+    .campaign-hero {
       position: relative;
+      width: 100%;
       overflow: hidden;
     }
-    
-    .progress-bar-fill {
-      position: relative;
-      overflow: hidden;
+    .campaign-hero img {
+      width: 100%;
+      height: auto;
+      display: block;
+      max-height: 400px;
+      object-fit: contain;
+      background-color: #f3f4f6;
     }
-    
-    .progress-bar-fill::after {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
-      animation: shimmer 2s infinite;
-    }
-    
-    @keyframes shimmer {
-      0% { transform: translateX(-100%); }
-      100% { transform: translateX(100%); }
-    }
-    
-    .update-card {
-      transition: all 0.3s ease;
-    }
-    
-    .update-card:hover {
-      transform: translateX(4px);
-      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-    }
-    
-    /* Donation Modal Styles */
+
     .donation-modal {
       display: none;
       position: fixed;
@@ -371,14 +292,12 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
       background-color: rgba(0, 0, 0, 0.5);
       backdrop-filter: blur(4px);
     }
-    
     .donation-modal.active {
       display: flex;
       align-items: center;
       justify-content: center;
       padding: 2rem;
     }
-    
     .donation-modal-content {
       background-color: white;
       border-radius: 1.5rem;
@@ -390,7 +309,6 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
       position: relative;
       animation: modalSlideIn 0.3s ease-out;
     }
-    
     @keyframes modalSlideIn {
       from {
         opacity: 0;
@@ -401,86 +319,9 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
         transform: translateY(0);
       }
     }
-    
-    .donation-modal-header {
-      position: sticky;
-      top: 0;
-      background: white;
-      z-index: 10;
-      padding: 1rem 1.25rem;
-      border-bottom: 2px solid #e5e7eb;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    
-    .donation-modal-header h2 {
-      font-size: 1.125rem;
-    }
-    
-    .donation-modal-header p {
-      font-size: 0.75rem;
-    }
-    
-    .donation-modal-body {
-      padding: 1rem 1.25rem;
-      font-size: 0.875rem;
-    }
-    
-    .form-section {
-      background: #f9fafb;
-      border-radius: 12px;
-      padding: 1rem;
-      margin-bottom: 1rem;
-    }
-    
-    .form-section-title {
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      margin-bottom: 0.75rem;
-      padding-bottom: 0.5rem;
-      border-bottom: 2px solid #e5e7eb;
-    }
-    
-    .input-group {
-      position: relative;
-    }
-    
-    .input-icon {
-      position: absolute;
-      left: 0.75rem;
-      top: 50%;
-      transform: translateY(-50%);
-      color: #6b7280;
-      pointer-events: none;
-      font-size: 0.875rem;
-      z-index: 1;
-    }
-    
-    .input-with-icon {
-      padding-left: 2.25rem !important;
-    }
-    
-    .donation-amount-btn {
-      transition: all 0.2s ease;
-    }
-    
-    .donation-amount-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
-    }
-    
-    .donation-amount-btn.active {
-      background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-      color: white;
-      border-color: #10b981;
-      box-shadow: 0 4px 12px rgba(16, 185, 129, 0.4);
-    }
   </style>
-  
 </head>
-<body class="bg-gray-50" style="font-family: 'Poppins', sans-serif;">
+<body class="bg-slate-50 font-sans">
 
 <?php include __DIR__ . '/../components/public-header.php'; ?>
 
@@ -489,125 +330,109 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
   <img 
     src="<?php echo $details['image_path'] ? BASE_URL . '/' . $details['image_path'] : BASE_URL . '/assets/images/default-campaign.jpg'; ?>" 
     alt="<?php echo htmlspecialchars($details['title']); ?>" 
-    class="w-full h-full object-contain object-center"
-    style="object-fit: contain; object-position: center;"
     onerror="this.src='<?php echo BASE_URL; ?>/assets/images/default-campaign.jpg'">
-  
-  <!-- Overlay Content -->
-  <div class="absolute bottom-0 left-0 right-0 z-10 p-4 sm:p-6 md:p-8 lg:p-12">
-    <div class="max-w-7xl mx-auto">
-      <div class="max-w-3xl">
-        <span class="inline-block px-3 py-1 sm:px-4 sm:py-1.5 mb-2 sm:mb-4 text-xs sm:text-sm font-semibold rounded-full
-          <?php
-            if ($details['status'] === 'active') echo 'bg-emerald-500 text-white';
-            elseif ($details['status'] === 'completed') echo 'bg-blue-500 text-white';
-            else echo 'bg-gray-500 text-white';
-          ?>">
-          <?php echo ucfirst($details['status']); ?>
-        </span>
-        <h1 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white mb-2 sm:mb-3 leading-tight drop-shadow-lg">
-          <?php echo htmlspecialchars($details['title']); ?>
-        </h1>
-        <p class="text-white/90 text-xs sm:text-sm md:text-base">
-          Created on <?php echo date('F j, Y', strtotime($details['created_at'])); ?>
-        </p>
-      </div>
-    </div>
-  </div>
 </div>
 
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-8 sm:mt-12 md:mt-16 relative z-20">
-  <!-- Progress Stats Section -->
-  <div class="bg-white rounded-2xl shadow-xl mb-8 p-6 md:p-8">
-    <?php
-      $percent = ($details['goal_amount'] > 0)
-        ? min(100, ($details['current_amount'] / $details['goal_amount']) * 100)
-        : 0;
-    ?>
-    
-    <!-- Progress Bar -->
-    <div class="mb-6">
-      <div class="progress-bar-container w-full bg-gray-200 rounded-full h-4 mb-4">
-        <div class="progress-bar-fill bg-gradient-to-r from-emerald-500 to-teal-500 h-4 rounded-full transition-all duration-500" style="width: <?php echo $percent; ?>%"></div>
-      </div>
-      <div class="flex items-center justify-between text-sm text-gray-600">
-        <span><?php echo round($percent); ?>% funded</span>
-        <span><?php echo (int)$details['donor_count']; ?> <?php echo (int)$details['donor_count'] == 1 ? 'donor' : 'donors'; ?></span>
-      </div>
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12 md:pt-28 md:pb-12">
+  <!-- Campaign Title & Status -->
+  <div class="mb-6 md:mb-8">
+    <div class="flex flex-wrap items-center gap-2 md:gap-3 mb-3 md:mb-4">
+      <span class="inline-block px-3 md:px-4 py-1 md:py-1.5 text-xs md:text-sm font-semibold rounded-xl <?php
+        if ($details['status'] === 'active') echo 'bg-emerald-100 text-emerald-700';
+        elseif ($details['status'] === 'completed') echo 'bg-blue-100 text-blue-700';
+        else echo 'bg-slate-100 text-slate-700';
+      ?>">
+        <?php echo ucfirst($details['status']); ?>
+      </span>
+      <span class="text-xs md:text-sm text-slate-600">
+        Created on <?php echo date('F j, Y', strtotime($details['created_at'])); ?>
+      </span>
     </div>
-    
-    <!-- Stats Grid -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-      <div class="stat-card bg-gradient-to-br from-emerald-50 to-teal-50 rounded-xl p-6 border border-emerald-100">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="w-12 h-12 bg-emerald-500 rounded-lg flex items-center justify-center">
-            <i class="fas fa-dollar-sign text-white text-xl"></i>
-          </div>
-          <div>
-            <p class="text-xs text-gray-600 uppercase tracking-wide">Raised</p>
-            <p class="text-2xl font-bold text-gray-900">$<?php echo number_format($details['current_amount'], 2); ?></p>
-          </div>
-        </div>
-      </div>
-      
-      <div class="stat-card bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-100">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="w-12 h-12 bg-blue-500 rounded-lg flex items-center justify-center">
-            <i class="fas fa-bullseye text-white text-xl"></i>
-          </div>
-          <div>
-            <p class="text-xs text-gray-600 uppercase tracking-wide">Goal</p>
-            <p class="text-2xl font-bold text-gray-900">$<?php echo number_format($details['goal_amount'], 2); ?></p>
-          </div>
-        </div>
-      </div>
-      
-      <div class="stat-card bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-6 border border-purple-100">
-        <div class="flex items-center gap-3 mb-2">
-          <div class="w-12 h-12 bg-purple-500 rounded-lg flex items-center justify-center">
-            <i class="fas fa-users text-white text-xl"></i>
-          </div>
-          <div>
-            <p class="text-xs text-gray-600 uppercase tracking-wide">Supporters</p>
-            <p class="text-2xl font-bold text-gray-900"><?php echo (int)$details['donor_count']; ?></p>
-          </div>
-        </div>
-      </div>
-    </div>
+    <h1 class="text-2xl md:text-3xl lg:text-4xl font-bold text-slate-900 mb-3 md:mb-4"><?php echo htmlspecialchars($details['title']); ?></h1>
+    <p class="text-base md:text-lg text-slate-600"><?php echo ucfirst($details['category']); ?> Campaign</p>
   </div>
 
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
-    <!-- Left Column: Main Content -->
-    <div class="lg:col-span-2 space-y-8 order-2 lg:order-1">
-
-      <!-- About Section -->
-      <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-        <div class="flex items-center gap-3 mb-6">
-          <div class="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-            <i class="fas fa-info-circle text-emerald-600"></i>
+  <!-- Progress & Stats Section -->
+  <div class="bg-white rounded-2xl shadow-soft border border-slate-100 p-4 md:p-8 mb-8 md:mb-12">
+            <?php
+              $percent = ($details['goal_amount'] > 0)
+                ? min(100, ($details['current_amount'] / $details['goal_amount']) * 100)
+                : 0;
+            ?>
+            <!-- Progress Bar -->
+            <div class="mb-6 md:mb-8">
+              <div class="w-full bg-slate-100 rounded-full h-2 md:h-3 mb-3 md:mb-4 overflow-hidden">
+                <div class="bg-emerald-600 h-full rounded-full transition-all duration-500" style="width: <?php echo $percent; ?>%"></div>
+              </div>
+              <div class="flex items-center justify-between text-xs md:text-sm">
+                <span class="text-slate-700"><strong class="text-slate-900 text-base md:text-lg"><?php echo round($percent); ?>%</strong> funded</span>
+                <span class="text-slate-700"><strong class="text-slate-900 text-base md:text-lg"><?php echo (int)$details['donor_count']; ?></strong> <?php echo (int)$details['donor_count'] == 1 ? 'donor' : 'donors'; ?></span>
+              </div>
+            </div>
+            
+            <!-- Stats Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
+              <div class="bg-emerald-50 rounded-xl p-4 md:p-6 border border-emerald-100">
+                <div class="flex items-center gap-3 md:gap-4">
+                  <div class="w-10 h-10 md:w-14 md:h-14 bg-emerald-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-dollar-sign text-white text-lg md:text-xl"></i>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-[10px] md:text-xs text-slate-600 uppercase tracking-wide font-semibold">Raised</p>
+                    <p class="text-xl md:text-3xl font-bold text-slate-900">$<?php echo number_format($details['current_amount'], 2); ?></p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="bg-slate-50 rounded-xl p-4 md:p-6 border border-slate-100">
+                <div class="flex items-center gap-3 md:gap-4">
+                  <div class="w-10 h-10 md:w-14 md:h-14 bg-slate-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-bullseye text-white text-lg md:text-xl"></i>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-[10px] md:text-xs text-slate-600 uppercase tracking-wide font-semibold">Goal</p>
+                    <p class="text-xl md:text-3xl font-bold text-slate-900">$<?php echo number_format($details['goal_amount'], 2); ?></p>
+                  </div>
+                </div>
+              </div>
+              
+              <div class="bg-blue-50 rounded-xl p-4 md:p-6 border border-blue-100">
+                <div class="flex items-center gap-3 md:gap-4">
+                  <div class="w-10 h-10 md:w-14 md:h-14 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-users text-white text-lg md:text-xl"></i>
+                  </div>
+                  <div class="flex-1">
+                    <p class="text-[10px] md:text-xs text-slate-600 uppercase tracking-wide font-semibold">Supporters</p>
+                    <p class="text-xl md:text-3xl font-bold text-slate-900"><?php echo (int)$details['donor_count']; ?></p>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <h2 class="text-2xl font-bold text-gray-900">About this campaign</h2>
-        </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-12">
+    <!-- Left Column: Main Content -->
+    <div class="lg:col-span-2 space-y-10 order-2 lg:order-1">
+      <!-- About Section -->
+      <div class="bg-white rounded-2xl shadow-soft border border-slate-100 p-4 md:p-8">
+        <h2 class="text-xl md:text-2xl font-bold text-slate-900 mb-4 md:mb-6 flex items-center gap-2 md:gap-3">
+          <div class="w-8 h-8 md:w-10 md:h-10 bg-emerald-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-info-circle text-emerald-700 text-sm md:text-base"></i>
+          </div>
+          About this campaign
+        </h2>
         
         <div x-data="{ expanded: false }">
           <?php $cleanDescription = nl2br(htmlspecialchars($details['description'])); ?>
-          <div 
-            class="relative transition-all duration-500 overflow-hidden prose prose-emerald max-w-none"
-            :class="expanded ? 'max-h-full' : 'max-h-64'"
-          >
-            <div class="text-gray-700 leading-relaxed"><?php echo $cleanDescription; ?></div>
-            <div 
-              class="absolute bottom-0 left-0 w-full h-24 bg-gradient-to-t from-white via-white/80 to-transparent pointer-events-none"
-              x-show="!expanded"
-            ></div>
+          <div class="text-slate-700 leading-relaxed text-base md:text-lg" :class="expanded ? '' : 'line-clamp-6'">
+            <?php echo $cleanDescription; ?>
           </div>
 
           <button 
             @click="expanded = !expanded" 
-            class="mt-4 text-emerald-600 hover:text-emerald-700 font-semibold flex items-center gap-2 transition-colors"
-          >
+            class="mt-4 md:mt-6 text-emerald-700 hover:text-emerald-800 font-semibold flex items-center gap-2 transition-colors text-sm md:text-base">
             <span x-text="expanded ? 'Show Less' : 'Read More'"></span>
-            <svg class="w-5 h-5 transition-transform duration-300" 
+            <svg class="w-4 h-4 md:w-5 md:h-5 transition-transform duration-300" 
                  :class="{ 'rotate-180': expanded }"
                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
@@ -618,48 +443,47 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
       </div>
 
       <!-- Campaign Updates Section -->
-      <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
-            <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <i class="fas fa-bullhorn text-blue-600"></i>
+      <div class="bg-white rounded-2xl shadow-soft border border-slate-100 p-4 md:p-8">
+        <div class="flex items-center justify-between mb-4 md:mb-6">
+          <div class="flex items-center gap-2 md:gap-3">
+            <div class="w-8 h-8 md:w-10 md:h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <i class="fas fa-bullhorn text-blue-700 text-sm md:text-base"></i>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900">Campaign Updates</h3>
+            <h3 class="text-xl md:text-2xl font-bold text-slate-900">Campaign Updates</h3>
           </div>
           <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $details['user_id']): ?>
             <button onclick="showUpdateForm()" 
-                    class="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-medium flex items-center gap-2 shadow-md hover:shadow-lg">
-              <i class="fas fa-plus"></i>
+                    class="px-3 md:px-5 py-2 md:py-2.5 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-colors font-semibold flex items-center gap-1 md:gap-2 shadow-soft text-xs md:text-sm">
+              <i class="fas fa-plus text-xs md:text-sm"></i>
               <span>Add Update</span>
             </button>
           <?php endif; ?>
         </div>
         
-        <div id="campaign-updates" class="space-y-4">
+        <div id="campaign-updates" class="space-y-3 md:space-y-4">
           <?php
           // Fetch campaign updates
           $updates = $campaign->getCampaignUpdates($campaignId);
           if (!empty($updates)):
             foreach ($updates as $update):
           ?>
-            <div class="update-card bg-gradient-to-r from-gray-50 to-white rounded-xl p-5 border-l-4 border-emerald-500 shadow-sm hover:shadow-md">
+            <div class="bg-slate-50 rounded-xl p-6 border-l-4 border-emerald-600 hover:shadow-soft transition-all">
               <div class="flex items-start justify-between gap-4">
                 <div class="flex-1">
-                  <div class="flex items-center gap-3 mb-3">
-                    <div class="w-2 h-2 bg-emerald-500 rounded-full"></div>
-                    <span class="text-base font-semibold text-gray-900"><?php echo htmlspecialchars($update['title']); ?></span>
-                    <span class="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded-full"><?php echo date('M j, Y', strtotime($update['created_at'])); ?></span>
+                  <div class="flex items-center gap-3 mb-4">
+                    <span class="text-lg font-semibold text-slate-900"><?php echo htmlspecialchars($update['title']); ?></span>
+                    <span class="text-xs text-slate-600 bg-white px-3 py-1 rounded-full border border-slate-200"><?php echo date('M j, Y', strtotime($update['created_at'])); ?></span>
                   </div>
-                  <p class="text-sm text-gray-700 leading-relaxed mb-4"><?php echo nl2br(htmlspecialchars($update['content'])); ?></p>
+                  <p class="text-base text-slate-700 leading-relaxed mb-4"><?php echo nl2br(htmlspecialchars($update['content'])); ?></p>
                   <?php if (!empty($update['image_path'])): ?>
                     <img src="<?php echo BASE_URL . '/' . $update['image_path']; ?>" 
                          alt="Update image" 
-                         class="w-full max-w-md rounded-lg mb-3 shadow-md">
+                         class="w-full max-w-md rounded-xl mb-4 shadow-soft">
                   <?php endif; ?>
                 </div>
                 <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $details['user_id']): ?>
                   <button onclick="editUpdate(<?php echo $update['id']; ?>)" 
-                          class="text-gray-400 hover:text-emerald-600 transition-colors p-2 hover:bg-emerald-50 rounded-lg">
+                          class="text-slate-400 hover:text-emerald-600 transition-colors p-2 hover:bg-emerald-50 rounded-lg">
                     <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                     </svg>
@@ -671,12 +495,12 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
             endforeach;
           else:
           ?>
-            <div class="text-center py-12 text-gray-500 bg-gray-50 rounded-xl">
-              <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-                <i class="fas fa-bullhorn text-gray-400 text-2xl"></i>
+            <div class="text-center py-12 text-slate-600 bg-slate-50 rounded-xl">
+              <div class="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-bullhorn text-slate-400 text-2xl"></i>
               </div>
-              <p class="text-base font-medium text-gray-700 mb-1">No updates yet</p>
-              <p class="text-sm text-gray-500">Campaign organizers will post updates here</p>
+              <p class="text-lg font-semibold text-slate-900 mb-1">No updates yet</p>
+              <p class="text-base text-slate-600">Campaign organizers will post updates here</p>
             </div>
           <?php endif; ?>
         </div>
@@ -684,41 +508,41 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
 
       <!-- Add Update Form (Hidden by default) -->
       <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $details['user_id']): ?>
-        <div id="update-form" class="hidden mt-6 bg-gradient-to-br from-gray-50 to-white rounded-xl p-6 border-2 border-emerald-200 shadow-lg">
-          <h4 class="text-lg font-bold mb-4 text-gray-900 flex items-center gap-2">
-            <i class="fas fa-edit text-emerald-600"></i>
+        <div id="update-form" class="hidden bg-white rounded-2xl shadow-soft border border-slate-100 p-8">
+          <h4 class="text-xl font-bold mb-6 text-slate-900 flex items-center gap-3">
+            <i class="fas fa-edit text-emerald-700"></i>
             Add Campaign Update
           </h4>
-          <form id="campaign-update-form" class="space-y-4">
+          <form id="campaign-update-form" class="space-y-5">
             <input type="hidden" name="campaign_id" value="<?php echo $details['id']; ?>">
             <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token']; ?>">
             
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Update Title</label>
-              <input type="text" name="update_title" required 
-                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">
+              <label for="update_title" class="block text-sm font-semibold text-slate-700 mb-2">Update Title</label>
+              <input type="text" name="update_title" id="update_title" required 
+                     class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
             </div>
             
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Update Content</label>
-              <textarea name="update_content" rows="5" required 
-                        class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors"
+              <label for="update_content" class="block text-sm font-semibold text-slate-700 mb-2">Update Content</label>
+              <textarea name="update_content" id="update_content" rows="6" required 
+                        class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all"
                         placeholder="Share the latest news, progress, or thank you message..."></textarea>
             </div>
             
             <div>
-              <label class="block text-sm font-semibold text-gray-700 mb-2">Image (Optional)</label>
-              <input type="file" name="update_image" accept="image/*" 
-                     class="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">
+              <label for="update_image" class="block text-sm font-semibold text-slate-700 mb-2">Image (Optional)</label>
+              <input type="file" name="update_image" id="update_image" accept="image/*" 
+                     class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all">
             </div>
             
             <div class="flex gap-3 pt-2">
               <button type="submit" 
-                      class="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors font-semibold shadow-md hover:shadow-lg">
+                      class="flex-1 px-6 py-3 bg-emerald-600 text-white rounded-xl hover:bg-emerald-700 transition-all font-semibold shadow-soft">
                 <i class="fas fa-paper-plane mr-2"></i>Post Update
               </button>
               <button type="button" onclick="hideUpdateForm()" 
-                      class="px-6 py-3 bg-gray-200 text-gray-700 rounded-lg hover:bg-gray-300 transition-colors font-semibold">
+                      class="px-6 py-3 bg-slate-100 text-slate-700 rounded-xl hover:bg-slate-200 transition-all font-semibold">
                 Cancel
               </button>
             </div>
@@ -727,16 +551,16 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
       <?php endif; ?>
 
       <!-- Recent Donors Section -->
-      <div class="bg-white rounded-2xl shadow-lg p-6 md:p-8">
-        <div class="flex items-center gap-3 mb-6">
-          <div class="w-10 h-10 bg-pink-100 rounded-lg flex items-center justify-center">
-            <i class="fas fa-heart text-pink-600"></i>
+      <div class="bg-white rounded-2xl shadow-soft border border-slate-100 p-4 md:p-8">
+        <div class="flex items-center gap-3 mb-4 md:mb-6">
+          <div class="w-8 h-8 md:w-10 md:h-10 bg-pink-100 rounded-lg flex items-center justify-center">
+            <i class="fas fa-heart text-pink-700 text-sm md:text-base"></i>
           </div>
-          <h3 class="text-2xl font-bold text-gray-900">Recent Donors</h3>
+          <h3 class="text-xl md:text-2xl font-bold text-slate-900">Recent Donors</h3>
         </div>
         
         <?php if (!empty($donors)): ?>
-          <div class="space-y-3">
+          <div class="space-y-3 md:space-y-4">
             <?php foreach ($donors as $index => $donor): 
               $donorInitial = '';
               if (isset($donor['donor_name']) && !empty($donor['donor_name']) && (!isset($donor['anonymous']) || $donor['anonymous'] != 1)) {
@@ -765,19 +589,19 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
                 $timeAgo = 'Just now';
               }
             ?>
-              <div class="flex items-center gap-4 p-4 bg-gray-50 rounded-xl hover:bg-gray-100 transition-colors">
-                <div class="donor-avatar rounded-full flex-shrink-0">
+              <div class="flex items-center gap-3 md:gap-4 p-3 md:p-5 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
+                <div class="donor-avatar flex-shrink-0" style="width: 36px; height: 36px; font-size: 14px;">
                   <?php echo $donorInitial; ?>
                 </div>
                 <div class="flex-1 min-w-0">
-                  <p class="font-semibold text-gray-900 truncate"><?php echo $donorName; ?></p>
-                  <p class="text-sm text-gray-600">
-                    <span class="font-bold text-emerald-600">$<?php echo number_format($donor['amount'], 2); ?></span>
-                    <span class="mx-2">·</span>
+                  <p class="font-semibold text-slate-900 text-base md:text-lg"><?php echo $donorName; ?></p>
+                  <p class="text-xs md:text-sm text-slate-600">
+                    <span class="font-bold text-emerald-700 text-base md:text-lg">$<?php echo number_format($donor['amount'], 2); ?></span>
+                    <span class="mx-1 md:mx-2">·</span>
                     <span><?php echo $timeAgo; ?></span>
                   </p>
                 </div>
-                <div class="text-emerald-500">
+                <div class="text-emerald-600 text-sm">
                   <i class="fas fa-heart"></i>
                 </div>
               </div>
@@ -786,77 +610,90 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
                     
           <!-- Pagination Controls -->
           <?php if ($totalPages > 1): ?>
-            <div class="mt-8 flex items-center justify-center">
-              <div class="flex items-center space-x-2">
+            <div class="mt-10 flex items-center justify-center">
+              <div class="flex items-center gap-2 flex-wrap">
                 <?php if ($page > 1): ?>
                   <a href="?id=<?php echo $campaignId; ?>&page=<?php echo $page - 1; ?>" 
-                     class="px-4 py-2 text-sm font-medium text-emerald-600 bg-white border-2 border-emerald-300 rounded-lg hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
-                    <i class="fas fa-chevron-left mr-1"></i>Previous
+                     class="px-3 md:px-5 py-2.5 text-sm font-semibold text-emerald-700 bg-white border border-emerald-200 rounded-xl hover:bg-emerald-50 transition-all">
+                    <i class="fas fa-chevron-left"></i>
+                    <span class="hidden sm:inline ml-2">Previous</span>
                   </a>
                 <?php endif; ?>
                 
                 <?php
-                $startPage = max(1, $page - 2);
-                $endPage = min($totalPages, $page + 2);
+                // Adjust page range based on screen size
+                $isMobile = true; // For template logic, we'll handle via CSS
+                $mobileRange = 1;
+                $desktopRange = 2;
+                $startPageMobile = max(1, $page - $mobileRange);
+                $endPageMobile = min($totalPages, $page + $mobileRange);
+                $startPageDesktop = max(1, $page - $desktopRange);
+                $endPageDesktop = min($totalPages, $page + $desktopRange);
+                ?>
                 
-                if ($startPage > 1): ?>
+                <?php if ($startPageDesktop > 1): ?>
                   <a href="?id=<?php echo $campaignId; ?>&page=1" 
-                     class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                     class="px-4 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">
                     1
                   </a>
-                  <?php if ($startPage > 2): ?>
-                    <span class="px-2 text-gray-500">...</span>
+                  <?php if ($startPageDesktop > 2): ?>
+                    <span class="px-2 text-slate-500 hidden sm:inline">...</span>
                   <?php endif; ?>
                 <?php endif; ?>
                 
-                <?php for ($i = $startPage; $i <= $endPage; $i++): ?>
+                <?php 
+                // Show desktop page numbers
+                for ($i = $startPageDesktop; $i <= $endPageDesktop; $i++): 
+                  $isVisibleOnMobile = ($i >= $startPageMobile && $i <= $endPageMobile) || $i == 1 || $i == $totalPages;
+                ?>
                   <a href="?id=<?php echo $campaignId; ?>&page=<?php echo $i; ?>" 
-                     class="px-4 py-2 text-sm font-medium <?php echo $i == $page ? 'text-white bg-emerald-600 border-emerald-600 shadow-md' : 'text-gray-700 bg-white border-gray-300 hover:bg-gray-50'; ?> border-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-all">
+                     class="px-4 py-2.5 text-sm font-semibold <?php echo $i == $page ? 'text-white bg-emerald-600 border-emerald-600' : 'text-slate-700 bg-white border-slate-200 hover:bg-slate-50'; ?> border rounded-xl transition-all <?php echo $isVisibleOnMobile ? '' : 'hidden sm:inline-flex'; ?>">
                     <?php echo $i; ?>
                   </a>
                 <?php endfor; ?>
                 
-                <?php if ($endPage < $totalPages): ?>
-                  <?php if ($endPage < $totalPages - 1): ?>
-                    <span class="px-2 text-gray-500">...</span>
+                <?php if ($endPageDesktop < $totalPages): ?>
+                  <?php if ($endPageDesktop < $totalPages - 1): ?>
+                    <span class="px-2 text-slate-500 hidden sm:inline">...</span>
                   <?php endif; ?>
                   <a href="?id=<?php echo $campaignId; ?>&page=<?php echo $totalPages; ?>" 
-                     class="px-4 py-2 text-sm font-medium text-gray-700 bg-white border-2 border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                     class="px-4 py-2.5 text-sm font-semibold text-slate-700 bg-white border border-slate-200 rounded-xl hover:bg-slate-50 transition-all">
                     <?php echo $totalPages; ?>
                   </a>
                 <?php endif; ?>
                 
                 <?php if ($page < $totalPages): ?>
                   <a href="?id=<?php echo $campaignId; ?>&page=<?php echo $page + 1; ?>" 
-                     class="px-4 py-2 text-sm font-medium text-emerald-600 bg-white border-2 border-emerald-300 rounded-lg hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors">
-                    Next<i class="fas fa-chevron-right ml-1"></i>
+                     class="px-3 md:px-5 py-2.5 text-sm font-semibold text-emerald-700 bg-white border border-emerald-200 rounded-xl hover:bg-emerald-50 transition-all">
+                    <span class="hidden sm:inline mr-2">Next</span>
+                    <i class="fas fa-chevron-right"></i>
                   </a>
                 <?php endif; ?>
               </div>
             </div>
           <?php endif; ?>
         <?php else: ?>
-          <div class="text-center py-12 text-gray-500 bg-gray-50 rounded-xl">
-            <div class="w-16 h-16 bg-gray-200 rounded-full flex items-center justify-center mx-auto mb-4">
-              <i class="fas fa-heart text-gray-400 text-2xl"></i>
+          <div class="text-center py-12 text-slate-600 bg-slate-50 rounded-xl">
+            <div class="w-16 h-16 bg-slate-200 rounded-full flex items-center justify-center mx-auto mb-4">
+              <i class="fas fa-heart text-slate-400 text-2xl"></i>
             </div>
-            <p class="text-lg font-semibold text-gray-700 mb-1">No donations yet</p>
-            <p class="text-sm text-gray-500">Be the first to support this campaign!</p>
+            <p class="text-lg font-semibold text-slate-900 mb-1">No donations yet</p>
+            <p class="text-base text-slate-600">Be the first to support this campaign!</p>
           </div>
         <?php endif; ?>
       </div>
 
       <!-- Browse Other Campaigns -->
-      <div class="bg-gradient-to-r from-emerald-500 to-teal-500 rounded-2xl shadow-xl p-6 md:p-8 text-white">
-        <div class="flex items-center gap-3 mb-4">
-          <div class="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center backdrop-blur-sm">
-            <i class="fas fa-check-circle text-white"></i>
+      <div class="bg-emerald-600 rounded-2xl p-4 md:p-8 text-white shadow-soft">
+        <div class="flex items-center gap-2 md:gap-3 mb-3 md:mb-4">
+          <div class="w-8 h-8 md:w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center">
+            <i class="fas fa-check-circle text-white text-sm md:text-base"></i>
           </div>
-          <h3 class="text-xl font-bold">Looking for other campaigns?</h3>
+          <h3 class="text-lg md:text-xl font-bold">Looking for other campaigns?</h3>
         </div>
-        <p class="text-emerald-50 mb-6">Discover verified campaigns and make an impact today.</p>
-        <a href="<?php echo BASE_URL; ?>/campaigns/v/"
-           class="inline-flex items-center px-6 py-3 bg-white text-emerald-600 rounded-lg font-semibold hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-white transition-all shadow-lg hover:shadow-xl">
+        <p class="text-emerald-100 mb-4 md:mb-6 text-base md:text-lg">Discover verified campaigns and make an impact today.</p>
+        <a href="<?php echo BASE_URL; ?>/campaigns/view_compaigns.php"
+           class="inline-flex items-center px-4 md:px-6 py-2 md:py-3 bg-white text-emerald-700 rounded-xl font-semibold hover:bg-slate-50 transition-all shadow-soft text-sm md:text-base">
           <i class="fas fa-check-circle mr-2"></i>
           Browse Verified Campaigns
         </a>
@@ -866,41 +703,41 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
     <!-- Right Column: Sticky Donation Card -->
     <div class="lg:col-span-1 order-1 lg:order-2">
       <div class="sticky-donation">
-        <div class="bg-white rounded-2xl shadow-2xl p-6 md:p-8 border-2 border-emerald-100">
-          <div class="text-center mb-6">
-            <div class="w-16 h-16 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg">
-              <i class="fas fa-heart text-white text-2xl"></i>
+        <div class="bg-white rounded-2xl shadow-soft border border-slate-100 p-4 md:p-8">
+          <div class="text-center mb-6 md:mb-8">
+            <div class="w-16 h-16 md:w-20 md:h-20 bg-emerald-600 rounded-full flex items-center justify-center mx-auto mb-3 md:mb-4 shadow-soft">
+              <i class="fas fa-heart text-white text-2xl md:text-3xl"></i>
             </div>
-            <h3 class="text-2xl font-bold text-gray-900 mb-2">Support This Campaign</h3>
-            <p class="text-gray-600 text-sm">Your donation can make a real difference</p>
+            <h3 class="text-xl md:text-2xl font-bold text-slate-900 mb-2">Support This Campaign</h3>
+            <p class="text-slate-600 text-sm md:text-base">Your donation can make a real difference</p>
           </div>
           
-          <div class="space-y-4">
-            <button onclick="window.open('https://www.paypal.com/donate/?hosted_button_id=XP8RWQK5EP7MC', '_blank')" 
-                    class="w-full bg-gradient-to-r from-emerald-600 to-teal-600 text-white py-4 px-6 rounded-xl hover:from-emerald-700 hover:to-teal-700 focus:ring-4 focus:ring-emerald-300 transition-all duration-200 text-lg font-bold shadow-lg hover:shadow-xl flex items-center justify-center gap-2 transform hover:scale-105">
+          <div class="space-y-3 md:space-y-4">
+            <button onclick="openDonationModal()" 
+                    class="w-full bg-emerald-600 text-white py-3 md:py-4 px-4 md:px-6 rounded-xl hover:bg-emerald-700 transition-all text-base md:text-lg font-bold shadow-soft flex items-center justify-center gap-2">
               <i class="fas fa-heart"></i>
               Donate Now
             </button>
             
             <button onclick="copyShareLink()" 
-                    class="w-full border-2 border-emerald-600 text-emerald-600 bg-white py-3 px-6 rounded-xl hover:bg-emerald-50 hover:border-emerald-700 focus:ring-4 focus:ring-emerald-200 transition-all duration-200 font-semibold flex items-center justify-center gap-2">
+                    class="w-full border border-emerald-600 text-emerald-700 bg-white py-2.5 md:py-3 px-4 md:px-6 rounded-xl hover:bg-emerald-50 transition-all font-semibold flex items-center justify-center gap-2 text-sm md:text-base">
               <i class="fas fa-share-alt"></i>
               Share Campaign
             </button>
           </div>
           
-          <div class="mt-6 pt-6 border-t border-gray-200">
-            <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+          <div class="mt-6 md:mt-8 pt-6 md:pt-8 border-t border-slate-200 space-y-2 md:space-y-3">
+            <div class="flex items-center justify-between text-xs md:text-sm text-slate-700">
               <span>Campaign Status</span>
-              <span class="font-semibold text-gray-900 capitalize"><?php echo $details['status']; ?></span>
+              <span class="font-semibold text-slate-900 capitalize"><?php echo $details['status']; ?></span>
             </div>
-            <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+            <div class="flex items-center justify-between text-xs md:text-sm text-slate-700">
               <span>Category</span>
-              <span class="font-semibold text-gray-900"><?php echo htmlspecialchars($details['category']); ?></span>
+              <span class="font-semibold text-slate-900"><?php echo htmlspecialchars($details['category']); ?></span>
             </div>
-            <div class="flex items-center justify-between text-sm text-gray-600">
+            <div class="flex items-center justify-between text-xs md:text-sm text-slate-700">
               <span>Created</span>
-              <span class="font-semibold text-gray-900"><?php echo date('M j, Y', strtotime($details['created_at'])); ?></span>
+              <span class="font-semibold text-slate-900"><?php echo date('M j, Y', strtotime($details['created_at'])); ?></span>
             </div>
           </div>
         </div>
@@ -912,24 +749,24 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
 <!-- Donation Modal -->
 <div id="donationModal" class="donation-modal">
   <div class="donation-modal-content">
-    <div class="donation-modal-header">
-      <div class="flex items-center gap-2">
-        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-500 rounded-lg flex items-center justify-center">
+    <div class="sticky top-0 bg-white border-b border-slate-200 p-6 flex items-center justify-between z-10">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-emerald-600 rounded-lg flex items-center justify-center">
           <i class="fas fa-heart text-white text-sm"></i>
         </div>
         <div>
-          <h2 class="text-lg font-bold text-gray-900">Make Your Donation</h2>
-          <p class="text-gray-600 text-xs">Support this campaign with a secure donation</p>
+          <h2 class="text-xl font-bold text-slate-900">Make Your Donation</h2>
+          <p class="text-sm text-slate-600">Support this campaign with a secure donation</p>
         </div>
       </div>
-      <button onclick="closeDonationModal()" class="text-gray-400 hover:text-gray-600 transition-colors p-2 hover:bg-gray-100 rounded-lg">
-        <i class="fas fa-times text-xl"></i>
+      <button onclick="closeDonationModal()" class="text-slate-400 hover:text-slate-700 transition-colors p-2 hover:bg-slate-50 rounded-lg">
+        <i class="fas fa-times text-2xl"></i>
       </button>
     </div>
-    <div class="donation-modal-body">
+    <div class="p-6">
       <div id="donationFormLoader" class="text-center py-12">
-        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-500 border-t-transparent"></div>
-        <p class="mt-4 text-gray-600">Loading donation form...</p>
+        <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-600 border-t-transparent"></div>
+        <p class="mt-4 text-slate-600">Loading donation form...</p>
       </div>
       <div id="donationFormContainer" class="hidden"></div>
     </div>
@@ -937,17 +774,10 @@ if (isset($_GET['session_id']) && !isset($_SESSION['dodo_session_id'])) {
 </div>
 
 <script>
-// ========================================
-// CAMPAIGN VIEW PAGE - DONATION FORM REMOVED
-// ========================================
-// All donation functionality has been moved to campaigns/donate.php
-// This page now only shows campaign details and redirects to donate page
-// ========================================
-
 // Basic variables for the page
-var URL_BASE = "<?php echo BASE_URL; ?>";
-var campaignId = <?php echo $details['id']; ?>;
-var donationMinimum = 5;
+const URL_BASE = '<?php echo BASE_URL; ?>';
+const campaignId = <?php echo $details['id']; ?>;
+const donationMinimum = 5;
 
 // Donation Modal Functions
 function openDonationModal() {
@@ -982,7 +812,7 @@ function openDonationModal() {
     },
     error: function() {
       formLoader.classList.add('hidden');
-      formContainer.innerHTML = '<div class="text-center py-8 text-red-600"><i class="fas fa-exclamation-triangle text-4xl mb-4"></i><p>Failed to load donation form. Please refresh the page and try again.</p></div>';
+      formContainer.innerHTML = '<div class="text-center py-8 text-red-700"><i class="fas fa-exclamation-triangle text-4xl mb-4"></i><p>Failed to load donation form. Please refresh the page and try again.</p></div>';
       formContainer.classList.remove('hidden');
     }
   });
@@ -1015,7 +845,7 @@ function initializeDonationForm() {
   $('.donation-amount-btn').off('click').on('click', function() {
     $('.donation-amount-btn').removeClass('active');
     $(this).addClass('active');
-    var amount = $(this).data('amount');
+    const amount = $(this).data('amount');
     $('#onlyNumber').val(amount);
     $('#onlyNumber').focus();
   });
@@ -1029,9 +859,9 @@ function initializeDonationForm() {
   $('#formDonation').off('submit').on('submit', function(e) {
     e.preventDefault();
     
-    var donationAmount = $('#onlyNumber').val();
-    var fullName = $('#cardholder-name').val();
-    var email = $('#cardholder-email').val();
+    const donationAmount = $('#onlyNumber').val();
+    const fullName = $('#cardholder-name').val();
+    const email = $('#cardholder-email').val();
     
     if (!validateBasicFields(donationAmount, fullName, email)) {
       return false;
@@ -1120,11 +950,9 @@ function editUpdate(updateId) {
   alert('Edit functionality coming soon!');
 }
 
-// Donation form functions removed - now handled on dedicated donate.php page
-
 // Copy Share Link Function
 function copyShareLink() {
-  const shareUrl = '<?php echo BASE_URL."/campaigns/public-view.php?id=". $details['id']; ?>';
+  const shareUrl = '<?php echo BASE_URL . "/campaigns/public-view.php?id=" . $details['id']; ?>';
   
   // Try to use modern clipboard API
   if (navigator.clipboard && window.isSecureContext) {
@@ -1166,7 +994,7 @@ function fallbackCopyTextToClipboard(text) {
 function showCopySuccess() {
   // Create a temporary success message
   const successMsg = document.createElement('div');
-  successMsg.className = 'fixed top-4 right-4 bg-emerald-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300';
+  successMsg.className = 'fixed bottom-6 right-6 bg-emerald-600 text-white px-6 py-3 rounded-xl shadow-large z-50 transition-all duration-300';
   successMsg.innerHTML = '<i class="fas fa-check mr-2"></i>Link copied to clipboard!';
   
   document.body.appendChild(successMsg);
@@ -1181,7 +1009,7 @@ function showCopySuccess() {
 function showCopyError() {
   // Create a temporary error message
   const errorMsg = document.createElement('div');
-  errorMsg.className = 'fixed top-4 right-4 bg-red-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 transform transition-all duration-300';
+  errorMsg.className = 'fixed bottom-6 right-6 bg-red-600 text-white px-6 py-3 rounded-xl shadow-large z-50 transition-all duration-300';
   errorMsg.innerHTML = '<i class="fas fa-exclamation-triangle mr-2"></i>Failed to copy link';
   
   document.body.appendChild(errorMsg);
@@ -1208,15 +1036,32 @@ document.addEventListener('DOMContentLoaded', function() {
       .then(response => response.json())
       .then(data => {
         if (data.success) {
-          alert('Update posted successfully!');
-          location.reload(); // Refresh to show new update
+          Swal.fire({
+            title: 'Success!',
+            text: 'Update posted successfully!',
+            icon: 'success',
+            confirmButtonText: 'Great!',
+            confirmButtonColor: '#059669'
+          }).then(() => location.reload());
         } else {
-          alert('Error: ' + (data.error || 'Failed to post update'));
+          Swal.fire({
+            title: 'Error!',
+            text: data.error || 'Failed to post update',
+            icon: 'error',
+            confirmButtonText: 'OK',
+            confirmButtonColor: '#dc2626'
+          });
         }
       })
       .catch(error => {
         console.error('Error:', error);
-        alert('Error posting update. Please try again.');
+        Swal.fire({
+          title: 'Error!',
+          text: 'Error posting update. Please try again.',
+          icon: 'error',
+          confirmButtonText: 'OK',
+          confirmButtonColor: '#dc2626'
+        });
       });
     });
   }
@@ -1224,10 +1069,6 @@ document.addEventListener('DOMContentLoaded', function() {
   // Check for success/error messages and show SweetAlert
   checkForMessages();
 });
-
-// Payment system functions removed - now handled on dedicated donate.php page
-
-
 
 // Country code to name mapping
 const countryNames = {
@@ -1254,8 +1095,6 @@ const countryNames = {
   'SA': 'Saudi Arabia',
   'AE': 'United Arab Emirates'
 };
-
-// Stripe Elements no longer needed - using Stripe Checkout instead
 
 // Check for success/error messages and show SweetAlert
 function checkForMessages() {
@@ -1330,261 +1169,8 @@ function checkForMessages() {
     window.history.replaceState({}, document.title, window.location.pathname);
   }
 }
-
-
-
-// Payment functions now handled via Dodo Payments checkout
-
-
-
-// Handle Stripe credit card payments
-function handleStripePayment() {
-  console.log('Starting Stripe checkout...');
-  
-  var donationAmount = $('#onlyNumber').val();
-  var fullName = $('#cardholder-name').val();
-  var email = $('#cardholder-email').val();
-  var country = $('#country').val();
-  var postalCode = $('#postal_code').val();
-  
-  if (!validateBasicFields(donationAmount, fullName, email)) {
-    return;
-  }
-  
-  if (!country || country === 'Other' || !validateCountryCode(country)) {
-    showError('Please select a valid country');
-    return;
-  }
-
-  // Show loading state
-  $('#buttonDonation').prop('disabled', true).html('<i class="spinner-border spinner-border-sm mr-2"></i>Processing...');
-  
-  // Store campaign ID in session for cancel handling
-  $.ajax({
-    url: URL_BASE + '/stripe/store-campaign-session.php',
-    type: 'POST',
-    data: {
-      campaign_id: campaignId,
-      csrf_token: $('input[name="csrf_token"]').val()
-    },
-    dataType: 'json',
-    success: function() {
-      // Now create Stripe checkout session
-      createStripeCheckoutSession();
-    },
-    error: function() {
-      // Continue anyway if session storage fails
-      createStripeCheckoutSession();
-    }
-  });
-  
-  function createStripeCheckoutSession() {
-    $.ajax({
-      url: URL_BASE + '/stripe/checkout-session.php',
-      type: 'POST',
-      data: {
-        amount: donationAmount,
-        full_name: fullName,
-        email: email,
-        campaign_id: campaignId,
-        country: country,
-        postal_code: postalCode,
-        comment: $('#comment').val(),
-        anonymous: $('#customControlInline').prop('checked') ? 1 : 0,
-        csrf_token: $('input[name="csrf_token"]').val()
-      },
-      dataType: 'json',
-      success: function(response) {
-        if (response.success && response.url) {
-          console.log('Redirecting to Stripe checkout:', response.url);
-          // Redirect to Stripe Checkout
-          window.location.href = response.url;
-        } else {
-          showError(response.error || 'Failed to create checkout session');
-          $('#buttonDonation').prop('disabled', false).html('<i></i> Donate <span id="ugxAmountDisplay" class="hidden">(UGX <span id="ugxAmountValue"></span>)</span>');
-        }
-      },
-      error: function(xhr, status, error) {
-        showError('Failed to create checkout session. Please try again.');
-        console.error('Checkout session error:', error);
-        $('#buttonDonation').prop('disabled', false).html('<i></i> Donate <span id="ugxAmountValue"></span>');
-      }
-    });
-  }
-}
-
-// Handle standard donations (fallback)
-function handleStandardDonation() {
-  var donationAmount = $('#onlyNumber').val();
-  var fullName = $('#cardholder-name').val();
-  var email = $('#cardholder-email').val();
-  
-  if (!validateBasicFields(donationAmount, fullName, email)) {
-    return;
-  }
-
-  submitDonation({
-    payment_gateway: '1', // Default to PayPal
-    amount: donationAmount,
-    full_name: fullName,
-    email: email
-  });
-}
-
-// Validate basic form fields
-function validateBasicFields(amount, name, email) {
-  if (!amount || parseFloat(amount) < donationMinimum) {
-    showError('Please enter a valid donation amount (minimum $' + donationMinimum + ')');
-    return false;
-  }
-  
-  if (!name.trim()) {
-    showError('Please enter your full name');
-    return false;
-  }
-  
-  if (!email.trim() || !/^\S+@\S+\.\S+$/.test(email)) {
-    showError('Please enter a valid email address');
-    return false;
-  }
-  
-  return true;
-}
-
-// Validate country code
-function validateCountryCode(countryCode) {
-  const validCountries = ['US', 'CA', 'GB', 'DE', 'FR', 'AU', 'JP', 'CN', 'IN', 'BR', 'MX', 'ZA', 'NG', 'KE', 'UG', 'GH', 'TZ', 'ET', 'RW', 'EG', 'SA', 'AE'];
-  return validCountries.includes(countryCode);
-}
-
-// Submit donation to backend
-function submitDonation(donationData) {
-  // Add CSRF token and campaign ID
-  donationData.csrf_token = $('input[name="csrf_token"]').val();
-  donationData.campaign_id = campaignId;
-  
-  // Show loading state
-  $('#buttonDonation').prop('disabled', true).html('<i class="spinner-border spinner-border-sm mr-2"></i>Processing...');
-  
-  $.ajax({
-    url: URL_BASE + '/donate/' + campaignId,
-    type: 'POST',
-    data: donationData,
-    dataType: 'json',
-    success: function(response) {
-      if (response.success) {
-        showSuccess('Donation submitted successfully!');
-        // Optionally redirect or refresh
-        setTimeout(() => {
-          location.reload();
-        }, 2000);
-      } else {
-        showError(response.error || 'Donation failed. Please try again.');
-      }
-    },
-    error: function(xhr, status, error) {
-      showError('An error occurred. Please try again.');
-      console.error('Donation error:', error);
-    },
-    complete: function() {
-      // Reset button state
-      $('#buttonDonation').prop('disabled', false).html('<i></i> Donate <span id="ugxAmountDisplay" class="hidden">(UGX <span id="ugxAmountValue"></span>)</span>');
-    }
-  });
-}
-
-// Utility functions for showing messages
-function showError(message) {
-  $('#showErrorsDonation').html('<li><i class="far fa-times-circle mr-2"></i> ' + message + '</li>');
-  $('#errorDonation').removeClass('hidden');
-  $('#showDonationMessages').addClass('hidden');
-}
-
-function showSuccess(message) {
-  $('#showDonationMessages').html('<div class="alert alert-success">' + message + '</div>').removeClass('hidden');
-  $('#errorDonation').addClass('hidden');
-}
-
-function showInfo(message) {
-  $('#showDonationMessages').html('<div class="alert alert-info">' + message + '</div>').removeClass('hidden');
-  $('#errorDonation').addClass('hidden');
-}
-
-// Handle description expand/collapse (if elements exist)
-document.addEventListener('DOMContentLoaded', function() {
-  const description = document.getElementById('description');
-  const toggleButton = document.getElementById('toggle-button');
-  const fade = document.getElementById('fade');
-
-  if (description && toggleButton && fade) {
-    let expanded = false;
-
-    toggleButton.addEventListener('click', () => {
-      expanded = !expanded;
-      if (expanded) {
-        description.classList.remove('max-h-48');
-        fade.style.display = 'none';
-        toggleButton.textContent = 'Read less';
-      } else {
-        description.classList.add('max-h-48');
-        fade.style.display = 'block';
-        toggleButton.textContent = 'Read more';
-      }
-    });
-  }
-
-  // Campaign Updates JavaScript Functions
-  function showUpdateForm() {
-    document.getElementById('update-form').classList.remove('hidden');
-  }
-
-  function hideUpdateForm() {
-    document.getElementById('update-form').classList.add('hidden');
-    document.getElementById('campaign-update-form').reset();
-  }
-
-  function editUpdate(updateId) {
-    // TODO: Implement edit functionality
-    alert('Edit functionality coming soon!');
-  }
-
-  // Handle campaign update form submission
-  const updateForm = document.getElementById('campaign-update-form');
-  if (updateForm) {
-    updateForm.addEventListener('submit', function(e) {
-      e.preventDefault();
-      
-      const formData = new FormData(this);
-      
-      fetch('<?php echo BASE_URL; ?>/campaigns/add-update.php', {
-        method: 'POST',
-        body: formData
-      })
-      .then(response => response.json())
-      .then(data => {
-        if (data.success) {
-          alert('Update posted successfully!');
-          location.reload(); // Refresh to show new update
-        } else {
-          alert('Error: ' + (data.error || 'Failed to post update'));
-        }
-      })
-      .catch(error => {
-        console.error('Error:', error);
-        alert('Error posting update. Please try again.');
-      });
-    });
-  }
-
-  // Make functions globally available
-  window.showUpdateForm = showUpdateForm;
-  window.hideUpdateForm = hideUpdateForm;
-  window.editUpdate = editUpdate;
-});
 </script>
 
 <?php include __DIR__ . '/../components/public-footer.php'; ?>
-
 </body>
 </html>
-  

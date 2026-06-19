@@ -1,67 +1,79 @@
 <?php
-
+// 1. Initialize session FIRST, before ANY output
 session_start();
 ob_start();
 
+// 2. Require config files
 require_once __DIR__ . '/../config/config.php';
-
-// Generate CSRF token if not exists
-if (empty($_SESSION['csrf_token'])) {
-    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
-}
-
-// Include necessary files
 require_once __DIR__ . '/../config/Campaign.php';
 require_once __DIR__ . '/../config/Withdrawal.php';
+require_once __DIR__ . '/../config/User.php';
 
-// Initialize error message variable
-$errorMessage = '';
-
-// Check if user is logged in
-if (!isset($_SESSION['user_id'])) {
+// 3. Check authentication BEFORE any HTML/component includes
+$user = new User();
+if (!$user->isLoggedIn()) {
     ob_end_clean(); // Clear any output
     header("Location: " . BASE_URL . "/login.php");
     exit();
 }
 
-// Initialize objects
+// 4. Get current user data
+$currentUser = $user->getCurrentUser();
+
+// 5. Defensive checks for user data
+if (!$currentUser || !isset($currentUser['name'])) {
+    session_destroy();
+    header("Location: " . BASE_URL . "/login.php");
+    exit();
+}
+
+// 6. Generate CSRF token if not exists
+if (empty($_SESSION['csrf_token'])) {
+    $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
+}
+
+// 7. Initialize error message variable
+$errorMessage = '';
+
+// 8. Initialize objects
 $campaign = new Campaign();
 $withdrawal = new Withdrawal();
 
-// Get user's total donations
+// 9. Get user's total donations
 $totalDonations = $campaign->getUserTotalDonations($_SESSION['user_id']);
 $totalWithdrawn = $withdrawal->getTotalApprovedWithdrawals($_SESSION['user_id']); // NEW LINE
 $pendingWithdrawals = $withdrawal->getPendingWithdrawals($_SESSION['user_id']);
 
-// Get user's information from database for ID verification
+// 10. Get user's information from database for ID verification
 $userInfo = $campaign->getUserInfo($_SESSION['user_id']);
 
-// Check if user has previously verified their ID
+// 11. Check if user has previously verified their ID
 $hasVerifiedId = $campaign->hasUserVerifiedId($_SESSION['user_id']);
 
-// Get verification attempts count
+// 12. Get verification attempts count
 $verificationAttempts = $campaign->getVerificationAttempts($_SESSION['user_id']);
 $hasExceededMaxAttempts = $campaign->hasExceededMaxAttempts($_SESSION['user_id'], 3);
 $remainingAttempts = 3 - $verificationAttempts;
 
-// Check if user has already attempted verification (and failed)
+// 13. Check if user has already attempted verification (and failed)
 $hasAttemptedVerification = $campaign->hasUserAttemptedVerification($_SESSION['user_id']);
 
 $availableBalance = $totalDonations - $totalWithdrawn - $pendingWithdrawals;
 
 $pendingWithdrawalsList = $withdrawal->getPendingWithdrawalsList($_SESSION['user_id']);
 
-// Security checks - Store error messages instead of redirecting
+// 14. Security checks - Store error messages instead of redirecting
 if ($availableBalance < MIN_WITHDRAWAL_AMOUNT) {
     $errorMessage = "Minimum withdrawal amount is $" . number_format(MIN_WITHDRAWAL_AMOUNT, 2);
 }
 
-// Check for withdrawal attempts in the last 24 hours
+// 15. Check for withdrawal attempts in the last 24 hours
 $attemptCount = $withdrawal->getWithdrawalAttempts($_SESSION['user_id'], 24);
 if ($attemptCount >= MAX_WITHDRAWAL_ATTEMPTS) {
     $errorMessage = "Maximum withdrawal attempts reached. Please try again later.";
 }
 
+// 16. Now we can include components AFTER all logic is done
 include '../components/header.php';
 ?>
 
@@ -72,16 +84,38 @@ include '../components/header.php';
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Initiate Withdrawal - CroFunding</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        emerald: {
+                            50: '#ecfdf5',
+                            100: '#d1fae5',
+                            200: '#a7f3d0',
+                            300: '#6ee7b7',
+                            400: '#34d399',
+                            500: '#10b981',
+                            600: '#059669',
+                            700: '#047857',
+                            800: '#065f46',
+                            900: '#064e3b',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen pt-16">
         <?php include '../components/sidebar.php'; ?>
         <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
-            <div class="p-6">
+            <div class="p-3 sm:p-6">
                 <?php if ($hasVerifiedId): ?>
                 <!-- Platform Fee Notice - Only visible for verified users -->
-                <div class="mb-6 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                <div class="mb-4 sm:mb-6 bg-yellow-50 border-l-4 border-yellow-500 p-3 sm:p-4 rounded">
                     <div class="flex">
                         <div class="flex-shrink-0">
                             <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -89,7 +123,7 @@ include '../components/header.php';
                             </svg>
                         </div>
                         <div class="ml-3">
-                            <p class="text-sm text-yellow-700">
+                            <p class="text-xs sm:text-sm text-yellow-700">
                                 <strong>Note:</strong> A <strong>15% fee</strong> will be automatically deducted on every <strong>$100 withdrawal</strong>. This fee covers transaction and processing costs. <strong>Maximum withdrawal amount is $100.</strong>
                             </p>
                         </div>
@@ -99,7 +133,7 @@ include '../components/header.php';
 
                 <?php if ($errorMessage): ?>
                     <!-- Error Message -->
-                    <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4">
+                    <div class="mb-4 sm:mb-6 bg-red-50 border-l-4 border-red-500 p-3 sm:p-4">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -107,7 +141,7 @@ include '../components/header.php';
                                 </svg>
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm text-red-700"><?php echo htmlspecialchars($errorMessage); ?></p>
+                                <p class="text-xs sm:text-sm text-red-700"><?php echo htmlspecialchars($errorMessage); ?></p>
                             </div>
                         </div>
                     </div>
@@ -115,7 +149,7 @@ include '../components/header.php';
 
                 <!-- Success Message -->
                 <?php if (isset($_GET['success']) && $_GET['success'] == 1): ?>
-                    <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4">
+                    <div class="mb-4 sm:mb-6 bg-green-50 border-l-4 border-green-500 p-3 sm:p-4">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -123,7 +157,7 @@ include '../components/header.php';
                                 </svg>
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm text-green-700">Withdrawal initiated successfully!</p>
+                                <p class="text-xs sm:text-sm text-green-700">Withdrawal initiated successfully!</p>
                             </div>
                         </div>
                     </div>
@@ -131,7 +165,7 @@ include '../components/header.php';
 
                 <!-- Session Success Message -->
                 <?php if (isset($_SESSION['success_message'])): ?>
-                    <div class="mb-6 bg-green-50 border-l-4 border-green-500 p-4">
+                    <div class="mb-4 sm:mb-6 bg-green-50 border-l-4 border-green-500 p-3 sm:p-4">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -139,7 +173,7 @@ include '../components/header.php';
                                 </svg>
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm text-green-700"><?php echo htmlspecialchars($_SESSION['success_message']); ?></p>
+                                <p class="text-xs sm:text-sm text-green-700"><?php echo htmlspecialchars($_SESSION['success_message']); ?></p>
                             </div>
                         </div>
                     </div>
@@ -148,7 +182,7 @@ include '../components/header.php';
 
                 <!-- Session Error Message -->
                 <?php if (isset($_SESSION['error_message'])): ?>
-                    <div class="mb-6 bg-red-50 border-l-4 border-red-500 p-4">
+                    <div class="mb-4 sm:mb-6 bg-red-50 border-l-4 border-red-500 p-3 sm:p-4">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -156,7 +190,7 @@ include '../components/header.php';
                                 </svg>
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm text-red-700"><?php echo htmlspecialchars($_SESSION['error_message']); ?></p>
+                                <p class="text-xs sm:text-sm text-red-700"><?php echo htmlspecialchars($_SESSION['error_message']); ?></p>
                             </div>
                         </div>
                     </div>
@@ -165,40 +199,40 @@ include '../components/header.php';
 
                 <?php if ($hasVerifiedId): ?>
                 <!-- Balance Card - Only visible if ID is verified -->
-                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Available Balance</h2>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                        <div class="p-4 bg-emerald-50 rounded-lg">
-                            <p class="text-sm text-emerald-600">Total Donations</p>
-                            <p class="text-xl sm:text-2xl font-bold text-emerald-700">$<?php echo number_format($totalDonations, 2); ?></p>
+                <div class="bg-white rounded-lg shadow-sm p-3 sm:p-6 mb-4 sm:mb-6">
+                    <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Available Balance</h2>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+                        <div class="p-3 sm:p-4 bg-emerald-50 rounded-lg">
+                            <p class="text-xs sm:text-sm text-emerald-600">Total Donations</p>
+                            <p class="text-lg sm:text-xl sm:text-2xl font-bold text-emerald-700">$<?php echo number_format($totalDonations, 2); ?></p>
                         </div>
-                        <div class="p-4 bg-yellow-50 rounded-lg">
-                            <p class="text-sm text-yellow-600 font-semibold">Pending Withdrawals</p>
-                            <p class="text-xl sm:text-2xl font-bold text-yellow-700">
+                        <div class="p-3 sm:p-4 bg-yellow-50 rounded-lg">
+                            <p class="text-xs sm:text-sm text-yellow-600 font-semibold">Pending Withdrawals</p>
+                            <p class="text-lg sm:text-xl sm:text-2xl font-bold text-yellow-700">
                                 $<?php echo number_format($pendingWithdrawals, 2); ?>
                             </p>
                         </div>
-                        <div class="p-4 bg-blue-50 rounded-lg">
-                            <p class="text-sm text-blue-600">Available for Withdrawal</p>
-                            <p class="text-xl sm:text-2xl font-bold text-blue-700">$<?php echo number_format($availableBalance, 2); ?></p>
+                        <div class="p-3 sm:p-4 bg-blue-50 rounded-lg">
+                            <p class="text-xs sm:text-sm text-blue-600">Available for Withdrawal</p>
+                            <p class="text-lg sm:text-xl sm:text-2xl font-bold text-blue-700">$<?php echo number_format($availableBalance, 2); ?></p>
                         </div>
-                        <div class="p-4 bg-red-50 rounded-lg">
-                            <p class="text-sm text-red-600">Completed Withdrawals</p>
-                            <p class="text-xl sm:text-2xl font-bold text-red-700">
+                        <div class="p-3 sm:p-4 bg-red-50 rounded-lg">
+                            <p class="text-xs sm:text-sm text-red-600">Completed Withdrawals</p>
+                            <p class="text-lg sm:text-xl sm:text-2xl font-bold text-red-700">
                                 $<?php echo number_format($totalWithdrawn, 2); ?>
                             </p>
                         </div>
                     </div>
-                                </div>
+                </div>
                 <?php elseif (!$hasExceededMaxAttempts): ?>
                 <!-- ID Verification Section - Only visible if ID is not verified and attempts not exceeded -->
-                <div class="bg-white rounded-lg shadow-sm p-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Verify Your National ID</h2>
-                    <p class="text-gray-600 mb-6">Please upload a clear photo of your National Identity card to verify your identity.</p>
+                <div class="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+                    <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Verify Your National ID</h2>
+                    <p class="text-xs sm:text-sm text-gray-600 mb-4 sm:mb-6">Please upload a clear photo of your National Identity card to verify your identity.</p>
                     
                     <?php if ($verificationAttempts > 0): ?>
                     <!-- Attempts Counter -->
-                    <div class="mb-6 bg-yellow-50 border-l-4 border-yellow-500 p-4 rounded">
+                    <div class="mb-4 sm:mb-6 bg-yellow-50 border-l-4 border-yellow-500 p-3 sm:p-4 rounded">
                         <div class="flex">
                             <div class="flex-shrink-0">
                                 <svg class="h-5 w-5 text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -206,7 +240,7 @@ include '../components/header.php';
                                 </svg>
                             </div>
                             <div class="ml-3">
-                                <p class="text-sm text-yellow-700">
+                                <p class="text-xs sm:text-sm text-yellow-700">
                                     <strong>Attempts:</strong> <?php echo $verificationAttempts; ?>/3 completed. 
                                     <strong>Remaining:</strong> <?php echo $remainingAttempts; ?> attempt<?php echo $remainingAttempts !== 1 ? 's' : ''; ?>.
                                 </p>
@@ -216,22 +250,22 @@ include '../components/header.php';
                     <?php endif; ?>
                     
                     <!-- ID Upload Section -->
-                    <div class="space-y-4">
+                    <div class="space-y-3 sm:space-y-4">
                         <!-- ID Upload Button -->
-                        <div class="flex items-center space-x-4">
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-4">
                             <input type="file" id="nationalIdFile" name="national_id" accept="image/*" class="hidden" onchange="handleIdUpload(event)">
-                            <button type="button" onclick="document.getElementById('nationalIdFile').click()" class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
+                            <button type="button" onclick="document.getElementById('nationalIdFile').click()" class="inline-flex items-center px-3 sm:px-4 py-2 border border-gray-300 rounded-lg shadow-sm text-xs sm:text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                                 </svg>
                                 <span id="uploadButtonText">Choose Image</span>
                             </button>
-                            <span class="text-sm text-gray-500">PNG, JPG, JPEG up to 10MB</span>
+                            <span class="text-[10px] sm:text-xs text-gray-500">PNG, JPG, JPEG up to 10MB</span>
                         </div>
 
                         <!-- File Selected Indicator -->
                         <div id="fileSelectedIndicator" class="hidden">
-                            <div class="flex items-center space-x-2 text-sm text-emerald-600">
+                            <div class="flex items-center space-x-2 text-xs sm:text-sm text-emerald-600">
                                 <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                                 </svg>
@@ -241,14 +275,14 @@ include '../components/header.php';
 
                         <!-- Submit Button -->
                         <div class="flex justify-center">
-                            <button type="button" onclick="processIdImage()" class="bg-emerald-600 text-white px-6 py-2 rounded text-sm hover:bg-emerald-700">
+                            <button type="button" onclick="processIdImage()" class="bg-emerald-600 text-white px-4 sm:px-6 py-2 rounded text-xs sm:text-sm hover:bg-emerald-700">
                                 Submit
                             </button>
                         </div>
 
                         <!-- OCR Processing Status -->
                         <div id="ocrStatus" class="hidden">
-                            <div class="flex items-center space-x-2 text-sm">
+                            <div class="flex items-center space-x-2 text-xs sm:text-sm">
                                 <div class="animate-spin rounded-full h-4 w-4 border-b-2 border-emerald-600"></div>
                                 <span class="text-gray-600">Processing ID image...</span>
                             </div>
@@ -256,9 +290,9 @@ include '../components/header.php';
 
                         <!-- Verification Results -->
                         <div id="verificationResults" class="hidden">
-                            <div class="bg-gray-50 rounded-lg p-4">
-                                <div id="extractedNames" class="text-sm text-gray-600 mb-3"></div>
-                                <div id="verificationStatus" class="text-sm font-medium"></div>
+                            <div class="bg-gray-50 rounded-lg p-3 sm:p-4">
+                                <div id="extractedNames" class="text-xs sm:text-sm text-gray-600 mb-2 sm:mb-3"></div>
+                                <div id="verificationStatus" class="text-xs sm:text-sm font-medium"></div>
                             </div>
                         </div>
 
@@ -268,23 +302,23 @@ include '../components/header.php';
                 </div>
                 <?php else: ?>
                 <!-- Verification Failed Section - User has exceeded max attempts -->
-                <div class="bg-white rounded-lg shadow-sm p-6">
+                <div class="bg-white rounded-lg shadow-sm p-3 sm:p-6">
                     <div class="text-center">
-                        <div class="mx-auto flex items-center justify-center h-12 w-12 rounded-full bg-red-100 mb-4">
-                            <svg class="h-6 w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <div class="mx-auto flex items-center justify-center h-10 w-10 sm:h-12 sm:w-12 rounded-full bg-red-100 mb-3 sm:mb-4">
+                            <svg class="h-5 w-5 sm:h-6 sm:w-6 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                             </svg>
                         </div>
-                        <h2 class="text-xl font-semibold text-gray-900 mb-2">Verification Failed</h2>
-                        <p class="text-gray-600 mb-4">You have exceeded the maximum number of verification attempts (3/3).</p>
-                        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                            <p class="text-sm text-red-700">
+                        <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-1 sm:mb-2">Verification Failed</h2>
+                        <p class="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">You have exceeded the maximum number of verification attempts (3/3).</p>
+                        <div class="bg-red-50 border border-red-200 rounded-lg p-3 sm:p-4">
+                            <p class="text-xs sm:text-sm text-red-700">
                                 <strong>Account Status:</strong> Withdrawal access denied due to failed ID verification after 3 attempts.
                             </p>
-                            <p class="text-sm text-red-600 mt-2">
+                            <p class="text-xs sm:text-sm text-red-600 mt-1 sm:mt-2">
                                 <strong>Attempts Made:</strong> <?php echo $verificationAttempts; ?>/3
                             </p>
-                            <p class="text-sm text-red-600 mt-2">
+                            <p class="text-xs sm:text-sm text-red-600 mt-1 sm:mt-2">
                                 Please contact support if you believe this is an error or if you need assistance with verification.
                             </p>
                         </div>
@@ -294,24 +328,24 @@ include '../components/header.php';
 
                 <?php if ($hasVerifiedId && !empty($pendingWithdrawalsList)): ?>
                 <!-- Pending Withdrawals Section - Only visible if ID is verified -->
-                <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
-                    <h2 class="text-xl font-semibold text-gray-900 mb-4">Pending Withdrawals</h2>
-                    <div class="space-y-3">
+                <div class="bg-white rounded-lg shadow-sm p-3 sm:p-6 mb-4 sm:mb-6">
+                    <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Pending Withdrawals</h2>
+                    <div class="space-y-2 sm:space-y-3">
                         <?php foreach ($pendingWithdrawalsList as $pending): ?>
                             <?php if (floatval($pending['amount']) > 0): ?>
-                                <div class="flex flex-col sm:flex-row sm:items-center justify-between p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                                    <div class="flex-1 mb-3 sm:mb-0">
+                                <div class="flex flex-col sm:flex-row sm:items-center justify-between p-3 sm:p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+                                    <div class="flex-1 mb-2 sm:mb-0">
                                         <div class="flex items-start sm:items-center space-x-3">
                                             <div class="flex-shrink-0 mt-1 sm:mt-0">
                                                 <svg class="w-5 h-5 text-yellow-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1"/>
+                                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                                                 </svg>
                                             </div>
                                             <div class="flex-1 min-w-0">
-                                                <p class="text-sm font-medium text-gray-900 truncate">
+                                                <p class="text-xs sm:text-sm font-medium text-gray-900 truncate">
                                                     $<?php echo number_format($pending['amount'], 2); ?>
                                                     <span class="text-yellow-600 ml-2">
-                                                        (<?php
+                                                        (<?php 
                                                             $method = strtolower($pending['method']);
                                                             if ($method === 'bank') echo 'Bank Transfer';
                                                             elseif ($method === 'mobile') echo 'Mobile Money';
@@ -320,17 +354,17 @@ include '../components/header.php';
                                                         ?>)
                                                     </span>
                                                 </p>
-                                                <p class="text-xs text-gray-500 mt-1">
+                                                <p class="text-[10px] sm:text-xs text-gray-500 mt-1">
                                                     Requested on <?php echo date('M d, Y \a\t g:i A', strtotime($pending['created_at'])); ?>
                                                 </p>
                                             </div>
                                         </div>
                                     </div>
                                     <div class="flex-shrink-0">
-                                        <form method="POST" action="delete_withdrawal.php" onsubmit="return confirmDelete()" class="w-full sm:w-auto">
+                                        <form method="POST" action="<?php echo BASE_URL; ?>/withdrawals/delete_withdrawal.php" onsubmit="return confirmDelete()" class="w-full sm:w-auto">
                                             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
                                             <input type="hidden" name="withdrawal_id" value="<?php echo $pending['id']; ?>">
-                                            <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-4 py-2 border border-red-300 text-sm font-medium rounded-md text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" title="Cancel withdrawal">
+                                            <button type="submit" class="w-full sm:w-auto inline-flex items-center justify-center px-3 sm:px-4 py-2 border border-red-300 text-xs sm:text-sm font-medium rounded-lg text-red-700 bg-white hover:bg-red-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 transition-colors" title="Cancel withdrawal">
                                                 <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"/>
                                                 </svg>
@@ -349,44 +383,44 @@ include '../components/header.php';
                 <!-- Withdrawal Form - Only visible if ID is verified -->
                 <div class="<?php echo $errorMessage ? 'opacity-50 pointer-events-none' : ''; ?>">
                     <!-- Withdrawal Methods -->
-                    <div class="bg-white rounded-lg shadow-sm p-6">
-                        <h2 class="text-xl font-semibold text-gray-900 mb-4">Select Withdrawal Method</h2>
+                    <div class="bg-white rounded-lg shadow-sm p-3 sm:p-6">
+                        <h2 class="text-lg sm:text-xl font-semibold text-gray-900 mb-3 sm:mb-4">Select Withdrawal Method</h2>
                         
-                        <form action="process_withdrawal.php" method="POST" class="space-y-6" onsubmit="return validateWithdrawalForm(event)">
+                        <form action="<?php echo BASE_URL; ?>/withdrawals/process_withdrawal.php" method="POST" class="space-y-4 sm:space-y-6" onsubmit="return validateWithdrawalForm(event)">
                             <!-- Add CSRF token -->
                             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
 
                             <!-- Withdrawal Method Selection -->
-                           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-                               <label class="flex items-center cursor-pointer px-4 py-3 border rounded-lg hover:border-emerald-500 transition-colors bg-gray-50 hover:bg-gray-100">
+                           <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-4 sm:mb-6">
+                               <label class="flex items-center cursor-pointer px-3 sm:px-4 py-2 sm:py-3 border rounded-lg hover:border-emerald-500 transition-colors bg-gray-50 hover:bg-gray-100">
                                     <input type="radio" name="withdrawal_method" value="bank" class="form-radio text-emerald-600" required onclick="showFields('bank')">
-                                    <span class="ml-3 text-sm font-medium">Bank Transfer</span>
+                                    <span class="ml-2 sm:ml-3 text-xs sm:text-sm font-medium">Bank Transfer</span>
                                 </label>
-                                <label class="flex items-center cursor-pointer px-4 py-3 border rounded-lg hover:border-emerald-500 transition-colors bg-gray-50 hover:bg-gray-100">
+                                <label class="flex items-center cursor-pointer px-3 sm:px-4 py-2 sm:py-3 border rounded-lg hover:border-emerald-500 transition-colors bg-gray-50 hover:bg-gray-100">
                                     <input type="radio" name="withdrawal_method" value="mobile" class="form-radio text-emerald-600" onclick="showFields('mobile')">
-                                    <span class="ml-3 text-sm font-medium">Mobile Money</span>
+                                    <span class="ml-2 sm:ml-3 text-xs sm:text-sm font-medium">Mobile Money</span>
                                 </label>
-                                <label class="flex items-center cursor-pointer px-4 py-3 border rounded-lg hover:border-emerald-500 transition-colors bg-gray-50 hover:bg-gray-100">
+                                <label class="flex items-center cursor-pointer px-3 sm:px-4 py-2 sm:py-3 border rounded-lg hover:border-emerald-500 transition-colors bg-gray-50 hover:bg-gray-100">
                                     <input type="radio" name="withdrawal_method" value="paypal" class="form-radio text-emerald-600" onclick="showFields('paypal')">
-                                    <span class="ml-3 text-sm font-medium">PayPal</span>
+                                    <span class="ml-2 sm:ml-3 text-xs sm:text-sm font-medium">PayPal</span>
                                 </label>
                             </div>
 
                             <!-- Bank Fields -->
-                            <div id="bankFields" class="space-y-4 hidden">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <input type="text" name="account_name" placeholder="Account Name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-sm">
-                                    <input type="text" name="bank_name" placeholder="Bank Name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-sm">
+                            <div id="bankFields" class="space-y-3 sm:space-y-4 hidden">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                    <input type="text" name="account_name" placeholder="Account Name" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs sm:text-sm">
+                                    <input type="text" name="bank_name" placeholder="Bank Name" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs sm:text-sm">
                                 </div>
-                                <input type="text" name="account_number" placeholder="Account Number" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-sm">
+                                <input type="text" name="account_number" placeholder="Account Number" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs sm:text-sm">
                             </div>
 
                             <!-- Mobile Money Fields -->
-                            <div id="mobileFields" class="space-y-4 hidden">
-                                <input type="text" name="full_name" placeholder="Full Name" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-sm">
+                            <div id="mobileFields" class="space-y-3 sm:space-y-4 hidden">
+                                <input type="text" name="full_name" placeholder="Full Name" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs sm:text-sm">
 
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                                    <select name="country" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-sm">
+                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+                                    <select name="country" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs sm:text-sm">
                                         <option value="">Select Country</option>
                                         <option value="Uganda">Uganda</option>
                                         <option value="Kenya">Kenya</option>
@@ -394,7 +428,7 @@ include '../components/header.php';
                                         <option value="Rwanda">Rwanda</option>
                                     </select>
 
-                                    <select name="mobile_provider" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-sm">
+                                    <select name="mobile_provider" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs sm:text-sm">
                                         <option value="">Select Mobile Money Provider</option>
                                         <option value="MTN">MTN</option>
                                         <option value="Airtel">Airtel</option>
@@ -403,39 +437,35 @@ include '../components/header.php';
                                     </select>
                                 </div>
 
-                                <input type="text" name="phone_number" placeholder="Phone Number" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-sm">
+                                <input type="text" name="phone_number" placeholder="Phone Number" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs sm:text-sm">
                             </div>
 
                             <!-- PayPal Fields -->
-                            <div id="paypalFields" class="space-y-4 hidden">
-                                <input type="email" name="paypal_email" placeholder="PayPal Email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-sm">
+                            <div id="paypalFields" class="space-y-3 sm:space-y-4 hidden">
+                                <input type="email" name="paypal_email" placeholder="PayPal Email" class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs sm:text-sm">
                             </div>
 
-
-
                             <!-- Amount -->
-                            <div class="space-y-2">
-                                <label for="amount" class="block text-sm font-medium text-gray-700">Withdrawal Amount</label>
+                            <div class="space-y-1 sm:space-y-2">
+                                <label for="amount" class="block text-xs sm:text-sm font-medium text-gray-700">Withdrawal Amount</label>
                                 <input type="number" id="amount" name="amount" min="1" max="<?php echo min($availableBalance, MAX_WITHDRAWAL_AMOUNT); ?>" step="0.01" required placeholder="Enter amount"
-                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-400 focus:border-emerald-400 text-sm">
-                                <p class="text-xs text-gray-500">Available balance: $<?php echo number_format($availableBalance, 2); ?> | Maximum withdrawal: $<?php echo number_format(MAX_WITHDRAWAL_AMOUNT, 2); ?></p>
+                                    class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 text-xs sm:text-sm">
+                                <p class="text-[10px] sm:text-xs text-gray-500">Available balance: $<?php echo number_format($availableBalance, 2); ?> | Maximum withdrawal: $<?php echo number_format(MAX_WITHDRAWAL_AMOUNT, 2); ?></p>
                             </div>
 
                             <button type="submit"
-                                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors text-sm">
+                                class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2 sm:py-3 px-4 sm:px-6 rounded-lg transition-colors text-xs sm:text-sm">
                                 Initiate Withdrawal
                             </button>
                         </form>
                     </div>
                 </div>
                 <?php endif; ?>
-
-       
             </div>
         </main>
     </div>
 
-   <script>
+    <script>
     // Global variables for ID processing
     let uploadedImageFile = null;
     let extractedData = {};
@@ -735,252 +765,78 @@ include '../components/header.php';
         // Exact match
         if (s1 === s2) return 1.0;
         
-        // Simple similarity calculation
-        const longer = s1.length > s2.length ? s1 : s2;
-        const shorter = s1.length > s2.length ? s2 : s1;
+        // Simple similarity check (length-based for demo)
+        if (s1.includes(s2) || s2.includes(s1)) return 0.9;
         
-        if (longer.length === 0) return 1.0;
-        
-        const editDistance = levenshteinDistance(longer, shorter);
-        return (longer.length - editDistance) / longer.length;
-    }
-
-    // Levenshtein distance calculation
-    function levenshteinDistance(str1, str2) {
-        const matrix = [];
-        
-        for (let i = 0; i <= str2.length; i++) {
-            matrix[i] = [i];
-        }
-        
-        for (let j = 0; j <= str1.length; j++) {
-            matrix[0][j] = j;
-        }
-        
-        for (let i = 1; i <= str2.length; i++) {
-            for (let j = 1; j <= str1.length; j++) {
-                if (str2.charAt(i - 1) === str1.charAt(j - 1)) {
-                    matrix[i][j] = matrix[i - 1][j - 1];
-                } else {
-                    matrix[i][j] = Math.min(
-                        matrix[i - 1][j - 1] + 1,
-                        matrix[i][j - 1] + 1,
-                        matrix[i - 1][j] + 1
-                    );
-                }
-            }
-        }
-        
-        return matrix[str2.length][str1.length];
+        // Otherwise return 0
+        return 0;
     }
 
     // Display verification results
-    function displayVerificationResults(extractedData, isVerified) {
+    function displayVerificationResults(extractedData, verificationResult) {
         const resultsDiv = document.getElementById('verificationResults');
-        const extractedNamesDiv = document.getElementById('extractedNames');
+        const namesDiv = document.getElementById('extractedNames');
         const statusDiv = document.getElementById('verificationStatus');
-        const verifiedInput = document.getElementById('idVerified');
-
-        // Display simple verification result
-        let dataHtml = '<div class="mb-3">';
         
-        if (isVerified) {
-            dataHtml += '<div class="bg-green-50 border border-green-200 rounded-lg p-4">';
-            dataHtml += '<div class="flex items-center">';
-            dataHtml += '<svg class="w-5 h-5 text-green-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">';
-            dataHtml += '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
-            dataHtml += '</svg>';
-            dataHtml += '<span class="text-green-800 font-medium">Verification Successful</span>';
-            dataHtml += '</div>';
-            dataHtml += '<p class="text-green-700 text-sm mt-1">You have been verified successfully.</p>';
-            dataHtml += '</div>';
-        } else {
-            // Get current attempt count from the page
-            const currentAttempts = <?php echo $verificationAttempts; ?>;
-            const remainingAttempts = 3 - currentAttempts - 1; // -1 because this attempt just failed
-            
-            if (remainingAttempts > 0) {
-                dataHtml += '<div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">';
-                dataHtml += '<div class="flex items-center">';
-                dataHtml += '<svg class="w-5 h-5 text-yellow-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">';
-                dataHtml += '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>';
-                dataHtml += '</svg>';
-                dataHtml += '<span class="text-yellow-800 font-medium">Verification Failed</span>';
-                dataHtml += '</div>';
-                dataHtml += '<p class="text-yellow-700 text-sm mt-1">You have ' + remainingAttempts + ' attempt' + (remainingAttempts !== 1 ? 's' : '') + ' remaining. Please try again with a clearer image.</p>';
-                dataHtml += '</div>';
-            } else {
-                dataHtml += '<div class="bg-red-50 border border-red-200 rounded-lg p-4">';
-                dataHtml += '<div class="flex items-center">';
-                dataHtml += '<svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">';
-                dataHtml += '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>';
-                dataHtml += '</svg>';
-                dataHtml += '<span class="text-red-800 font-medium">Verification Failed</span>';
-                dataHtml += '</div>';
-                dataHtml += '<p class="text-red-700 text-sm mt-1">Account Locked. You have exceeded the maximum number of attempts. Please contact support.</p>';
-                dataHtml += '</div>';
-            }
+        // Build names display
+        let namesText = '';
+        if (extractedData.last_name) {
+            namesText += `<strong>Extracted Surname:</strong> ${extractedData.last_name}<br>`;
+        }
+        if (extractedData.date_of_birth) {
+            namesText += `<strong>Date of Birth:</strong> ${extractedData.date_of_birth}<br>`;
+        }
+        if (extractedData.id_number) {
+            namesText += `<strong>ID Number:</strong> ${extractedData.id_number}<br>`;
         }
         
-        dataHtml += '</div>';
+        namesDiv.innerHTML = namesText;
         
-        extractedNamesDiv.innerHTML = dataHtml;
-
-        // Set verification status
-        if (isVerified) {
-            verifiedInput.value = '1';
-            // Mark ID as verified in database
-            markIdAsVerified();
+        // Set status
+        if (verificationResult) {
+            statusDiv.innerHTML = '<strong class="text-emerald-600">✅ Verification Successful!</strong> You can now proceed to make a withdrawal.';
+            document.getElementById('idVerified').value = '1';
         } else {
-            verifiedInput.value = '0';
-            // Mark verification as attempted (failed)
-            markVerificationAttempted();
+            statusDiv.innerHTML = '<strong class="text-red-600">❌ Verification Failed!</strong> We could not verify your identity from the provided image. Please try again with a clearer photo.';
+            document.getElementById('idVerified').value = '0';
         }
         
-        // Hide the status div since we're showing the result in the main area
-        statusDiv.style.display = 'none';
-
         resultsDiv.classList.remove('hidden');
     }
 
-    function validateWithdrawalForm(e) {
-        e.preventDefault();
-
-        const form = e.target;
-        const amount = parseFloat(form.amount.value);
-        const method = form.querySelector('input[name="withdrawal_method"]:checked');
-
-        if (!method) {
-            alert('Please select a withdrawal method');
-            return false;
-        }
-
-        // ID verification is not required for verified users
-
-        if (amount < <?php echo MIN_WITHDRAWAL_AMOUNT; ?>) {
-            alert('Minimum withdrawal amount is $<?php echo number_format(MIN_WITHDRAWAL_AMOUNT, 2); ?>');
-            return false;
-        }
-
-        if (amount > <?php echo $availableBalance; ?>) {
-            alert('Amount exceeds available balance');
-            return false;
-        }
-
-        if (amount > <?php echo MAX_WITHDRAWAL_AMOUNT; ?>) {
-            alert('Maximum withdrawal amount is $<?php echo number_format(MAX_WITHDRAWAL_AMOUNT, 2); ?>');
-            return false;
-        }
-
-        // Validate required fields based on method
-        switch(method.value) {
-            case 'bank':
-                if (!form.bank_name.value || !form.account_number.value) {
-                    alert('Please fill in all bank details');
-                    return false;
-                }
-                break;
-            case 'mobile':
-                if (!form.full_name.value || !form.country.value || !form.mobile_provider.value || !form.phone_number.value) {
-                    alert('Please fill in all Mobile Money details: full name, country, provider, and phone number');
-                    return false;
-                }
-                break;
-            case 'paypal':
-                if (!form.paypal_email.value || !validateEmail(form.paypal_email.value)) {
-                    alert('Please enter a valid PayPal email');
-                    return false;
-                }
-                break;
-        }
-
-        // If all checks pass, submit the form
-        form.submit();
-        return true;
-    }
-
-    function validateEmail(email) {
-        return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
-    }
-
+    // Withdrawal form functions
     function showFields(method) {
+        // Hide all fields first
         document.getElementById('bankFields').classList.add('hidden');
         document.getElementById('mobileFields').classList.add('hidden');
         document.getElementById('paypalFields').classList.add('hidden');
+        
+        // Show selected method fields
+        document.getElementById(`${method}Fields`).classList.remove('hidden');
+    }
 
-        if (method === 'bank') document.getElementById('bankFields').classList.remove('hidden');
-        if (method === 'mobile') document.getElementById('mobileFields').classList.remove('hidden');
-        if (method === 'paypal') document.getElementById('paypalFields').classList.remove('hidden');
+    function validateWithdrawalForm(event) {
+        const amount = parseFloat(document.getElementById('amount').value);
+        
+        if (isNaN(amount) || amount <= 0) {
+            alert('Please enter a valid withdrawal amount');
+            event.preventDefault();
+            return false;
+        }
+        
+        const maxAmount = <?php echo min($availableBalance, MAX_WITHDRAWAL_AMOUNT); ?>;
+        if (amount > maxAmount) {
+            alert(`Withdrawal amount cannot exceed $${maxAmount.toFixed(2)}`);
+            event.preventDefault();
+            return false;
+        }
+        
+        return true;
     }
 
     function confirmDelete() {
-        return confirm('Are you sure you want to cancel this withdrawal? This action cannot be undone.');
+        return confirm('Are you sure you want to cancel this withdrawal?');
     }
-
-    // Mark ID as verified in database
-    function markIdAsVerified() {
-        fetch('mark_id_verified.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                csrf_token: '<?php echo $_SESSION['csrf_token']; ?>'
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('ID marked as verified successfully');
-                // Reload page after 2 seconds to show withdrawal interface
-                setTimeout(() => {
-                    window.location.reload();
-                }, 2000);
-            } else {
-                console.error('Failed to mark ID as verified:', data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error marking ID as verified:', error);
-        });
-    }
-
-    // Mark verification as attempted (failed)
-    function markVerificationAttempted() {
-        fetch('mark_verification_attempted.php', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                csrf_token: '<?php echo $_SESSION['csrf_token']; ?>'
-            })
-        })
-        .then(response => response.json())
-        .then(data => {
-            if (data.success) {
-                console.log('Verification attempt recorded:', data.attempts, 'attempts,', data.remaining, 'remaining');
-                
-                // Show attempt count in the UI
-                if (data.remaining > 0) {
-                    alert(`Verification failed. You have ${data.remaining} attempt${data.remaining !== 1 ? 's' : ''} remaining. Please try again with a clearer image.`);
-                } else {
-                    alert('Verification failed. You have exceeded the maximum number of attempts. Your account is now locked. Please contact support.');
-                }
-                
-                // Reload page after 3 seconds to show updated interface
-                setTimeout(() => {
-                    window.location.reload();
-                }, 3000);
-            } else {
-                console.error('Failed to record verification attempt:', data.message);
-            }
-        })
-        .catch(error => {
-            console.error('Error recording verification attempt:', error);
-        });
-    }
-</script>
-
+    </script>
 </body>
 </html>

@@ -102,35 +102,35 @@ $imageUrl = !empty($camp['image_path']) ? BASE_URL . '/' . ltrim($camp['image_pa
 
 <?php include '../../../components/public-header.php'; ?>
 
-  <main class="py-12">
+  <main class="pt-20 pb-12 md:pt-28 md:pb-12">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
       <!-- Header -->
-      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 p-8 mb-12 animate-gradient">
+      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 p-4 md:p-8 mb-8 md:mb-12 animate-gradient">
         <div class="relative z-10 text-center text-white">
-          <h1 class="text-4xl md:text-5xl font-bold mb-4">Support Gaza Fundraisers</h1>
-          <p class="text-xl md:text-2xl text-emerald-50">Support the people of Gaza through this verified and trusted fundraising campaign.</p>
+          <h1 class="text-2xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4">Support Gaza Fundraisers</h1>
+          <p class="text-base md:text-xl lg:text-2xl text-emerald-50">Support the people of Gaza through this verified and trusted fundraising campaign.</p>
         </div>
         <div class="absolute inset-0 bg-black opacity-10"></div>
       </div>
 
       <!-- Single Campaign Card -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div class="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden max-w-md mx-auto" data-aos="fade-up" x-data="{ expanded: false }">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+        <div class="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden max-w-full w-full" data-aos="fade-up" x-data="{ expanded: false }">
           <div class="flex flex-row sm:flex-col">
             <!-- Image -->
-            <div class="w-1/3 h-40 sm:w-full sm:h-48 overflow-hidden relative">
+            <div class="w-1/3 h-36 md:h-40 sm:w-full sm:h-48 overflow-hidden relative">
               <img src="<?= $imageUrl ?>" alt="<?= $title ?>" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" onerror="this.src='<?= BASE_URL ?>/assets/images/default-campaign.jpg'" />
            
             </div>
 
             <!-- Content -->
-            <div class="w-2/3 sm:w-full p-3 sm:p-6 flex flex-col justify-between">
-              <h3 class="text-sm sm:text-lg font-semibold text-gray-900 mb-1 group-hover:text-emerald-600 leading-snug line-clamp-2" title="<?= $title ?>">
+            <div class="w-2/3 sm:w-full p-3 md:p-6 flex flex-col justify-between">
+              <h3 class="text-sm md:text-lg font-semibold text-gray-900 mb-1 group-hover:text-emerald-600 leading-snug line-clamp-2" title="<?= $title ?>">
                 <?= $title ?>
               </h3>
 
-              <div class="relative mb-3 text-xs text-gray-600 flex-1">
+              <div class="relative mb-3 text-xs md:text-sm text-gray-600 flex-1">
                 <p :class="{ 'line-clamp-3': !expanded }"><?= $description ?></p>
                 <?php if (strlen($camp['description']) > 140): ?>
                 <button @click="expanded = !expanded" class="mt-1 text-emerald-600 hover:text-emerald-700 text-xs font-medium flex items-center">
@@ -143,12 +143,12 @@ $imageUrl = !empty($camp['image_path']) ? BASE_URL . '/' . ltrim($camp['image_pa
               </div>
 
               <div class="mb-3">
-                <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+                <div class="w-full h-1.5 md:h-2 bg-gray-200 rounded-full overflow-hidden">
                   <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full" style="width: <?= round($percent) ?>%"></div>
                 </div>
-                <div class="flex justify-between items-center mt-2 text-xs text-gray-700">
+                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-2 text-[10px] md:text-xs text-gray-700 gap-1">
                   <span><strong>$<?= number_format($current, 2) ?></strong> <span class="text-gray-500">of $<?= number_format($goal, 2) ?></span></span>
-                  <div class="flex items-center gap-2 text-emerald-600 font-semibold">
+                  <div class="flex items-center gap-1 md:gap-2 text-emerald-600 font-semibold">
                     <span><?= round($percent) ?>%</span>
                     <span class="text-gray-400">|</span>
                     <span class="text-gray-600"><?= $donors ?> donors</span>
@@ -158,7 +158,7 @@ $imageUrl = !empty($camp['image_path']) ? BASE_URL . '/' . ltrim($camp['image_pa
 
               <div class="flex justify-between pt-2 border-t border-gray-100">
                 <div class="flex space-x-2">
-                  <button onclick="copyShareLink(<?= $id ?>, '<?= addslashes($title) ?>')" class="px-3 py-1 text-xs font-medium text-gray-700 border border-gray-300 rounded hover:bg-gray-100">Share</button>
+                  <button onclick="copyShareLink(<?= $id ?>, '<?= addslashes($title) ?>')" class="px-3 py-1.5 text-xs font-medium text-gray-700 border border-gray-300 rounded hover:bg-gray-100">Share</button>
                   <a href="../public-view.php?id=<?= $id ?>" class="px-4 py-1.5 text-xs font-medium text-white rounded bg-emerald-600 hover:bg-emerald-700 transition">Donate</a>
                 </div>
               </div>

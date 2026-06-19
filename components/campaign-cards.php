@@ -1,6 +1,10 @@
 <?php
 // Required if not already defined in the parent file
+if (!defined('BASE_URL')) {
+    require_once dirname(__DIR__) . '/config/config.php';
+}
 if (!isset($campaign)) {
+    require_once dirname(__DIR__) . '/config/Campaign.php';
     $campaign = new Campaign();
 }
 
@@ -17,7 +21,7 @@ $userCampaigns = $campaign->getUserCampaigns($_SESSION['user_id'], 'all', 'newes
             </div>
             <h3 class="mb-2 text-lg font-medium text-gray-900">No campaigns yet</h3>
             <p class="mb-4 text-sm text-gray-500">Get started by creating your first fundraising campaign</p>
-            <a href="/new/campaigns/create.php" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-150">
+            <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-150">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>
@@ -63,11 +67,11 @@ $userCampaigns = $campaign->getUserCampaigns($_SESSION['user_id'], 'all', 'newes
                         </div>
                     </div>
                     <div class="flex flex-col sm:flex-row gap-2 mt-4">
-                        <a href="/new/campaigns/view.php?id=<?php echo $campaign['id']; ?>" 
+                        <a href="<?php echo BASE_URL; ?>/campaigns/view.php?id=<?php echo $campaign['id']; ?>" 
                            class="flex-1 inline-flex items-center justify-center px-4 py-2 border border-emerald-600 text-sm font-medium rounded-lg text-emerald-600 bg-white hover:bg-emerald-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-150">
                             View Details
                         </a>
-                        <a href="/new/campaigns/edit.php?id=<?php echo $campaign['id']; ?>"
+                        <a href="<?php echo BASE_URL; ?>/campaigns/edit.php?id=<?php echo $campaign['id']; ?>"
                            class="flex-1 inline-flex items-center justify-center px-4 py-2 border border-yellow-500 text-sm font-medium rounded-lg text-yellow-700 bg-yellow-50 hover:bg-yellow-100 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-yellow-400 transition-colors duration-150">
                             <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536M9 13l6-6m2 2l-6 6m-2 2h2v2h2v-2h2v-2h-2v-2H9v2z"/>
@@ -157,7 +161,7 @@ function deleteCampaign() {
     deleteBtn.disabled = true;
     
     // Make AJAX request to delete campaign
-    fetch('/new/campaigns/delete_campaign.php', {
+    fetch('<?php echo BASE_URL; ?>/campaigns/delete_campaign.php', {
         method: 'POST',
         headers: {
             'Content-Type': 'application/x-www-form-urlencoded',

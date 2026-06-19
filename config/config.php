@@ -1,13 +1,13 @@
 <?php
 
-define('BASE_URL', 'https://crofund.org/new');
+define('BASE_URL', 'http://localhost/crofund');
 define('SITE_NAME', 'CroFund');
 
 
 // Database configuration
 define('DB_HOST', 'localhost');
-define('DB_USER', 'crofundo_admin');
-define('DB_PASS', 'crofundo_admin');
+define('DB_USER', 'root');
+define('DB_PASS', '');
 define('DB_NAME', 'crofundo_donations');
 
 define('UPLOAD_DIR', __DIR__ . '/../uploads');

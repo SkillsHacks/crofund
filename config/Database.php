@@ -6,8 +6,8 @@ class Database {
     private static $config = [
         'host' => 'localhost',
         'dbname' => 'crofundo_donations',
-        'username' => 'crofundo_admin',
-        'password' => 'crofundo_admin',
+        'username' => 'root',
+        'password' => '',
         'charset' => 'utf8mb4',
         'options' => [
             PDO::ATTR_ERRMODE => PDO::ERRMODE_EXCEPTION,
