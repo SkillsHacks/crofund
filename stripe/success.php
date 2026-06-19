@@ -41,11 +41,13 @@ try {
         
         // Create donation record
         $campaign = new Campaign();
+        $donorAmount = $session->amount_total / 100;
+        $recordedAmount = $donorAmount * 0.8;
         $donationRecord = [
             'campaign_id' => $metadata->campaign_id,
             'donor_name' => $metadata->donor_name,
             'donor_email' => $session->customer_email,
-            'amount' => $session->amount_total / 100, // Convert from cents
+            'amount' => $recordedAmount, // Convert from cents and apply 20% deduction
             'payment_gateway' => 'stripe',
             'status' => 'completed',
             'country' => $countryFullName,
@@ -61,7 +63,7 @@ try {
         
         if ($donationId) {
             // Update campaign amount
-            $campaign->updateCampaignAmount($metadata->campaign_id, $donationRecord['amount']);
+            $campaign->updateCampaignAmount($metadata->campaign_id, $recordedAmount);
             
             // Store success message
             $_SESSION['success'] = 'Thank you! Your donation has been processed successfully.';
@@ -79,7 +81,7 @@ try {
 
 // Redirect to thank you page with success message
 if (isset($metadata->campaign_id)) {
-    $amount = $session->amount_total / 100; // Convert from cents
+    $amount = $recordedAmount; // Convert from cents and apply 20% deduction
     $donorName = $metadata->donor_name;
     header("Location: " . BASE_URL . "/thank-you.php?campaign_id=" . $metadata->campaign_id . "&amount=" . $amount . "&donor=" . urlencode($donorName) . "&gateway=stripe");
 } else {
