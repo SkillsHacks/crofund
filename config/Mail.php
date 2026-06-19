@@ -132,4 +132,58 @@ class Mail {
             </p>
         </div>';
     }
+
+    public function sendAdminRegistrationNotification($userData) {
+        try {
+            $this->mail->clearAddresses();
+            
+            // Admin email address - you can change this!
+            $adminEmail = 'support@crofund.org';
+            $this->mail->addAddress($adminEmail);
+
+            $this->mail->isHTML(true);
+            $this->mail->Subject = 'New User Registration on ' . SITE_NAME;
+            $this->mail->Body = $this->getAdminNotificationEmailTemplate($userData);
+            $this->mail->AltBody = $this->getAdminNotificationAltText($userData);
+
+            return $this->mail->send();
+        } catch (Exception $e) {
+            error_log("Failed to send admin notification email: " . $e->getMessage());
+            throw new Exception("Admin email notification could not be sent. Mailer Error: {$this->mail->ErrorInfo}");
+        }
+    }
+
+    private function getAdminNotificationEmailTemplate($userData) {
+        return '
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+            <h2 style="color: #333;">New User Registration!</h2>
+            <p>A new user has registered on ' . SITE_NAME . ':</p>
+            
+            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <p style="margin: 8px 0;"><strong>Full Name:</strong> ' . htmlspecialchars($userData['name']) . '</p>
+                <p style="margin: 8px 0;"><strong>Email:</strong> ' . htmlspecialchars($userData['email']) . '</p>
+                <p style="margin: 8px 0;"><strong>Phone:</strong> ' . htmlspecialchars($userData['phone']) . '</p>
+                <p style="margin: 8px 0;"><strong>Country:</strong> ' . htmlspecialchars($userData['country']) . '</p>
+                <p style="margin: 8px 0;"><strong>City:</strong> ' . htmlspecialchars($userData['city']) . '</p>
+                <p style="margin: 8px 0;"><strong>National ID (NIN):</strong> ' . htmlspecialchars($userData['nin']) . '</p>
+                <p style="margin: 8px 0;"><strong>Newsletter Opt-in:</strong> ' . ($userData['newsletter'] ? 'Yes' : 'No') . '</p>
+            </div>
+            
+            <p style="color: #666; font-size: 14px;">
+                Please review this new registration and approve/verify the user as needed.
+            </p>
+        </div>';
+    }
+
+    private function getAdminNotificationAltText($userData) {
+        return "New User Registration on " . SITE_NAME . "\n\n" .
+               "A new user has registered:\n\n" .
+               "Full Name: " . $userData['name'] . "\n" .
+               "Email: " . $userData['email'] . "\n" .
+               "Phone: " . $userData['phone'] . "\n" .
+               "Country: " . $userData['country'] . "\n" .
+               "City: " . $userData['city'] . "\n" .
+               "National ID (NIN): " . $userData['nin'] . "\n" .
+               "Newsletter Opt-in: " . ($userData['newsletter'] ? 'Yes' : 'No');
+    }
 }

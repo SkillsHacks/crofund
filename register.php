@@ -61,6 +61,13 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 'verificationLink' => $verificationLink
             ]);
             
+            // Send admin notification
+            try {
+                $mailer->sendAdminRegistrationNotification($userData);
+            } catch (Exception $adminMailException) {
+                error_log("Failed to send admin registration notification: " . $adminMailException->getMessage());
+            }
+            
             $_SESSION['success'] = "Registration successful! Verify your email to complete your registration.";
         } catch (Exception $e) {
             error_log("Failed to send welcome email: " . $e->getMessage());
