@@ -1,7 +1,5 @@
 <?php
-// Enable error reporting for debugging (remove in production)
-error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't display errors to browser
+ini_set('display_errors', 0);
 
 session_start();
 require_once __DIR__ . '/../config/config.php';

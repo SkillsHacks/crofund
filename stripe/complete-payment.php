@@ -1,7 +1,5 @@
 <?php
-// Enable error reporting for debugging (remove in production)
-error_reporting(E_ALL);
-ini_set('display_errors', 0); // Don't display errors to browser
+ini_set('display_errors', 0);
 
 session_start();
 require_once __DIR__ . '/../config/config.php';
@@ -49,8 +47,6 @@ try {
     // Initialize campaign object
     $campaign = new Campaign();
     
-    // Log the donation data for debugging
-    error_log("Donation data: " . json_encode($donationData));
     
     // Convert country code to full name for database storage
     $countryNames = [
@@ -80,8 +76,6 @@ try {
         'anonymous' => $donationData['anonymous'],
         'created_at' => $donationData['created_at']
     ];
-    
-    error_log("Donation record: " . json_encode($donationRecord));
     
     $donationId = $campaign->createDonation($donationRecord);
     

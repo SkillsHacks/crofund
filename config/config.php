@@ -1,5 +1,12 @@
 <?php
 
+// ── Error handling (centralised — applies to every file that includes config.php) ──
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
+ini_set('log_errors', 1);
+ini_set('error_log', __DIR__ . '/../error.log');
+error_reporting(E_ALL);
+
 define('BASE_URL', 'http://localhost/crofund');
 define('SITE_NAME', 'CroFund');
 
@@ -42,6 +49,19 @@ function getSetting($key) {
 define('STRIPE_PUBLISHABLE_KEY', getSetting('stripe_publishable_key') ?: 'pk_test_51RyDlT2eCSr0a8MYts58DRWjz8nmgKZtDfZHbqpKKIDmZ3xIMmS0BxSusnJHfdFr4m8sNCErBcIFsGTxu4ps09Dm00GfAnw5qg');
 define('STRIPE_SECRET_KEY', getSetting('stripe_secret_key') ?: 'sk_test_51RyDlT2eCSr0a8MYGvXjLMvduV7taSpA6Uxfr1EyNUE84CLTAYe9vqj3PE5jHTOSC4PiM4Dcsz5Q8HVUO6r9aE5S00eg5OFNyE');
 define('STRIPE_WEBHOOK_SECRET', getSetting('stripe_webhook_secret') ?: 'whsec_your_webhook_secret_here');
+
+// PayPal Configuration
+define('PAYPAL_CLIENT_ID', getSetting('paypal_client_id') ?: '');
+define('PAYPAL_CLIENT_SECRET', getSetting('paypal_client_secret') ?: '');
+define('PAYPAL_MODE', getSetting('paypal_mode') ?: 'sandbox'); // 'sandbox' or 'live'
+
+// Function to get enabled payment gateways
+function getEnabledPaymentGateways() {
+    global $pdo;
+    $stmt = $pdo->prepare("SELECT code, name, enabled FROM payment_gateways WHERE enabled = 1 ORDER BY id ASC");
+    $stmt->execute();
+    return $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
 
 define('AVATAR_UPLOAD_PATH', __DIR__ . '/../uploads/avatars/');
 define('AVATAR_URL_PATH', 'uploads/avatars/');

@@ -325,11 +325,7 @@ class Campaign {
             $params[] = (int)$limit;
             $params[] = (int)$offset;
 
-            error_log("SQL Query: " . $sql);
-            error_log("Params: " . print_r($params, true));
-            
             $campaigns = $this->db->fetchAll($sql, $params);
-            error_log("Found " . count($campaigns) . " campaigns");
 
             // Format campaign data
             foreach ($campaigns as &$campaign) {

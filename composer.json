@@ -1,7 +1,8 @@
 {
     "require": {
         "phpmailer/phpmailer": "^6.10",
-        "stripe/stripe-php": "^17.5"
+        "stripe/stripe-php": "^17.5",
+        "paypal/paypal-checkout-sdk": "^1.0"
     },
     "config": {
         "allow-plugins": {
