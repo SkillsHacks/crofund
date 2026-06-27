@@ -42,12 +42,6 @@ $percent  = ($details['goal_amount'] > 0)
     ? min(100, ($details['current_amount'] / $details['goal_amount']) * 100)
     : 0;
 
-$daysLeft = null;
-if (!empty($details['end_date'])) {
-    $endDate  = new DateTime($details['end_date']);
-    $now      = new DateTime();
-    $daysLeft = $endDate > $now ? (int)$now->diff($endDate)->days : 0;
-}
 
 $creatorInitial = !empty($details['creator_name']) ? strtoupper(substr($details['creator_name'], 0, 1)) : 'O';
 $creatorName    = !empty($details['creator_name']) ? htmlspecialchars($details['creator_name']) : 'Organizer';
@@ -250,9 +244,6 @@ $ogImageUrl = !empty($details['image_path'])
         <div class="flex items-center justify-between text-sm text-slate-600">
           <span><strong class="text-slate-900"><?php echo (int)$details['donor_count']; ?></strong> donors</span>
           <span><strong class="text-slate-900"><?php echo round($percent); ?>%</strong> funded</span>
-          <?php if ($daysLeft !== null): ?>
-            <span><strong class="text-slate-900"><?php echo $daysLeft; ?></strong> days left</span>
-          <?php endif; ?>
         </div>
         <button onclick="openDonationModal()"
           class="mt-5 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-cta transition-all active:scale-[.98] text-base">
@@ -523,7 +514,7 @@ $ogImageUrl = !empty($details['image_path'])
           </div>
 
           <!-- Stats row -->
-          <div class="grid grid-cols-3 gap-3 mb-5">
+          <div class="grid grid-cols-2 gap-3 mb-5">
             <div class="text-center bg-slate-50 rounded-xl p-3 border border-slate-100">
               <p class="text-lg font-extrabold text-slate-900"><?php echo (int)$details['donor_count']; ?></p>
               <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Donors</p>
@@ -531,15 +522,6 @@ $ogImageUrl = !empty($details['image_path'])
             <div class="text-center bg-emerald-50 rounded-xl p-3 border border-emerald-100">
               <p class="text-lg font-extrabold text-emerald-700"><?php echo round($percent); ?>%</p>
               <p class="text-[10px] font-semibold text-emerald-600 uppercase tracking-wide">Funded</p>
-            </div>
-            <div class="text-center bg-slate-50 rounded-xl p-3 border border-slate-100">
-              <?php if ($daysLeft !== null): ?>
-                <p class="text-lg font-extrabold text-slate-900"><?php echo $daysLeft; ?></p>
-                <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Days Left</p>
-              <?php else: ?>
-                <p class="text-lg font-extrabold text-slate-900"><i class="fas fa-infinity text-base"></i></p>
-                <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Ongoing</p>
-              <?php endif; ?>
             </div>
           </div>
 
