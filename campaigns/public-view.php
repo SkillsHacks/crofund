@@ -111,8 +111,11 @@ $ogImageUrl = !empty($details['image_path'])
     body{ font-family:'Inter',sans-serif; background:#f8fafc; color:#0f172a; }
 
     /* ── Hero ── */
-    .hero-wrap{ position:relative; width:100%; background:#0f172a; overflow:hidden; max-height:480px; }
-    .hero-wrap img{ width:100%; height:480px; object-fit:cover; opacity:.88; display:block; }
+    .hero-wrap{ position:relative; width:100%; background:#0f172a; overflow:hidden; }
+    .hero-wrap img{ width:100%; height:300px; object-fit:cover; object-position:50% 30%; opacity:.88; display:block; }
+    @media(min-width:640px){ .hero-wrap img{ height:360px; object-position:center; } }
+    @media(min-width:768px){ .hero-wrap img{ height:430px; object-position:center; } }
+    @media(min-width:1024px){ .hero-wrap img{ height:480px; object-position:center; } }
     .hero-gradient{ position:absolute; inset:0; background:linear-gradient(to bottom, rgba(15,23,42,.1) 0%, rgba(15,23,42,.55) 100%); }
 
     /* ── Cards ── */
@@ -767,13 +770,8 @@ function initializeDonationForm() {
     }
   });
 
-  // Auto-render PayPal buttons if PayPal is the pre-selected (or only) gateway
-  const preselectedGw = $('input[name="payment_gateway"]:checked').val();
-  if (preselectedGw === 'paypal') {
-    $('#buttonDonation').addClass('hidden');
-    $('#paypal-button-container').removeClass('hidden');
-    loadPayPalButtons();
-  }
+  // Trigger a click on the first gateway option so its state (radio + UI + PayPal buttons) initialises correctly
+  $('.gateway-option').first().trigger('click');
 
   $('.donation-amount-btn').off('click').on('click', function () {
     $('.donation-amount-btn').removeClass('active');
