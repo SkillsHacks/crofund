@@ -767,6 +767,14 @@ function initializeDonationForm() {
     }
   });
 
+  // Auto-render PayPal buttons if PayPal is the pre-selected (or only) gateway
+  const preselectedGw = $('input[name="payment_gateway"]:checked').val();
+  if (preselectedGw === 'paypal') {
+    $('#buttonDonation').addClass('hidden');
+    $('#paypal-button-container').removeClass('hidden');
+    loadPayPalButtons();
+  }
+
   $('.donation-amount-btn').off('click').on('click', function () {
     $('.donation-amount-btn').removeClass('active');
     $(this).addClass('active');
