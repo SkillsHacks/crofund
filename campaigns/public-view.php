@@ -156,7 +156,7 @@ $ogImageUrl = !empty($details['image_path'])
     }
 
     /* ── Badge ── */
-    .badge{ display:inline-flex; align-items:center; gap:.3rem; padding:.3rem .75rem; border-radius:999px; font-size:.72rem; font-weight:700; letter-spacing:.04em; text-transform:uppercase; }
+    .badge{ display:inline-flex; align-items:center; gap:.25rem; padding:.2rem .55rem; border-radius:999px; font-size:.62rem; font-weight:700; letter-spacing:.03em; text-transform:uppercase; white-space:nowrap; }
 
     /* ── Verified check ── */
     .verified-badge{ background:#ecfdf5; color:#059669; }
@@ -193,7 +193,7 @@ $ogImageUrl = !empty($details['image_path'])
   <!-- Campaign title block -->
   <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
     <div class="flex-1 min-w-0">
-      <div class="flex flex-wrap items-center gap-2 mb-3">
+      <div class="flex flex-nowrap items-center gap-1.5 mb-3 overflow-x-auto">
         <span class="badge <?php
           if ($details['status']==='active') echo 'status-active';
           elseif ($details['status']==='completed') echo 'status-completed';
@@ -211,7 +211,7 @@ $ogImageUrl = !empty($details['image_path'])
           Verified Campaign
         </span>
       </div>
-      <h1 class="text-2xl md:text-3xl lg:text-4xl font-extrabold text-slate-900 leading-tight mb-2">
+      <h1 class="text-lg md:text-2xl lg:text-3xl font-bold text-slate-900 leading-snug mb-2">
         <?php echo htmlspecialchars($details['title']); ?>
       </h1>
       <p class="text-sm text-slate-500">
