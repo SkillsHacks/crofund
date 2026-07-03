@@ -181,7 +181,7 @@ try {
                         <span class="text-sm font-semibold text-slate-900">
                             <?php if ($gw['code'] === 'stripe'): ?>
                                 <i class="fab fa-cc-stripe mr-1.5 text-indigo-600"></i>
-                            <?php elseif ($gw['code'] === 'paypal'): ?>
+                            <?php elseif ($gw['code'] === 'paypal' || $gw['code'] === 'paypal_classic'): ?>
                                 <i class="fab fa-paypal mr-1.5 text-blue-600"></i>
                             <?php endif; ?>
                             <?php echo htmlspecialchars($gw['name']); ?>

@@ -798,6 +798,32 @@ function initializeDonationForm() {
           $('#buttonDonation').prop('disabled', false).html('<i class="fas fa-heart mr-2"></i> Complete Donation');
         }
       });
+    } else if (gw === 'paypal_classic') {
+      // Classic PayPal Standard flow (personal account, HTML form POST to
+      // paypal.com). We create the pending_donations record server-side
+      // first, then hand off to an auto-submitting form -- see
+      // campaigns/paypal-classic-create.php and paypal-classic-submit.php.
+      $('#buttonDonation').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Redirecting to PayPal…');
+      $.ajax({
+        url: URL_BASE + '/campaigns/paypal-classic-create.php',
+        type: 'POST',
+        data: {
+          campaign_id: campaignId, amount, full_name: name, email,
+          csrf_token: $('input[name="csrf_token"]').val()
+        },
+        dataType: 'json',
+        success: function (r) {
+          if (r.success && r.redirect) { window.location.href = r.redirect; }
+          else {
+            showError(r.error || 'Failed to start PayPal donation.');
+            $('#buttonDonation').prop('disabled', false).html('<i class="fas fa-heart mr-2"></i> Complete Donation');
+          }
+        },
+        error: function () {
+          showError('An error occurred. Please try again.');
+          $('#buttonDonation').prop('disabled', false).html('<i class="fas fa-heart mr-2"></i> Complete Donation');
+        }
+      });
     }
     return false;
   });
