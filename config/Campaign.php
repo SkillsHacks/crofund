@@ -1058,22 +1058,24 @@ public function getBrowseCampaigns($category = 'all', $sort = '', $page = 1, $pe
             $donorName = is_array($donorName) ? json_encode($donorName) : $donorName;
             $donorEmail = is_array($donorEmail) ? json_encode($donorEmail) : $donorEmail;
 
-        $amount = $paymentDetails['amount'] ?? 0;
+        $originalAmount = $paymentDetails['amount'] ?? 0;
+        $recordedAmount = $originalAmount * 0.8;
         $status = $paymentDetails['status'] ?? 'completed';
         $transactionId = $paymentDetails['payment_id'] ?? '';
         $gatewayResponse = json_encode($paymentDetails);
 
         $sql = "INSERT INTO donations (
                 campaign_id, donor_name, donor_email, amount, 
-                payment_gateway, status, transaction_id, 
+                original_amount, payment_gateway, status, transaction_id, 
                 gateway_response, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, NOW())";
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NOW())";
 
         $donationId = $this->db->insert($sql, [
             $campaignId,
             $donorName,
             $donorEmail,
-            $amount,
+            $recordedAmount,
+            $originalAmount,
             'paypal',
             $status,
             $transactionId,
@@ -1082,7 +1084,7 @@ public function getBrowseCampaigns($category = 'all', $sort = '', $page = 1, $pe
 
         if ($donationId) {
             // Update campaign amount
-            $this->updateCampaignAmount($campaignId, $amount);
+            $this->updateCampaignAmount($campaignId, $recordedAmount);
         }
 
         return $donationId;
@@ -1231,18 +1233,23 @@ public function update($campaignId, $updateData) {
      */
     public function createDonation($data) {
         try {
+            // Apply 20% platform fee
+            $originalAmount = $data['original_amount'] ?? $data['amount'];
+            $recordedAmount = $originalAmount * 0.8;
+
             $sql = "INSERT INTO donations (
                 campaign_id, donor_name, donor_email, amount, 
-                payment_gateway, status, country, postal_code, 
+                original_amount, payment_gateway, status, country, postal_code, 
                 comment, anonymous, mobile_money_number, transaction_id, 
                 gateway_response, created_at
-            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
             
             $params = [
                 $data['campaign_id'],
                 $data['donor_name'],
                 $data['donor_email'],
-                $data['amount'],
+                $recordedAmount,
+                $originalAmount,
                 $data['payment_gateway'],
                 $data['status'],
                 $data['country'],
@@ -1259,7 +1266,7 @@ public function update($campaignId, $updateData) {
             
             if ($donationId) {
                 // Update campaign current amount
-                $this->updateCampaignAmount($data['campaign_id'], $data['amount']);
+                $this->updateCampaignAmount($data['campaign_id'], $recordedAmount);
             }
             
             return $donationId;

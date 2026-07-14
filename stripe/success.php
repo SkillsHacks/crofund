@@ -41,23 +41,22 @@ try {
         
         // Create donation record
         $campaign = new Campaign();
-        $donorAmount = $session->amount_total / 100;
-        $recordedAmount = $donorAmount * 0.8;
-        $donationRecord = [
-            'campaign_id' => $metadata->campaign_id,
-            'donor_name' => $metadata->donor_name,
-            'donor_email' => $session->customer_email,
-            'amount' => $recordedAmount, // Convert from cents and apply 20% deduction
-            'payment_gateway' => 'stripe',
-            'status' => 'completed',
-            'country' => $countryFullName,
-            'postal_code' => $metadata->postal_code,
-            'comment' => $metadata->comment,
-            'anonymous' => intval($metadata->anonymous),
-            'transaction_id' => $session->payment_intent,
-            'gateway_response' => json_encode($session),
-            'created_at' => date('Y-m-d H:i:s')
-        ];
+            $donorAmount = $session->amount_total / 100;
+            $donationRecord = [
+                'campaign_id' => $metadata->campaign_id,
+                'donor_name' => $metadata->donor_name,
+                'donor_email' => $session->customer_email,
+                'amount' => $donorAmount, // Pass original amount, createDonation will apply 20%
+                'payment_gateway' => 'stripe',
+                'status' => 'completed',
+                'country' => $countryFullName,
+                'postal_code' => $metadata->postal_code,
+                'comment' => $metadata->comment,
+                'anonymous' => intval($metadata->anonymous),
+                'transaction_id' => $session->payment_intent,
+                'gateway_response' => json_encode($session),
+                'created_at' => date('Y-m-d H:i:s')
+            ];
         
         $donationId = $campaign->createDonation($donationRecord);
         

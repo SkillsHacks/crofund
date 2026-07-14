@@ -85,14 +85,18 @@ try {
         $db->beginTransaction();
 
         try {
-            $campaign->updateCampaignAmount($donationData['campaign_id'], $donationData['amount']);
+            $originalAmount = $donationData['amount'];
+            $recordedAmount = $originalAmount * 0.8;
+            
+            $campaign->updateCampaignAmount($donationData['campaign_id'], $recordedAmount);
 
-            $stmt = $db->prepare("INSERT INTO donations (campaign_id, donor_name, donor_email, amount, payment_gateway, transaction_id, status, country, postal_code, comment, anonymous) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+            $stmt = $db->prepare("INSERT INTO donations (campaign_id, donor_name, donor_email, amount, original_amount, payment_gateway, transaction_id, status, country, postal_code, comment, anonymous) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
             $stmt->execute([
                 $donationData['campaign_id'],
                 $donationData['full_name'],
                 $donationData['email'],
-                $donationData['amount'],
+                $recordedAmount,
+                $originalAmount,
                 'paypal',
                 $paypalOrderId,
                 'completed',

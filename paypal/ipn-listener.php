@@ -96,23 +96,27 @@ if ($mcGross <= 0 || $mcCurrency !== $pending['currency_code']) {
 try {
     $pdo->beginTransaction();
 
-    $pdo->prepare(
-        "UPDATE pending_donations SET status = 'completed', transaction_id = ?, amount_requested = ?, completed_at = NOW() WHERE id = ?"
-    )->execute([$txnId, $mcGross, $pending['id']]);
+    $originalAmount = $mcGross;
+        $recordedAmount = $originalAmount * 0.8;
 
-    $pdo->prepare(
-        "INSERT INTO donations (campaign_id, donor_name, donor_email, amount, payment_gateway, status, transaction_id, gateway_response, created_at)
-         VALUES (?, ?, ?, ?, 'paypal_standard', 'completed', ?, ?, NOW())"
-    )->execute([
-        $pending['campaign_id'],
-        $pending['donor_name'],
-        $pending['donor_email'],
-        $mcGross,
-        $txnId,
-        json_encode($posted),
-    ]);
+        $pdo->prepare(
+            "UPDATE pending_donations SET status = 'completed', transaction_id = ?, amount_requested = ?, completed_at = NOW() WHERE id = ?"
+        )->execute([$txnId, $mcGross, $pending['id']]);
 
-    (new Campaign())->updateCampaignAmount($pending['campaign_id'], $mcGross);
+        $pdo->prepare(
+            "INSERT INTO donations (campaign_id, donor_name, donor_email, amount, original_amount, payment_gateway, status, transaction_id, gateway_response, created_at)
+             VALUES (?, ?, ?, ?, ?, 'paypal_standard', 'completed', ?, ?, NOW())"
+        )->execute([
+            $pending['campaign_id'],
+            $pending['donor_name'],
+            $pending['donor_email'],
+            $recordedAmount,
+            $originalAmount,
+            $txnId,
+            json_encode($posted)
+        ]);
+
+        (new Campaign())->updateCampaignAmount($pending['campaign_id'], $recordedAmount);
 
     $pdo->commit();
 } catch (Exception $e) {
