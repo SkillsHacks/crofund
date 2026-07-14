@@ -15,26 +15,32 @@ if (!$userObj->isLoggedIn()) {
 }
 
 $userData = $userObj->getCurrentUser();
+$mailer = new Mail();
+$error = null;
 
-if (isset($_POST['send_verification'])) {
-    if (!$userData['is_verified']) {
-        try {
-            $verificationToken = bin2hex(random_bytes(32));
-            $userObj->updateVerificationToken($userData['id'], $verificationToken);
-            $verificationLink = BASE_URL . "/account/verify.php?token=" . $verificationToken;
-            $mailer = new Mail();
-            
-            if ($mailer->sendVerificationEmail($userData['email'], $verificationLink)) {
-                $_SESSION['success'] = "Verification email sent successfully!";
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    try {
+        if (isset($_POST['verify_code'])) {
+            $code = trim($_POST['code'] ?? '');
+            if (!empty($code)) {
+                $userObj->verifyEmailCode($userData['email'], $code);
+                $_SESSION['success'] = "Email verified successfully!";
+                header("Location: " . BASE_URL . "/account/verification.php");
+                exit();
             } else {
-                $_SESSION['error'] = "Failed to send verification email. Please try again.";
+                $error = "Please enter the verification code.";
             }
-        } catch (Exception $e) {
-            $_SESSION['error'] = "An error occurred: " . $e->getMessage();
+        } elseif (isset($_POST['send_verification'])) {
+            if (!$userData['is_verified']) {
+                $verificationCode = $userObj->resendVerificationCode($userData['id']);
+                $mailer->sendVerificationCode($userData['email'], $verificationCode, $userData['name']);
+                $_SESSION['success'] = "Verification email sent successfully!";
+                header("Location: " . BASE_URL . "/account/verification.php");
+                exit();
+            }
         }
-        
-        header("Location: " . BASE_URL . "/account/verification.php");
-        exit();
+    } catch (Exception $e) {
+        $error = $e->getMessage();
     }
 }
 
@@ -97,7 +103,7 @@ include '../components/header.php';
                                     </div>
                                 </div>
                             <?php else: ?>
-                                <div class="p-3 sm:p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                                <div class="p-3 sm:p-4 bg-yellow-50 rounded-lg border border-yellow-200 mb-6">
                                     <div class="flex">
                                         <div class="flex-shrink-0">
                                             <svg class="h-5 w-5 text-yellow-400" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor">
@@ -109,17 +115,49 @@ include '../components/header.php';
                                             <p class="mt-1 sm:mt-2 text-xs sm:text-sm text-yellow-700">Your email address needs to be verified to access all features.</p>
                                         </div>
                                     </div>
-                                    <form method="POST" class="mt-4 sm:mt-6">
+                                </div>
+
+                                <?php if (isset($error)): ?>
+                                    <div class="mb-6 p-4 bg-red-50 border border-red-200 text-red-800 rounded-xl">
+                                        <?php echo htmlspecialchars($error); ?>
+                                    </div>
+                                <?php endif; ?>
+
+                                <form method="POST" class="space-y-6">
+                                    <div>
+                                        <label for="code" class="block text-sm font-semibold text-slate-700 mb-2">Verification Code</label>
+                                        <input 
+                                            id="code" 
+                                            name="code" 
+                                            type="text" 
+                                            maxlength="6" 
+                                            required 
+                                            autocomplete="one-time-code"
+                                            class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 text-center text-lg tracking-widest"
+                                            placeholder="000000"
+                                        >
+                                    </div>
+
+                                    <div class="flex flex-col sm:flex-row gap-4">
+                                        <button type="submit" 
+                                            name="verify_code" 
+                                            class="flex-1 inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent text-xs sm:text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-200">
+                                            <svg class="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                            </svg>
+                                            Verify Code
+                                        </button>
+
                                         <button type="submit" 
                                             name="send_verification" 
-                                            class="inline-flex items-center px-4 sm:px-6 py-2 sm:py-3 border border-transparent text-xs sm:text-sm font-medium rounded-md shadow-sm text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-200">
+                                            class="flex-1 inline-flex items-center justify-center px-4 sm:px-6 py-2 sm:py-3 border border-slate-200 text-xs sm:text-sm font-medium rounded-md shadow-sm text-slate-700 bg-white hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-200">
                                             <svg class="mr-1 sm:mr-2 h-4 w-4 sm:h-5 sm:w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 8l7.89 5.26a2 2 0 002.22 0L21 8M5 19h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
                                             </svg>
-                                            Send Verification Email
+                                            Resend Code
                                         </button>
-                                    </form>
-                                </div>
+                                    </div>
+                                </form>
                             <?php endif; ?>
                         </div>
                     </div>

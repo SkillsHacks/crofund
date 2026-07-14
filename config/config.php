@@ -67,12 +67,14 @@ define('AVATAR_UPLOAD_PATH', __DIR__ . '/../uploads/avatars/');
 define('AVATAR_URL_PATH', 'uploads/avatars/');
 
 define('MAIL_HOST', 'mail.crofund.org');
-define('MAIL_USERNAME', 'support@crofund.org');
-define('MAIL_PASSWORD', 'Ihateu123#@!000');
-define('MAIL_FROM', 'support@crofund.org');
-define('MAIL_FROM_NAME', 'CroFunding');
-define('MAIL_PORT', 587);
-define('MAIL_SECURE', 'tls');
+define('MAIL_USERNAME', 'no-reply@crofund.org');
+define('MAIL_PASSWORD', 'Uk2+R6Jn?[CHXhX]');
+define('MAIL_FROM', 'no-reply@crofund.org');
+define('MAIL_FROM_NAME', SITE_NAME);
+define('MAIL_REPLY_TO', 'no-reply@crofund.org');
+define('MAIL_REPLY_TO_NAME', SITE_NAME);
+define('MAIL_PORT', 465);
+define('MAIL_SECURE', 'ssl');
 
 
 ?>

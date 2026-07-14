@@ -16,70 +16,69 @@ if ($user->isLoggedIn()) {
 }
 
 if ($_SERVER["REQUEST_METHOD"] == "POST") {
-    try {
-        if ($_POST['password'] !== $_POST['password_confirmation']) {
-            throw new Exception("Passwords do not match");
-        }
-
-        if (!isset($_POST['terms'])) {
-            throw new Exception("You must accept the Terms of Service and Privacy Policy");
-        }
-
-        if (empty($_POST['nin'])) {
-            throw new Exception("National ID Number is required");
-        }
-        
-        $nin = trim($_POST['nin']);
-        if (strlen($nin) !== 14) {
-            throw new Exception("National ID Number must be exactly 14 characters");
-        }
-        
-        if (!preg_match('/^[A-Za-z][A-Za-z0-9]{13}$/', $nin)) {
-            throw new Exception("National ID Number must start with a letter and contain only letters and numbers");
-        }
-
-        $userData = [
-            'name' => $_POST['name'] ?? '',
-            'email' => $_POST['email'] ?? '',
-            'password' => $_POST['password'] ?? '',
-            'phone' => $_POST['phone'] ?? '',
-            'nin' => $_POST['nin'] ?? '',
-            'country' => $_POST['country'] ?? '',
-            'city' => $_POST['city'] ?? '',
-            'newsletter' => isset($_POST['newsletter']),
-            'avatar' => $_FILES['avatar'] ?? null
-        ];
-
-        $registrationData = $user->register($userData);
-
-        $mailer = new Mail();
-        $verificationLink = BASE_URL . "/account/verify.php?token=" . $registrationData['verification_token'];
-        
         try {
-            $mailer->sendWelcomeEmail($registrationData['email'], [
-                'name' => $userData['name'],
-                'verificationLink' => $verificationLink
-            ]);
-            
-            // Send admin notification
-            try {
-                $mailer->sendAdminRegistrationNotification($userData);
-            } catch (Exception $adminMailException) {
-                error_log("Failed to send admin registration notification: " . $adminMailException->getMessage());
+            if ($_POST['password'] !== $_POST['password_confirmation']) {
+                throw new Exception("Passwords do not match");
+            }
+
+            if (!isset($_POST['terms'])) {
+                throw new Exception("You must accept the Terms of Service and Privacy Policy");
+            }
+
+            if (empty($_POST['nin'])) {
+                throw new Exception("National ID Number is required");
             }
             
-            $_SESSION['success'] = "Registration successful! Verify your email to complete your registration.";
-        } catch (Exception $e) {
-            error_log("Failed to send welcome email: " . $e->getMessage());
-            $_SESSION['success'] = "Registration successful! However, we could not send the verification email. Please contact support if you don't receive it within a few minutes.";
-        }
+            $nin = trim($_POST['nin']);
+            if (strlen($nin) !== 14) {
+                throw new Exception("National ID Number must be exactly 14 characters");
+            }
+            
+            if (!preg_match('/^[A-Za-z][A-Za-z0-9]{13}$/', $nin)) {
+                throw new Exception("National ID Number must start with a letter and contain only letters and numbers");
+            }
 
-        header("Location: login.php");
-        exit();
-    } catch (Exception $e) {
-        $error = $e->getMessage();
+            $userData = [
+                'name' => $_POST['name'] ?? '',
+                'email' => $_POST['email'] ?? '',
+                'password' => $_POST['password'] ?? '',
+                'phone' => $_POST['phone'] ?? '',
+                'nin' => $_POST['nin'] ?? '',
+                'country' => $_POST['country'] ?? '',
+                'city' => $_POST['city'] ?? '',
+                'newsletter' => isset($_POST['newsletter']),
+                'avatar' => $_FILES['avatar'] ?? null
+            ];
+
+            $registrationData = $user->register($userData);
+
+            $mailer = new Mail();
+            
+            try {
+                $mailer->sendVerificationCode($registrationData['email'], $registrationData['verification_code'], $userData['name']);
+                
+                // Send admin notification
+                try {
+                    $mailer->sendAdminRegistrationNotification($userData);
+                } catch (Exception $adminMailException) {
+                    error_log("Failed to send admin registration notification: " . $adminMailException->getMessage());
+                }
+                
+                // Store email in session for verification page
+                $_SESSION['verify_email'] = $registrationData['email'];
+                $_SESSION['success'] = "Registration successful! Please check your email for the verification code.";
+            } catch (Exception $e) {
+                error_log("Failed to send verification email: " . $e->getMessage());
+                $_SESSION['verify_email'] = $registrationData['email'];
+                $_SESSION['error'] = "Registration successful! However, we could not send the verification email. Please click 'Resend Code' to try again.";
+            }
+
+            header("Location: verify-email.php");
+            exit();
+        } catch (Exception $e) {
+            $error = $e->getMessage();
+        }
     }
-}
 ?>
 <!DOCTYPE html>
 <html lang="en">

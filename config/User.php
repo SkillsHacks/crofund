@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/Mail.php';
 
 class User {
     private $db;
@@ -43,7 +44,6 @@ class User {
 
     public function register($data) {
         try {
-           
             $existingUser = $this->db->fetchOne(
                 "SELECT id FROM users WHERE email = ?",
                 [$data['email']]
@@ -53,7 +53,6 @@ class User {
                 throw new Exception("Email already exists");
             }
 
-          
             $existingNIN = $this->db->fetchOne(
                 "SELECT id FROM users WHERE nin = ?",
                 [$data['nin']]
@@ -63,10 +62,12 @@ class User {
                 throw new Exception("National ID Number already registered");
             }
 
-            $sql = "INSERT INTO users (name, email, password, phone, nin, country, city, newsletter, status, verification_token) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?)";
+            $sql = "INSERT INTO users (name, email, password, phone, nin, country, city, newsletter, status, verification_token, verification_code, verification_code_expires_at) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)";
             
             $verificationToken = bin2hex(random_bytes(32));
+            $verificationCode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            $verificationExpiresAt = date('Y-m-d H:i:s', time() + 3600); // Expires in 1 hour
             $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
             
             $params = [
@@ -78,7 +79,9 @@ class User {
                 $data['country'],
                 $data['city'],
                 $data['newsletter'] ? 1 : 0,
-                $verificationToken
+                $verificationToken,
+                $verificationCode,
+                $verificationExpiresAt
             ];
             
             $this->db->query($sql, $params);
@@ -87,7 +90,8 @@ class User {
             return [
                 'id' => $userId,
                 'email' => $data['email'],
-                'verification_token' => $verificationToken
+                'verification_token' => $verificationToken,
+                'verification_code' => $verificationCode
             ];
         } catch (Exception $e) {
             throw new Exception("Registration failed: " . $e->getMessage());
@@ -96,7 +100,6 @@ class User {
 
     public function login($email, $password) {
         try {
-          
             $this->checkLoginAttempts($email);
 
             $user = $this->db->fetchOne(
@@ -109,16 +112,38 @@ class User {
                 throw new Exception("The email or password you entered is incorrect. Please try again.");
             }
 
-     
+            // Check if email is verified first
+            if (!$user['is_verified']) {
+                // Store email in session for verification
+                if (session_status() === PHP_SESSION_NONE) {
+                    session_start();
+                }
+                $_SESSION['verify_email'] = $user['email'];
+                throw new Exception("Your email is not verified. Please check your inbox for a verification code.");
+            }
+
             $this->recordLoginAttempt($email, true);
 
-          
-            session_regenerate_id(true);
-            $_SESSION['user_id'] = $user['id'];
-            $_SESSION['user_name'] = $user['name'];
-            $_SESSION['last_activity'] = time();
-            $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
-            $_SESSION['ip_address'] = $_SERVER['REMOTE_ADDR'];
+            // Generate 6-digit 2FA code
+            $twoFactorCode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+
+            // Store temporary data in session
+            $_SESSION['2fa_user_id'] = $user['id'];
+            $_SESSION['2fa_email'] = $user['email'];
+            $_SESSION['2fa_user_name'] = $user['name'];
+            $_SESSION['2fa_code'] = $twoFactorCode;
+            $_SESSION['2fa_code_time'] = time();
+            $_SESSION['2fa_attempts'] = 0;
+
+            // Send email with 2FA code (log error but continue if it fails)
+            try {
+                $mailObj = new Mail();
+                $mailObj->sendTwoFactorCode($user['email'], $twoFactorCode);
+            } catch (Exception $mailException) {
+                // Log the error but don't block login
+                error_log("Failed to send 2FA email: " . $mailException->getMessage());
+                // You can add a message here to let the user know if needed, but for now we'll continue
+            }
 
             return $user;
         } catch (Exception $e) {
@@ -270,6 +295,62 @@ class User {
             return false;
         } catch (Exception $e) {
             throw new Exception("Email verification failed: " . $e->getMessage());
+        }
+    }
+
+    public function verifyEmailCode($email, $code) {
+        try {
+            $sql = "SELECT id, verification_code, verification_code_expires_at 
+                    FROM users 
+                    WHERE email = ?";
+            $user = $this->db->fetchOne($sql, [$email]);
+            
+            if (!$user) {
+                throw new Exception("User not found");
+            }
+            
+            if (!$user['verification_code'] || $user['verification_code'] !== $code) {
+                throw new Exception("Invalid verification code");
+            }
+            
+            if (strtotime($user['verification_code_expires_at']) < time()) {
+                throw new Exception("Verification code has expired");
+            }
+            
+            // Mark email as verified
+            $updateSql = "UPDATE users 
+                          SET is_verified = 1, 
+                              verification_token = NULL, 
+                              verification_code = NULL, 
+                              verification_code_expires_at = NULL 
+                          WHERE id = ?";
+            $this->db->query($updateSql, [$user['id']]);
+            
+            return true;
+        } catch (Exception $e) {
+            throw new Exception($e->getMessage());
+        }
+    }
+
+    public function resendVerificationCode($userId) {
+        try {
+            $user = $this->getUserById($userId);
+            if (!$user) {
+                throw new Exception("User not found");
+            }
+            
+            $verificationCode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
+            $verificationExpiresAt = date('Y-m-d H:i:s', time() + 3600);
+            
+            $sql = "UPDATE users 
+                    SET verification_code = ?, 
+                        verification_code_expires_at = ? 
+                    WHERE id = ?";
+            $this->db->query($sql, [$verificationCode, $verificationExpiresAt, $userId]);
+            
+            return $verificationCode;
+        } catch (Exception $e) {
+            throw new Exception("Failed to resend verification code: " . $e->getMessage());
         }
     }
 

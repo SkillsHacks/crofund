@@ -25,17 +25,22 @@ try {
         unset($_SESSION['redirect_after_login']);
     }
 
-    // Direct login without 2FA
-    header('Location: ' . BASE_URL . $redirect);
+    // Store redirect path in session for after 2FA verification
+    $_SESSION['2fa_redirect'] = $redirect;
+
+    // Redirect to 2FA verification page
+    header('Location: ' . BASE_URL . '/verify-2fa.php');
     exit();
 } catch (Exception $e) {
-    // Check if the error is about verification
-    if ($e->getMessage() === "Your email is not verified. Please check your inbox for a verification link.") {
-        $_SESSION['unverified_email'] = $email;
+        // Check if the error is about verification
+        if (strpos($e->getMessage(), "Your email is not verified") !== false) {
+            $_SESSION['error'] = $e->getMessage();
+            header("Location: " . BASE_URL . "/verify-email.php");
+            exit();
+        }
+        $_SESSION['error'] = $e->getMessage();
+        header("Location: " . BASE_URL . "/login.php");
+        exit();
     }
-    $_SESSION['error'] = $e->getMessage();
-    header("Location: " . BASE_URL . "/login.php");
-    exit();
-}
 
 return $user;

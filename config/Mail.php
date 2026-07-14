@@ -7,146 +7,212 @@ use PHPMailer\PHPMailer\Exception;
 
 class Mail {
     private $mail;
+    private $maxRetries = 3;
+    private $retryDelay = 2; // seconds between retries
 
     public function __construct() {
         $this->mail = new PHPMailer(true);
 
-        // Server settings
+        // Server settings (from config.php)
         $this->mail->isSMTP();
-        $this->mail->Host = 'mail.crofund.org';
+        $this->mail->Host = MAIL_HOST;
         $this->mail->SMTPAuth = true;
-        $this->mail->Username = 'desputes@crofund.org';
-        $this->mail->Password = '-9$Gwp_r@35M{c_}';
-        $this->mail->SMTPSecure = 'ssl';
-        $this->mail->Port = 465;
+        $this->mail->Username = MAIL_USERNAME;
+        $this->mail->Password = MAIL_PASSWORD;
         
-        // Reduce debug level
-        $this->mail->SMTPDebug = SMTP::DEBUG_SERVER;
-        $this->mail->Debugoutput = 'error_log';
+        // Set encryption type
+        if (MAIL_SECURE === 'ssl') {
+            $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_SMTPS;
+        } elseif (MAIL_SECURE === 'tls') {
+            $this->mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
+        }
         
-        // Set default sender
-        $this->mail->setFrom('desputes@crofund.org', SITE_NAME);
+        $this->mail->Port = MAIL_PORT;
         
-        // Other settings
-        $this->mail->Timeout = 30;
+        // Disable debug logging in production
+        $this->mail->SMTPDebug = SMTP::DEBUG_OFF;
+        
+        // Set default sender - use same as SMTP username to avoid sender verify failures
+        $this->mail->setFrom(MAIL_FROM, MAIL_FROM_NAME);
+        $this->mail->addReplyTo(MAIL_REPLY_TO, MAIL_REPLY_TO_NAME);
+        
+        // Enable SSL certificate verification (security best practice)
         $this->mail->SMTPOptions = array(
             'ssl' => array(
-                'verify_peer' => false,
-                'verify_peer_name' => false,
-                'allow_self_signed' => true
+                'verify_peer' => true,
+                'verify_peer_name' => true,
+                'allow_self_signed' => false
             )
+        );
+        
+        // Set other deliverability settings
+        $this->mail->XMailer = SITE_NAME . ' Mailer';
+        $this->mail->CharSet = 'UTF-8';
+    }
+
+    /**
+     * Send an email with retries for temporary failures
+     */
+    private function sendWithRetry() {
+        $attempt = 0;
+        while ($attempt < $this->maxRetries) {
+            try {
+                $this->mail->send();
+                error_log("Email sent successfully to: " . implode(', ', array_keys($this->mail->getAllRecipientAddresses())));
+                return true;
+            } catch (Exception $e) {
+                $attempt++;
+                $errorMsg = "Email send attempt {$attempt} failed: " . $this->mail->ErrorInfo;
+                error_log($errorMsg);
+                
+                // Check if it's a temporary failure (we can retry)
+                $isTemporary = $this->isTemporaryFailure($this->mail->ErrorInfo);
+                
+                if ($attempt >= $this->maxRetries || !$isTemporary) {
+                    throw new Exception($errorMsg);
+                }
+                
+                // Wait before retrying
+                sleep($this->retryDelay * $attempt); // Exponential backoff
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Determine if an error is temporary and worth retrying
+     */
+    private function isTemporaryFailure($error) {
+        $temporaryKeywords = [
+            'temporarily unavailable',
+            'try again later',
+            'connection timeout',
+            'busy',
+            '421',
+            '450',
+            '451',
+            '452'
+        ];
+        
+        foreach ($temporaryKeywords as $keyword) {
+            if (stripos($error, $keyword) !== false) {
+                return true;
+            }
+        }
+        
+        return false;
+    }
+
+    /**
+     * Generate a unique Message-ID
+     */
+    private function generateMessageId() {
+        $domain = parse_url(BASE_URL, PHP_URL_HOST) ?: 'crofund.org';
+        return sprintf('<%s.%s@%s>',
+            uniqid('', true),
+            bin2hex(random_bytes(8)),
+            $domain
         );
     }
 
+    /**
+     * Send email verification link
+     */
     public function sendVerificationEmail($to, $verificationLink) {
         try {
-            // Clear all recipients first
             $this->mail->clearAddresses();
+            $this->mail->clearReplyTos();
             
-            // Add recipient
             $this->mail->addAddress($to);
+            $this->mail->addReplyTo('no-reply@crofund.org', SITE_NAME);
 
-            // Content
-            $this->mail->isHTML(true);
-            $this->mail->Subject = 'Verify Your Email Address';
-            $this->mail->Body    = $this->getVerificationEmailTemplate($verificationLink);
-            $this->mail->AltBody = "Please click the following link to verify your email address:\n\n" . $verificationLink;
+            $this->mail->Subject = 'Verify Your Email Address - ' . SITE_NAME;
+            $this->mail->Body = $this->getVerificationEmailTemplate($verificationLink);
+            $this->mail->AltBody = $this->getVerificationEmailPlainText($verificationLink);
+            $this->mail->MessageID = $this->generateMessageId();
 
-            return $this->mail->send();
+            return $this->sendWithRetry();
         } catch (Exception $e) {
-            throw new Exception("Email could not be sent. Mailer Error: {$this->mail->ErrorInfo}");
+            throw new Exception("Verification email could not be sent. Mailer Error: {$this->mail->ErrorInfo}");
         }
     }
 
     private function getVerificationEmailTemplate($verificationLink) {
-        return '
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">Verify Your Email Address</h2>
-            <p>Thank you for registering. Please click the button below to verify your email address:</p>
-            <p style="margin: 25px 0;">
-                <a href="' . $verificationLink . '" 
-                   style="background-color: #10B981; 
-                          color: white; 
-                          padding: 12px 30px; 
-                          text-decoration: none; 
-                          border-radius: 5px; 
-                          display: inline-block;">
-                    Verify Email Address
-                </a>
-            </p>
-            <p style="color: #666; font-size: 14px;">
-                If the button doesn\'t work, copy and paste this link in your browser:<br>
-                ' . $verificationLink . '
-            </p>
-        </div>';
+        return '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #ffffff;">
+        <h2 style="color: #111827; margin-top: 0;">Verify Your Email Address</h2>
+        <p>Thank you for registering with ' . SITE_NAME . '. Please click the button below to verify your email address:</p>
+        
+        <p style="margin: 30px 0; text-align: center;">
+            <a href="' . htmlspecialchars($verificationLink) . '" 
+               style="background-color: #059669; 
+                      color: white; 
+                      padding: 14px 32px; 
+                      text-decoration: none; 
+                      border-radius: 8px; 
+                      display: inline-block;
+                      font-weight: 600;
+                      font-size: 16px;">
+                Verify Email Address
+            </a>
+        </p>
+        
+        <p style="color: #4b5563; font-size: 14px;">
+            If the button doesn\'t work, copy and paste this link in your browser:
+        </p>
+        <p style="color: #059669; word-break: break-all; font-size: 14px;">
+            ' . htmlspecialchars($verificationLink) . '
+        </p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+        
+        <p style="color: #6b7280; font-size: 13px;">
+            If you didn\'t create an account with ' . SITE_NAME . ', you can safely ignore this email.
+        </p>
+    </div>
+</body>
+</html>';
     }
 
+    private function getVerificationEmailPlainText($verificationLink) {
+        return "Verify Your Email Address\n\n" .
+               "Thank you for registering with " . SITE_NAME . ". Please click the link below to verify your email address:\n\n" .
+               $verificationLink . "\n\n" .
+               "If you didn't create an account with " . SITE_NAME . ", you can safely ignore this email.";
+    }
+
+    /**
+     * Send welcome email (with verification)
+     */
     public function sendWelcomeEmail($to, $data) {
-        try {
-            // Clear all recipients first
-            $this->mail->clearAddresses();
-            
-            // Add recipient
-            $this->mail->addAddress($to);
-
-            // Content
-            $this->mail->isHTML(true);
-            $this->mail->Subject = 'Welcome to ' . SITE_NAME . ' - Verify Your Email';
-            $this->mail->Body = $this->getWelcomeEmailTemplate($data);
-            $this->mail->AltBody = "Welcome to " . SITE_NAME . "!\n\n" .
-                                  "Thank you for registering. Please verify your email address by clicking the following link:\n" .
-                                  $data['verificationLink'];
-
-            return $this->mail->send();
-        } catch (Exception $e) {
-            throw new Exception("Email could not be sent. Mailer Error: {$this->mail->ErrorInfo}");
-        }
+        return $this->sendVerificationEmail($to, $data['verificationLink']);
     }
 
-    private function getWelcomeEmailTemplate($data) {
-        return '
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">Welcome to ' . SITE_NAME . '!</h2>
-            <p>Hello ' . htmlspecialchars($data['name']) . ',</p>
-            <p>Thank you for creating an account. To complete your registration and verify your email address, please click the button below:</p>
-            
-            <div style="margin: 25px 0; text-align: center;">
-                <a href="' . $data['verificationLink'] . '" 
-                   style="background-color: #10B981; 
-                          color: white; 
-                          padding: 12px 30px; 
-                          text-decoration: none; 
-                          border-radius: 5px; 
-                          display: inline-block;">
-                    Verify Email Address
-                </a>
-            </div>
-            
-            <p style="color: #666;">If the button doesn\'t work, copy and paste this link in your browser:</p>
-            <p style="color: #666; font-size: 14px;">' . $data['verificationLink'] . '</p>
-            
-            <hr style="border: none; border-top: 1px solid #eee; margin: 25px 0;">
-            
-            <p style="color: #666; font-size: 14px;">
-                If you didn\'t create an account, you can safely ignore this email.
-            </p>
-        </div>';
-    }
-
+    /**
+     * Send admin registration notification
+     */
     public function sendAdminRegistrationNotification($userData) {
         try {
             $this->mail->clearAddresses();
+            $this->mail->clearReplyTos();
             
-            // Admin email address - you can change this!
             $adminEmail = 'support@crofund.org';
             $this->mail->addAddress($adminEmail);
+            $this->mail->addReplyTo('no-reply@crofund.org', SITE_NAME);
 
-            $this->mail->isHTML(true);
-            $this->mail->Subject = 'New User Registration on ' . SITE_NAME;
+            $this->mail->Subject = 'New User Registration - ' . SITE_NAME;
             $this->mail->Body = $this->getAdminNotificationEmailTemplate($userData);
             $this->mail->AltBody = $this->getAdminNotificationAltText($userData);
+            $this->mail->MessageID = $this->generateMessageId();
 
-            return $this->mail->send();
+            return $this->sendWithRetry();
         } catch (Exception $e) {
             error_log("Failed to send admin notification email: " . $e->getMessage());
             throw new Exception("Admin email notification could not be sent. Mailer Error: {$this->mail->ErrorInfo}");
@@ -154,25 +220,30 @@ class Mail {
     }
 
     private function getAdminNotificationEmailTemplate($userData) {
-        return '
-        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
-            <h2 style="color: #333;">New User Registration!</h2>
-            <p>A new user has registered on ' . SITE_NAME . ':</p>
-            
-            <div style="background-color: #f8fafc; padding: 20px; border-radius: 8px; margin: 20px 0;">
-                <p style="margin: 8px 0;"><strong>Full Name:</strong> ' . htmlspecialchars($userData['name']) . '</p>
-                <p style="margin: 8px 0;"><strong>Email:</strong> ' . htmlspecialchars($userData['email']) . '</p>
-                <p style="margin: 8px 0;"><strong>Phone:</strong> ' . htmlspecialchars($userData['phone']) . '</p>
-                <p style="margin: 8px 0;"><strong>Country:</strong> ' . htmlspecialchars($userData['country']) . '</p>
-                <p style="margin: 8px 0;"><strong>City:</strong> ' . htmlspecialchars($userData['city']) . '</p>
-                <p style="margin: 8px 0;"><strong>National ID (NIN):</strong> ' . htmlspecialchars($userData['nin']) . '</p>
-                <p style="margin: 8px 0;"><strong>Newsletter Opt-in:</strong> ' . ($userData['newsletter'] ? 'Yes' : 'No') . '</p>
-            </div>
-            
-            <p style="color: #666; font-size: 14px;">
-                Please review this new registration and approve/verify the user as needed.
-            </p>
-        </div>';
+        return '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New User Registration</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #ffffff;">
+        <h2 style="color: #111827; margin-top: 0;">New User Registration</h2>
+        <p>A new user has registered on ' . SITE_NAME . ':</p>
+        
+        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 8px 0;"><strong>Full Name:</strong> ' . htmlspecialchars($userData['name']) . '</p>
+            <p style="margin: 8px 0;"><strong>Email:</strong> ' . htmlspecialchars($userData['email']) . '</p>
+            <p style="margin: 8px 0;"><strong>Phone:</strong> ' . htmlspecialchars($userData['phone']) . '</p>
+            <p style="margin: 8px 0;"><strong>Country:</strong> ' . htmlspecialchars($userData['country']) . '</p>
+            <p style="margin: 8px 0;"><strong>City:</strong> ' . htmlspecialchars($userData['city']) . '</p>
+            <p style="margin: 8px 0;"><strong>National ID (NIN):</strong> ' . htmlspecialchars($userData['nin']) . '</p>
+            <p style="margin: 8px 0;"><strong>Newsletter Opt-in:</strong> ' . ($userData['newsletter'] ? 'Yes' : 'No') . '</p>
+        </div>
+    </div>
+</body>
+</html>';
     }
 
     private function getAdminNotificationAltText($userData) {
@@ -185,5 +256,126 @@ class Mail {
                "City: " . $userData['city'] . "\n" .
                "National ID (NIN): " . $userData['nin'] . "\n" .
                "Newsletter Opt-in: " . ($userData['newsletter'] ? 'Yes' : 'No');
+    }
+
+    /**
+     * Send 2FA verification code
+     */
+    public function sendTwoFactorCode($to, $code) {
+        try {
+            $this->mail->clearAddresses();
+            $this->mail->clearReplyTos();
+            
+            $this->mail->addAddress($to);
+            $this->mail->addReplyTo('no-reply@crofund.org', SITE_NAME);
+
+            $this->mail->Subject = 'Your Two-Factor Verification Code - ' . SITE_NAME;
+            $this->mail->Body = $this->getTwoFactorEmailTemplate($code);
+            $this->mail->AltBody = $this->getTwoFactorEmailPlainText($code);
+            $this->mail->MessageID = $this->generateMessageId();
+
+            return $this->sendWithRetry();
+        } catch (Exception $e) {
+            throw new Exception("2FA code email could not be sent. Mailer Error: {$this->mail->ErrorInfo}");
+        }
+    }
+
+    private function getTwoFactorEmailTemplate($code) {
+        return '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your Verification Code</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #ffffff;">
+        <h2 style="color: #111827; margin-top: 0;">Two-Factor Verification Code</h2>
+        <p>Here is your verification code to complete your login:</p>
+        
+        <div style="background-color: #f0fdf4; padding: 30px; border-radius: 8px; margin: 30px 0; text-align: center;">
+            <span style="font-size: 36px; font-weight: 700; color: #059669; letter-spacing: 0.5em;">' . htmlspecialchars($code) . '</span>
+        </div>
+        
+        <p style="color: #4b5563;">This code will expire in 5 minutes.</p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+        
+        <p style="color: #6b7280; font-size: 13px;">
+            If you didn\'t request this code, you can safely ignore this email.
+        </p>
+    </div>
+</body>
+</html>';
+    }
+
+    private function getTwoFactorEmailPlainText($code) {
+        return "Two-Factor Verification Code\n\n" .
+               "Here is your verification code to complete your login:\n\n" .
+               "Verification Code: {$code}\n\n" .
+               "This code will expire in 5 minutes.\n\n" .
+               "If you didn't request this code, you can safely ignore this email.";
+    }
+
+    public function sendVerificationCode($to, $code, $name = null) {
+        try {
+            $this->mail->clearAddresses();
+            $this->mail->clearReplyTos();
+            
+            $this->mail->addAddress($to);
+            $this->mail->addReplyTo('no-reply@crofund.org', SITE_NAME);
+
+            $this->mail->Subject = "Verify Your Email - " . SITE_NAME;
+            $this->mail->Body = $this->getVerificationCodeEmailTemplate($code, $name);
+            $this->mail->AltBody = $this->getVerificationCodeEmailPlainText($code, $name);
+            $this->mail->MessageID = $this->generateMessageId();
+
+            return $this->sendWithRetry();
+        } catch (Exception $e) {
+            throw new Exception("Verification code email could not be sent: " . $this->mail->ErrorInfo);
+        }
+    }
+
+    private function getVerificationCodeEmailTemplate($code, $name = null) {
+        $greeting = $name ? "Hi $name," : "Hi,";
+        
+        return '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #ffffff;">
+        <h2 style="color: #111827; margin-top: 0;">Verify Your Email Address</h2>
+        <p>' . htmlspecialchars($greeting) . '</p>
+        <p>Thank you for signing up for ' . SITE_NAME . '! Please use the verification code below to verify your email address.</p>
+        
+        <div style="background-color: #ecfdf5; padding: 30px; border-radius: 8px; margin: 30px 0; text-align: center;">
+            <span style="font-size: 36px; font-weight: 700; color: #059669; letter-spacing: 0.5em;">' . htmlspecialchars($code) . '</span>
+        </div>
+        
+        <p style="color: #4b5563;">This code will expire in 1 hour.</p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+        
+        <p style="color: #6b7280; font-size: 13px;">
+            If you didn\'t create an account with ' . SITE_NAME . ', you can safely ignore this email.
+        </p>
+    </div>
+</body>
+</html>';
+    }
+
+    private function getVerificationCodeEmailPlainText($code, $name = null) {
+        $greeting = $name ? "Hi $name," : "Hi,";
+        
+        return "Verify Your Email Address\n\n" .
+               htmlspecialchars($greeting) . "\n\n" .
+               "Thank you for signing up for " . SITE_NAME . "! Please use the verification code below to verify your email address.\n\n" .
+               "Verification Code: $code\n\n" .
+               "This code will expire in 1 hour.\n\n" .
+               "If you didn't create an account with " . SITE_NAME . ", you can safely ignore this email.";
     }
 }
