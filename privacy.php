@@ -8,6 +8,11 @@ require_once 'config/config.php';
     <meta name="google-adsense-account" content="ca-pub-9839651797371714">
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
+    <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
+    <link rel="shortcut icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
+    <link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
+    
     <title>Privacy Policy - CroFunding</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>

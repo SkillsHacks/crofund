@@ -22,7 +22,9 @@ if (!$donationId) {
     <title>Donation Completed - CroFunding</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://rsms.me/inter/inter.css" rel="stylesheet">
-    <link rel="icon" href="<?php echo BASE_URL; ?>/assets/images/Logo.png" type="image/x-icon">
+    <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
+    <link rel="shortcut icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
+    <link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
 </head>
 <body class="bg-gray-100 font-sans">
     

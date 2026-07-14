@@ -52,8 +52,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Edit Campaign - CroFunding</title>
     <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
+    <link rel="shortcut icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
+    <link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
+    <title>Edit Campaign - CroFunding</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
