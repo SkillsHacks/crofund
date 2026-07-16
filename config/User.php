@@ -62,36 +62,48 @@ class User {
                 throw new Exception("National ID Number already registered");
             }
 
-            $sql = "INSERT INTO users (name, email, password, phone, nin, country, city, newsletter, status, verification_token, verification_code, verification_code_expires_at) 
-                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?)";
+            $sql = "INSERT INTO users (name, email, password, phone, phone_country_code, nin, country, nationality, city, newsletter, status, account_type, organization_name, organization_type, registration_number, organization_website, organization_contact, is_verified, verification_token, verification_code, verification_code_expires_at, is_phone_verified, phone_verified_at, phone_risk_score, phone_verification_status) 
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'active', ?, ?, ?, ?, ?, ?, 1, NULL, NULL, NULL, ?, ?, ?, ?)";
             
-            $verificationToken = bin2hex(random_bytes(32));
-            $verificationCode = str_pad(rand(0, 999999), 6, '0', STR_PAD_LEFT);
-            $verificationExpiresAt = date('Y-m-d H:i:s', time() + 3600); // Expires in 1 hour
             $hashedPassword = password_hash($data['password'], PASSWORD_DEFAULT);
+            $isPhoneVerified = !empty($data['is_phone_verified']) ? 1 : 0;
+            $phoneVerificationStatus = $data['phone_verification_status'] ?? ($isPhoneVerified ? 'verified' : 'pending');
+            $phoneVerifiedAt = $data['phone_verified_at'] ?? ($isPhoneVerified ? date('Y-m-d H:i:s') : null);
             
             $params = [
                 $data['name'],
                 $data['email'],
                 $hashedPassword,
                 $data['phone'],
+                $data['phone_country_code'] ?? null,
                 $data['nin'],
                 $data['country'],
+                $data['nationality'],
                 $data['city'],
                 $data['newsletter'] ? 1 : 0,
-                $verificationToken,
-                $verificationCode,
-                $verificationExpiresAt
+                $data['account_type'] ?? 'personal',
+                $data['organization_name'] ?? null,
+                $data['organization_type'] ?? null,
+                $data['registration_number'] ?? null,
+                $data['organization_website'] ?? null,
+                $data['organization_contact'] ?? null,
+                $isPhoneVerified,
+                $phoneVerifiedAt,
+                (int) ($data['phone_risk_score'] ?? 0),
+                $phoneVerificationStatus
             ];
             
             $this->db->query($sql, $params);
             $userId = $this->db->lastInsertId();
             
+            // Handle avatar upload if provided
+            if (isset($data['avatar']) && $data['avatar']['error'] === UPLOAD_ERR_OK) {
+                $this->handleAvatarUpload($userId, $data['avatar']);
+            }
+            
             return [
                 'id' => $userId,
-                'email' => $data['email'],
-                'verification_token' => $verificationToken,
-                'verification_code' => $verificationCode
+                'email' => $data['email']
             ];
         } catch (Exception $e) {
             throw new Exception("Registration failed: " . $e->getMessage());
@@ -229,36 +241,11 @@ class User {
 
     public function updateProfile($userId, $data) {
         try {
-            // Build dynamic query based on available fields
-            $fields = [];
-            $values = [];
-            
-            if (isset($data['email'])) {
-                $fields[] = "email = ?";
-                $values[] = $data['email'];
-            }
-            
-            if (isset($data['phone'])) {
-                $fields[] = "phone = ?";
-                $values[] = $data['phone'];
-            }
-            
-            // Note: name is intentionally excluded for security reasons
-            // Users cannot change their name to prevent ID verification fraud
-            
-            if (empty($fields)) {
-                throw new Exception("No valid fields to update");
-            }
-            
-            $values[] = $userId; // Add userId as the last parameter
-            $query = "UPDATE users SET " . implode(', ', $fields) . " WHERE id = ?";
-            
-            return $this->db->query($query, $values);
+            throw new Exception("Profile updates for identity fields are disabled");
         } catch (Exception $e) {
-            // Log the error for debugging
-            error_log("Profile update failed for user $userId: " . $e->getMessage());
-            error_log("Update data: " . json_encode($data));
-            throw new Exception("Failed to update profile: " . $e->getMessage());
+            error_log("Profile update blocked for user $userId: " . $e->getMessage());
+            error_log("Blocked update data: " . json_encode($data));
+            throw new Exception("Profile details such as name, email, and phone cannot be changed from settings.");
         }
     }
 

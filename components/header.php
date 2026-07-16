@@ -56,7 +56,7 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
             </div>
 
             <div class="flex-1 flex items-center justify-end space-x-2 md:space-x-4">
-                <a href="<?php echo BASE_URL; ?>/campaigns/create.php" 
+                <a href="<?php echo BASE_URL; ?>/campaigns/create.php" data-dashboard-ajax="create-campaign"
                    class="hidden md:inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-lg text-white bg-emerald-600 hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
                     <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
@@ -78,9 +78,9 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
 
                     <div class="hidden absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50" id="user-menu">
                         <div class="py-1" role="menu">
-                            <a href="<?php echo BASE_URL; ?>/account/settings.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Your Profile</a>
-                            <a href="<?php echo BASE_URL; ?>/campaigns" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Your Campaigns</a>
-                            <a href="<?php echo BASE_URL; ?>/account/settings.php" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Settings</a>
+                            <a href="<?php echo BASE_URL; ?>/account/settings.php" data-dashboard-ajax="section" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Your Profile</a>
+                            <a href="<?php echo BASE_URL; ?>/campaigns/index.php" data-dashboard-ajax="section" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Your Campaigns</a>
+                            <a href="<?php echo BASE_URL; ?>/account/settings.php" data-dashboard-ajax="section" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" role="menuitem">Settings</a>
                             <div class="border-t border-gray-100"></div>
                             <a href="<?php echo BASE_URL; ?>/logout.php" class="block px-4 py-2 text-sm text-red-600 hover:bg-gray-100" role="menuitem">Sign out</a>
                         </div>
@@ -92,10 +92,10 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
 
     <div class="hidden md:hidden bg-white border-t border-gray-200" id="mobile-menu">
         <div class="px-2 pt-2 pb-3 space-y-1">
-            <a href="<?php echo BASE_URL; ?>/profile.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-50">Your Profile</a>
-            <a href="<?php echo BASE_URL; ?>/campaigns" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-50">Your Campaigns</a>
-            <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-50">Create Campaign</a>
-            <a href="<?php echo BASE_URL; ?>/settings.php" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-50">Settings</a>
+            <a href="<?php echo BASE_URL; ?>/account/settings.php" data-dashboard-ajax="section" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-50">Your Profile</a>
+            <a href="<?php echo BASE_URL; ?>/campaigns/index.php" data-dashboard-ajax="section" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-50">Your Campaigns</a>
+            <a href="<?php echo BASE_URL; ?>/campaigns/create.php" data-dashboard-ajax="create-campaign" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-50">Create Campaign</a>
+            <a href="<?php echo BASE_URL; ?>/account/settings.php" data-dashboard-ajax="section" class="block px-3 py-2 rounded-md text-base font-medium text-gray-700 hover:text-emerald-600 hover:bg-gray-50">Settings</a>
             <div class="border-t border-gray-200 my-2"></div>
             <a href="<?php echo BASE_URL; ?>/logout.php" class="block px-3 py-2 rounded-md text-base font-medium text-red-600 hover:bg-gray-50">Sign out</a>
         </div>

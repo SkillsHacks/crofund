@@ -84,40 +84,71 @@ $campaigns = $userCampaigns->getAllByUser(1);
     [x-cloak] {
       display: none !important;
     }
+    .hero-orb {
+      position: absolute;
+      border-radius: 9999px;
+      filter: blur(60px);
+      opacity: 0.45;
+      pointer-events: none;
+    }
   </style>
 </head>
-<body class="bg-gray-50 font-sans">
+<body class="bg-slate-50 font-sans text-slate-900">
 
 <?php include '../../components/public-header.php'; ?>
 
-  <main class="pt-20 pb-12 md:pt-28 md:pb-12">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <!-- Header -->
-      <div class="relative overflow-hidden rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-500 to-emerald-500 p-4 md:p-8 mb-8 md:mb-12 animate-gradient">
-        <div class="relative z-10 text-center text-white">
-          <div class="flex justify-center items-center gap-2 md:gap-3 mb-2">
-            <svg class="w-6 h-6 md:w-8 md:h-8 text-yellow-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="#facc15"/>
-              <path d="M9 12l2 2l4-4" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-            </svg>
-            <span class="inline-block bg-yellow-300 text-emerald-900 font-bold px-2 md:px-3 py-0.5 md:py-1 rounded-full text-xs md:text-sm shadow">Verified Campaigns</span>
-          </div>
-          <h1 class="text-2xl md:text-4xl lg:text-5xl font-bold mb-3 md:mb-4">Browse Verified Fundraisers</h1>
-          <p class="text-base md:text-xl lg:text-2xl text-emerald-50">All campaigns listed here are verified and trusted. Support with confidence!</p>
-        </div>
-        <div class="absolute inset-0 bg-black opacity-10"></div>
-      </div>
-      <!-- Empathy Message -->
-      <div class="max-w-3xl mx-auto mb-8 md:mb-10">
-        <div class="bg-white rounded-xl shadow p-4 md:p-6 text-center border-l-4 border-emerald-500">
-          <p class="text-base md:text-lg lg:text-xl font-semibold text-emerald-700 mb-1 md:mb-2">Your support truly matters.</p>
-          <p class="text-sm md:text-base text-gray-700">Every verified campaign here has made a real difference in someone's life. These fundraisers are carefully reviewed and trusted, ensuring your generosity goes directly to those in genuine need. Thank you for believing in real causes and real people.</p>
-        </div>
-      </div>
-    
+  <main class="relative overflow-hidden pt-20 pb-14 md:pt-28 md:pb-20">
+    <div class="hero-orb -top-16 left-[-4rem] h-56 w-56 bg-emerald-200"></div>
+    <div class="hero-orb top-20 right-[-3rem] h-64 w-64 bg-teal-200"></div>
 
-      <!-- Campaigns Grid -->
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 md:gap-8">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
+      <section class="relative overflow-hidden rounded-[2rem] border border-white/70 bg-gradient-to-br from-slate-950 via-emerald-950 to-teal-900 px-6 py-8 text-white shadow-2xl sm:px-8 md:px-10 md:py-10 lg:px-12">
+        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.18),_transparent_22%),radial-gradient(circle_at_bottom_right,_rgba(16,185,129,0.22),_transparent_34%)]"></div>
+        <div class="relative grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
+          <div class="max-w-3xl">
+            <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-emerald-100">
+              <svg class="h-4 w-4 text-yellow-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="#facc15"/>
+                <path d="M9 12l2 2l4-4" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+              </svg>
+              Verified fundraisers
+            </div>
+            <h1 class="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
+              Support trusted campaigns with confidence.
+            </h1>
+            <p class="mt-4 max-w-2xl text-sm leading-7 text-emerald-50 sm:text-base">
+              Every fundraiser listed here has passed an additional review step. Discover causes that have been vetted for trust, transparency, and real community impact.
+            </p>
+          </div>
+
+          <div class="grid gap-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
+            <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur-sm">
+              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-100/80">Verified campaigns</p>
+              <p class="mt-2 text-2xl font-bold text-white"><?= number_format(count($campaigns)) ?></p>
+              <p class="mt-1 text-sm text-emerald-50/80">Reviewed and listed</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur-sm">
+              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-100/80">Trust first</p>
+              <p class="mt-2 text-2xl font-bold text-white">100%</p>
+              <p class="mt-1 text-sm text-emerald-50/80">Manual verification focus</p>
+            </div>
+            <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur-sm">
+              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-emerald-100/80">Giving</p>
+              <p class="mt-2 text-2xl font-bold text-white">Secure</p>
+              <p class="mt-1 text-sm text-emerald-50/80">Donate with confidence</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="-mt-6 relative z-10 mx-auto max-w-4xl rounded-[1.75rem] border border-slate-200/70 bg-white/95 p-6 text-center shadow-xl shadow-slate-200/60 backdrop-blur sm:p-8">
+        <p class="text-lg font-semibold tracking-tight text-slate-900 sm:text-xl">Your support truly matters.</p>
+        <p class="mt-3 text-sm leading-7 text-slate-600 sm:text-base">
+          Every verified campaign here represents a real story, a real person, and a real need. These fundraisers are reviewed so your generosity can go further with more confidence and more clarity.
+        </p>
+      </section>
+
+      <div class="mt-8 grid grid-cols-1 gap-6 lg:grid-cols-2 xl:gap-8">
         <?php foreach ($campaigns as $index => $camp): 
           $title = htmlspecialchars($camp['title'] ?? '');
           $description = htmlspecialchars($camp['description'] ?? '');
@@ -129,58 +160,82 @@ $campaigns = $userCampaigns->getAllByUser(1);
           $percent = $goal > 0 ? min(($current / $goal) * 100, 100) : 0;
           $imageUrl = !empty($camp['image_path']) ? BASE_URL . '/' . ltrim($camp['image_path'], '/') : BASE_URL . '/assets/images/default-campaign.jpg';
         ?>
-        <div class="group bg-white rounded-xl shadow-sm hover:shadow-md transition-all duration-300 overflow-hidden max-w-full w-full" data-aos="fade-up" data-aos-delay="<?= $index * 100 ?>" x-data="{ expanded: false }">
-          <div class="flex flex-row sm:flex-col">
-            <!-- Image -->
-            <div class="w-1/2 h-36 md:h-40 sm:w-full sm:h-48 overflow-hidden relative">
-              <img src="<?= $imageUrl ?>" alt="<?= $title ?>" class="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105" onerror="this.src='<?= BASE_URL ?>/assets/images/default-campaign.jpg'" />
-              <span class="absolute top-2 right-2 md:top-3 md:right-3 px-2 py-1 text-[10px] md:text-xs font-semibold text-white bg-emerald-500 rounded-full shadow flex items-center gap-1">
-                <svg class="w-3 h-3 md:w-4 md:h-4 text-yellow-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                  <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="#facc15"/>
-                  <path d="M9 12l2 2l4-4" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-                </svg>
-                Verified
-              </span>
-            
+        <div class="group overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-200/70" data-aos="fade-up" data-aos-delay="<?= $index * 100 ?>" x-data="{ expanded: false }">
+          <div class="flex flex-col md:flex-row">
+            <div class="relative h-60 overflow-hidden bg-slate-100 md:h-auto md:w-[44%]">
+              <img src="<?= $imageUrl ?>" alt="<?= $title ?>" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='<?= BASE_URL ?>/assets/images/default-campaign.jpg'" />
+              <div class="absolute inset-x-0 top-0 flex items-start justify-between p-4">
+                <span class="inline-flex items-center gap-1 rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-sm backdrop-blur-sm">
+                  <svg class="h-3.5 w-3.5 text-yellow-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="#facc15"/>
+                    <path d="M9 12l2 2l4-4" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                  </svg>
+                  Verified
+                </span>
+                <span class="inline-flex items-center rounded-full bg-slate-950/75 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm">
+                  <?= round($percent) ?>% funded
+                </span>
+              </div>
+              <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/70 to-transparent"></div>
             </div>
 
-            <!-- Content -->
-            <div class="w-1/2 sm:w-full p-3 md:p-6 flex flex-col justify-between">
-              <h3 class="text-sm md:text-lg font-semibold text-gray-900 mb-1 group-hover:text-emerald-600 leading-snug line-clamp-2" title="<?= $title ?>">
+            <div class="flex flex-1 flex-col p-5 sm:p-6">
+              <div class="flex items-center gap-2 text-xs font-medium text-slate-500">
+                <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-emerald-700"><?= $category ?></span>
+                <span class="inline-flex items-center gap-1">
+                  <svg class="h-3.5 w-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M9.049 2.927C9.469 1.675 10.531 1.675 10.951 2.927l1.07 3.207a1 1 0 00.95.69h3.374c1.317 0 1.86 1.687.795 2.454l-2.73 1.967a1 1 0 00-.364 1.118l1.07 3.207c.42 1.252-.566 2.19-1.63 1.423l-2.73-1.967a1 1 0 00-1.172 0l-2.73 1.967c-1.064.767-2.05-.171-1.63-1.423l1.07-3.207a1 1 0 00-.364-1.118L2.68 9.278c-1.065-.767-.522-2.454.795-2.454h3.374a1 1 0 00.95-.69l1.07-3.207z"/>
+                  </svg>
+                  Trusted listing
+                </span>
+              </div>
+
+              <h3 class="mt-4 text-xl font-semibold tracking-tight text-slate-900 transition-colors group-hover:text-emerald-700 line-clamp-2" title="<?= $title ?>">
                 <?= $title ?>
               </h3>
 
-              <div class="relative mb-3 text-xs md:text-sm text-gray-600 flex-1">
+              <div class="mt-4 flex-1 text-sm leading-7 text-slate-600">
                 <p :class="{ 'line-clamp-3': !expanded }"><?= $description ?></p>
                 <?php if (strlen($camp['description']) > 140): ?>
-                <button @click="expanded = !expanded" class="mt-1 text-emerald-600 hover:text-emerald-700 text-xs font-medium flex items-center">
-                  <span x-text="expanded ? 'Show Less' : 'Read More'"></span>
-                  <svg class="w-4 h-4 ml-1 transition-transform" :class="{ 'rotate-180': expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <button @click="expanded = !expanded" class="mt-2 inline-flex items-center text-xs font-semibold text-emerald-600 transition hover:text-emerald-700">
+                  <span x-text="expanded ? 'Show less' : 'Read more'"></span>
+                  <svg class="ml-1 h-4 w-4 transition-transform" :class="{ 'rotate-180': expanded }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
                   </svg>
                 </button>
                 <?php endif; ?>
               </div>
 
-              <!-- Updated Progress Section with Donors Inline -->
-              <div class="mb-3">
-                <div class="w-full h-1.5 md:h-2 bg-gray-200 rounded-full overflow-hidden">
-                  <div class="h-full bg-gradient-to-r from-emerald-500 to-teal-500 rounded-full" style="width: <?= round($percent) ?>%"></div>
+              <div class="mt-6 rounded-2xl bg-slate-50 p-4">
+                <div class="mb-3 flex items-center justify-between text-sm">
+                  <span class="text-slate-600">Raised</span>
+                  <span class="font-semibold text-emerald-700"><?= round($percent) ?>%</span>
                 </div>
-                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center mt-2 text-[10px] md:text-xs text-gray-700 gap-1">
-                  <span><strong>$<?= number_format($current, 2) ?></strong> <span class="text-gray-500">of $<?= number_format($goal, 2) ?></span></span>
-                  <div class="flex items-center gap-1 md:gap-2 text-emerald-600 font-semibold">
-                    <span><?= round($percent) ?>%</span>
-                    <span class="text-gray-400">|</span>
-                    <span class="text-gray-600"><?= $donors ?> donors</span>
+                <div class="mb-3 h-2.5 overflow-hidden rounded-full bg-slate-200">
+                  <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-teal-500" style="width: <?= round($percent) ?>%"></div>
+                </div>
+                <div class="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p class="text-slate-500">Current</p>
+                    <p class="mt-1 font-semibold text-slate-900">$<?= number_format($current, 2) ?></p>
+                  </div>
+                  <div>
+                    <p class="text-slate-500">Goal</p>
+                    <p class="mt-1 font-semibold text-slate-900">$<?= number_format($goal, 2) ?></p>
                   </div>
                 </div>
               </div>
 
-              <div class="flex justify-between pt-2 border-t border-gray-100">
-                <div class="flex space-x-2">
-                  <button onclick="copyShareLink(<?= $id ?>, '<?= addslashes($title) ?>')" class="px-3 py-1.5 text-xs font-medium text-gray-700 border border-gray-300 rounded hover:bg-gray-100">Share</button>
-                  <a href="../public-view.php?id=<?= $id ?>" class="px-4 py-1.5 text-xs font-medium text-white rounded bg-emerald-600 hover:bg-emerald-700 transition">Donate</a>
+              <div class="mt-5 flex items-center justify-between border-t border-slate-100 pt-4">
+                <div class="flex items-center text-sm text-slate-600">
+                  <svg class="mr-1.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
+                  </svg>
+                  <?= $donors ?> donors
+                </div>
+                <div class="flex items-center gap-2">
+                  <button onclick="copyShareLink(<?= $id ?>, '<?= addslashes($title) ?>')" class="inline-flex items-center justify-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50">Share</button>
+                  <a href="../public-view.php?id=<?= $id ?>" class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700">Donate</a>
                 </div>
               </div>
             </div>

@@ -2,16 +2,14 @@
 session_start();
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Campaign.php';
-require_once __DIR__ . '/../config/User.php'; // Add User class
+require_once __DIR__ . '/../config/User.php';
 
-// Check if user is logged in using session
 if (!isset($_SESSION['user_id'])) {
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
     header("Location: " . BASE_URL . "/login.php?message=" . urlencode('Please login to create a campaign'));
     exit();
 }
 
-// Initialize User object
 $user = new User();
 if (!$user->isLoggedIn()) {
     $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
@@ -21,84 +19,348 @@ if (!$user->isLoggedIn()) {
 
 $error = null;
 $success = null;
+$isAjaxRequest = isset($_GET['ajax']) && $_GET['ajax'] === '1';
 
-// Handle form submission
-if ($_SERVER["REQUEST_METHOD"] == "POST") {
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        // Log the attempt
         error_log("Campaign creation attempt for user " . $_SESSION['user_id'] . " with data: " . json_encode($_POST));
-        
-        // Basic input validation
+
         $required_fields = ['title', 'category', 'goal', 'description'];
         $missing_fields = [];
-        
+
         foreach ($required_fields as $field) {
             if (empty($_POST[$field])) {
                 $missing_fields[] = $field;
             }
         }
-        
+
         if (!empty($missing_fields)) {
             error_log("Campaign creation validation failed for user " . $_SESSION['user_id'] . ": Missing fields: " . implode(', ', $missing_fields));
-            throw new Exception("Please fill in all required fields.");
+            throw new Exception('Please fill in all required fields.');
         }
-        
-        // Validate goal amount
+
         if (!is_numeric($_POST['goal']) || $_POST['goal'] < 100) {
             error_log("Campaign creation validation failed for user " . $_SESSION['user_id'] . ": Invalid goal amount: " . $_POST['goal']);
-            throw new Exception("Please enter a valid goal amount (minimum $100).");
+            throw new Exception('Please enter a valid goal amount (minimum $100).');
         }
-        
-        // Sanitize input data (preserve emojis and special characters but prevent XSS)
+
         $sanitized_data = [
             'title' => trim(filter_var($_POST['title'], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES)),
             'category' => trim(filter_var($_POST['category'], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES)),
-            'goal' => (float)$_POST['goal'],
-            'description' => trim(filter_var($_POST['description'], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES))
+            'goal' => (float) $_POST['goal'],
+            'description' => trim(filter_var($_POST['description'], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES)),
+            'user_id' => $_SESSION['user_id'],
         ];
-        
-        // Add user_id to the data
-        $sanitized_data['user_id'] = $_SESSION['user_id'];
-        
-        // Handle file upload if present
+
         if (isset($_FILES['campaign_image']) && $_FILES['campaign_image']['error'] === UPLOAD_ERR_OK) {
             $sanitized_data['campaign_image'] = $_FILES['campaign_image'];
         }
-        
+
         $campaign = new Campaign();
         $result = $campaign->create($sanitized_data);
-        
+
         if ($result) {
             error_log("Campaign created successfully with ID: " . $result . " for user " . $_SESSION['user_id']);
-            $success = "Campaign created successfully!";
-            header("Location: view.php?id=" . $result);
+            $success = 'Campaign created successfully!';
+            header('Location: view.php?id=' . $result);
             exit();
-        } else {
-            // Log the error instead of showing to user
-            error_log("Campaign creation failed for user " . $_SESSION['user_id'] . ": Campaign::create() returned false");
-            throw new Exception("Something went wrong. Please try again.");
         }
+
+        error_log("Campaign creation failed for user " . $_SESSION['user_id'] . ": Campaign::create() returned false");
+        throw new Exception('Something went wrong. Please try again.');
     } catch (Exception $e) {
-        // Log the actual error details with stack trace
         error_log("Campaign creation error for user " . $_SESSION['user_id'] . ": " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
-        error_log("Stack trace: " . $e->getTraceAsString());
-        
-        // Show generic error message to user
-        $error = "Something went wrong. Please try again.";
+        error_log('Stack trace: ' . $e->getTraceAsString());
+        $error = 'Something went wrong. Please try again.';
     } catch (Error $e) {
-        // Log PHP errors (fatal errors, etc.)
         error_log("Campaign creation PHP error for user " . $_SESSION['user_id'] . ": " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
-        error_log("Stack trace: " . $e->getTraceAsString());
-        
-        // Show generic error message to user
-        $error = "Something went wrong. Please try again.";
+        error_log('Stack trace: ' . $e->getTraceAsString());
+        $error = 'Something went wrong. Please try again.';
     }
 }
 
-// Include header AFTER all potential redirects
-include '../components/header.php';
-?>
+if ($isAjaxRequest) {
+    ob_start();
+}
 
+function renderCreateCampaignContent(?string $error = null): void {
+?>
+<div class="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.65fr),360px]">
+        <div class="space-y-6">
+            <section class="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 shadow-sm">
+                <div class="absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-white/50 to-transparent lg:block"></div>
+                <div class="relative px-6 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
+                    <div class="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
+                        <div class="max-w-2xl">
+                            <div class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                                <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+                                New campaign
+                            </div>
+                            <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Bring your story to life</h1>
+                            <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                                Create a compelling fundraiser with a clear goal, a strong story, and an image that helps supporters instantly understand your cause.
+                            </p>
+                        </div>
+                        <a href="<?php echo BASE_URL; ?>/dashboard.php"
+                           class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-700">
+                            <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                            </svg>
+                            Back to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </section>
+
+            <?php if ($error): ?>
+                <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-red-700 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <div>
+                            <p class="text-sm font-semibold">We couldn’t create your campaign</p>
+                            <p class="mt-1 text-sm"><?php echo htmlspecialchars($error); ?></p>
+                        </div>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <form method="POST" enctype="multipart/form-data" class="space-y-6">
+                <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                    <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-semibold text-slate-900">Basic information</h2>
+                                <p class="text-sm text-slate-500">Start with a title and category people can immediately understand.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 gap-6 px-5 py-5 sm:px-6 sm:py-6">
+                        <div>
+                            <label for="title" class="block text-sm font-semibold text-slate-700">Campaign title</label>
+                            <input type="text" id="title" name="title" required
+                                   placeholder="e.g. Help rebuild a family home after the fire"
+                                   class="mt-2 block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
+                            <p class="mt-2 text-sm text-slate-500">Aim for a clear, specific title that builds trust quickly.</p>
+                        </div>
+
+                        <div>
+                            <label for="category" class="block text-sm font-semibold text-slate-700">Category</label>
+                            <select id="category" name="category" required
+                                    class="mt-2 block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
+                                <option value="">Select a category</option>
+                                <option value="education">Education</option>
+                                <option value="medical">Medical & Health</option>
+                                <option value="emergency">Emergency Relief</option>
+                                <option value="community">Community Project</option>
+                                <option value="creative">Creative Project</option>
+                                <option value="nonprofit">Nonprofit</option>
+                                <option value="business">Small Business</option>
+                                <option value="technology">Technology</option>
+                                <option value="environment">Environment</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                    <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-semibold text-slate-900">Funding goal</h2>
+                                <p class="text-sm text-slate-500">Set a realistic target that reflects what you actually need.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="px-5 py-5 sm:px-6 sm:py-6">
+                        <div class="max-w-md">
+                            <label for="goal" class="block text-sm font-semibold text-slate-700">Funding goal (USD)</label>
+                            <div class="relative mt-2">
+                                <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">$</span>
+                                <input type="number" id="goal" name="goal" min="100" required placeholder="5000"
+                                       class="block w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-8 pr-4 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
+                            </div>
+                            <p class="mt-2 text-sm text-slate-500">Minimum campaign goal is $100.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                    <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
+                        <div class="flex items-center gap-3">
+                            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <h2 class="text-lg font-semibold text-slate-900">Story & media</h2>
+                                <p class="text-sm text-slate-500">Add the details and imagery that make people want to support your cause.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-6 px-5 py-5 sm:px-6 sm:py-6">
+                        <div>
+                            <label for="description" class="block text-sm font-semibold text-slate-700">Campaign story</label>
+                            <textarea id="description" name="description" rows="8" required
+                                      placeholder="Tell your story. Why are you raising funds? How will the money be used? What impact will it make?"
+                                      class="mt-2 block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10"></textarea>
+                            <p class="mt-2 text-sm text-slate-500">Be honest, specific, and transparent about where the money will go.</p>
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700">Campaign image</label>
+                            <div id="campaign-image-dropzone" class="mt-2 rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/80 p-6 text-center transition hover:border-emerald-400 hover:bg-emerald-50/40">
+                                <div id="image-preview" class="hidden mb-5">
+                                    <img src="" alt="Preview" class="mx-auto max-h-64 rounded-2xl object-cover shadow-sm">
+                                </div>
+                                <div id="upload-placeholder" class="flex flex-col items-center">
+                                    <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm">
+                                        <svg class="h-7 w-7" stroke="currentColor" fill="none" viewBox="0 0 48 48">
+                                            <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
+                                        </svg>
+                                    </div>
+                                    <p class="mt-4 text-sm font-semibold text-slate-700">Upload a strong cover image</p>
+                                    <p class="mt-1 max-w-md text-sm text-slate-500">Choose a clear image that reflects your campaign and helps donors connect with it instantly.</p>
+                                    <div class="mt-4 flex flex-col items-center gap-2 sm:flex-row">
+                                        <label for="campaign_image" class="inline-flex cursor-pointer items-center rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-within:outline-none focus-within:ring-4 focus-within:ring-emerald-500/20">
+                                            <span>Choose image</span>
+                                            <input id="campaign_image" name="campaign_image" type="file" class="sr-only" accept="image/*" required>
+                                        </label>
+                                        <span class="text-sm text-slate-500">or drag and drop</span>
+                                    </div>
+                                    <p class="mt-3 text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
+                    <p class="max-w-2xl text-sm leading-6 text-slate-500">
+                        By creating this campaign, you confirm that the information you provide is accurate and that you agree to the platform terms and privacy policy.
+                    </p>
+                    <button type="submit"
+                            class="inline-flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 sm:w-auto">
+                        Create campaign
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <aside class="space-y-6">
+            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 class="text-lg font-semibold text-slate-900">What makes a campaign work?</h2>
+                <div class="mt-5 space-y-4">
+                    <div class="rounded-2xl bg-slate-50 px-4 py-4">
+                        <p class="text-sm font-semibold text-slate-900">1. Be specific</p>
+                        <p class="mt-1 text-sm text-slate-500">Explain exactly what you need, who it helps, and how the funds will be used.</p>
+                    </div>
+                    <div class="rounded-2xl bg-slate-50 px-4 py-4">
+                        <p class="text-sm font-semibold text-slate-900">2. Use a strong image</p>
+                        <p class="mt-1 text-sm text-slate-500">A real, relevant image improves trust and helps people engage faster.</p>
+                    </div>
+                    <div class="rounded-2xl bg-slate-50 px-4 py-4">
+                        <p class="text-sm font-semibold text-slate-900">3. Keep supporters updated</p>
+                        <p class="mt-1 text-sm text-slate-500">After publishing, share updates so donors can see progress and stay involved.</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="rounded-3xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm">
+                <h2 class="text-lg font-semibold text-emerald-900">Before you publish</h2>
+                <ul class="mt-4 space-y-3 text-sm text-emerald-900/80">
+                    <li class="flex gap-3">
+                        <span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>
+                        <span>Use a title that explains the campaign clearly in one line.</span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>
+                        <span>Set a funding goal that feels realistic and easy to justify.</span>
+                    </li>
+                    <li class="flex gap-3">
+                        <span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>
+                        <span>Write a story that shows urgency, transparency, and expected impact.</span>
+                    </li>
+                </ul>
+            </div>
+        </aside>
+    </div>
+</div>
+
+<script>
+    (function() {
+        const imageInput = document.getElementById('campaign_image');
+        const imagePreview = document.getElementById('image-preview');
+        const imagePreviewImg = imagePreview ? imagePreview.querySelector('img') : null;
+        const uploadPlaceholder = document.getElementById('upload-placeholder');
+        const dropZone = document.getElementById('campaign-image-dropzone');
+
+        if (!imageInput || !dropZone || !imagePreview || !imagePreviewImg || !uploadPlaceholder) {
+            return;
+        }
+
+        imageInput.addEventListener('change', function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(loadEvent) {
+                imagePreviewImg.src = loadEvent.target.result;
+                imagePreview.classList.remove('hidden');
+                uploadPlaceholder.classList.add('hidden');
+            };
+            reader.readAsDataURL(file);
+        });
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
+            dropZone.addEventListener(eventName, function(e) {
+                e.preventDefault();
+                e.stopPropagation();
+            }, false);
+        });
+
+        ['dragenter', 'dragover'].forEach((eventName) => {
+            dropZone.addEventListener(eventName, function() {
+                dropZone.classList.add('border-emerald-400', 'bg-emerald-50');
+            }, false);
+        });
+
+        ['dragleave', 'drop'].forEach((eventName) => {
+            dropZone.addEventListener(eventName, function() {
+                dropZone.classList.remove('border-emerald-400', 'bg-emerald-50');
+            }, false);
+        });
+
+        dropZone.addEventListener('drop', function(e) {
+            const dt = e.dataTransfer;
+            const file = dt.files[0];
+
+            if (file && file.type.startsWith('image/')) {
+                imageInput.files = dt.files;
+                imageInput.dispatchEvent(new Event('change'));
+            }
+        }, false);
+    })();
+</script>
+<?php
+}
+
+if (!$isAjaxRequest) {
+    include '../components/header.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -108,11 +370,7 @@ include '../components/header.php';
     <link rel="shortcut icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
     <link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
     <title>Create Campaign - CroFunding</title>
-    
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Custom Tailwind Configuration -->
     <script>
         tailwind.config = {
             theme: {
@@ -137,241 +395,16 @@ include '../components/header.php';
     </script>
 </head>
 <body class="bg-gray-50">
-    <!-- Include Header -->
-    <?php include '../components/header.php'; ?>
-
     <div class="flex h-screen pt-16">
-        <!-- Include Sidebar -->
         <?php include '../components/sidebar.php'; ?>
-
-        <!-- Main Content -->
-        <main class="flex-1 min-w-0 overflow-auto bg-gray-50">
-            <div class="min-h-screen px-4 sm:px-6 lg:px-8 py-8 max-w-4xl mx-auto">
-                <!-- Page Header -->
-                <div class="mb-8">
-                    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
-                        <div class="mb-4 sm:mb-0">
-                            <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Create New Campaign</h1>
-                            <p class="mt-2 text-base sm:text-lg text-gray-600">Launch your fundraising campaign and start making a difference.</p>
-                        </div>
-                        <!-- Back Button -->
-                        <a href="<?php echo BASE_URL; ?>/dashboard.php" 
-                           class="inline-flex items-center justify-center px-4 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-lg text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500">
-                            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                            </svg>
-                            Back to Campaigns
-                        </a>
-                    </div>
-                </div>
-
-                <!-- Error Messages -->
-                <?php if (isset($error)): ?>
-                    <div class="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
-                        <div class="flex items-center">
-                            <svg class="w-5 h-5 text-red-600 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                            </svg>
-                            <span class="text-red-700"><?php echo htmlspecialchars($error); ?></span>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-                <!-- Campaign Creation Form -->
-                <div class="bg-white rounded-xl shadow-sm border border-gray-200">
-                    <div class="p-4 sm:p-6 md:p-8">
-                        <form method="POST" enctype="multipart/form-data" class="space-y-8">
-                            <!-- Basic Information Section -->
-                            <div class="space-y-6">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                    </div>
-                                    <h2 class="ml-3 text-xl font-semibold text-gray-900">Basic Information</h2>
-                                </div>
-                                
-                                <!-- Campaign Title -->
-                                <div class="space-y-1">
-                                    <label for="title" class="block text-sm font-medium text-gray-700">Campaign Title</label>
-                                    <input type="text" id="title" name="title" required
-                                        placeholder="Enter a clear, descriptive title"
-                                        class="mt-1 block w-full px-4 py-3 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-150 text-base">
-                                    <p class="mt-1 text-sm text-gray-500">Make it clear and attention-grabbing</p>
-                                </div>
-
-                                <!-- Campaign Category -->
-                                <div class="space-y-1">
-                                    <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
-                                    <select id="category" name="category" required
-                                        class="mt-1 block w-full px-4 py-3 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-150 text-base">
-                                        <option value="">Select a category</option>
-                                        <option value="education">Education</option>
-                                        <option value="medical">Medical & Health</option>
-                                        <option value="emergency">Emergency Relief</option>
-                                        <option value="community">Community Project</option>
-                                        <option value="creative">Creative Project</option>
-                                        <option value="nonprofit">Nonprofit</option>
-                                        <option value="business">Small Business</option>
-                                        <option value="technology">Technology</option>
-                                        <option value="environment">Environment</option>
-                                    </select>
-                                </div>
-                            </div>
-
-                            <!-- Funding Details Section -->
-                            <div class="space-y-6 pt-6 border-t border-gray-200">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                    </div>
-                                    <h2 class="ml-3 text-xl font-semibold text-gray-900">Funding Details</h2>
-                                </div>
-                                
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-6">
-                                    <!-- Funding Goal -->
-                                    <div class="space-y-1">
-                                        <label for="goal" class="block text-sm font-medium text-gray-700">Funding Goal ($)</label>
-                                        <div class="mt-1 relative rounded-lg">
-                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                                <span class="text-gray-500 sm:text-sm">$</span>
-                                            </div>
-                                            <input type="number" id="goal" name="goal" min="100" required
-                                                placeholder="5000"
-                                                class="block w-full pl-8 pr-12 py-3 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-150 text-base">
-                                        </div>
-                                        <p class="mt-1 text-sm text-gray-500">Minimum $100</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Campaign Content Section -->
-                            <div class="space-y-6 pt-6 border-t border-gray-200">
-                                <div class="flex items-center">
-                                    <div class="flex-shrink-0 w-8 h-8 bg-emerald-100 rounded-full flex items-center justify-center">
-                                        <svg class="w-5 h-5 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                                        </svg>
-                                        </div>
-                                    <h2 class="ml-3 text-xl font-semibold text-gray-900">Campaign Content</h2>
-                                </div>
-
-                                <!-- Campaign Description -->
-                                <div class="space-y-1">
-                                    <label for="description" class="block text-sm font-medium text-gray-700">Campaign Story</label>
-                                    <textarea id="description" name="description" rows="8" required
-                                        placeholder="Tell your story. Why are you raising funds? How will the money be used? What impact will it make?"
-                                        class="mt-1 block w-full px-4 py-3 rounded-lg border border-gray-300 shadow-sm focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition duration-150 text-base"></textarea>
-                                    <p class="mt-1 text-sm text-gray-500">Be detailed and transparent about your campaign's purpose and goals</p>
-                                </div>
-
-                                <!-- Campaign Image -->
-                                <div class="space-y-1">
-                                    <label class="block text-sm font-medium text-gray-700">Campaign Image</label>
-                                    <div class="mt-1 flex justify-center px-6 pt-5 pb-6 border-2 border-gray-300 border-dashed rounded-lg hover:border-emerald-500 transition-colors duration-150">
-                                        <div class="space-y-2 text-center">
-                                            <div id="image-preview" class="hidden mb-4">
-                                                <img src="" alt="Preview" class="mx-auto rounded-lg max-h-48 object-cover">
-                                            </div>
-                                            <div class="flex flex-col items-center">
-                                                <svg class="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                                                    <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
-                                                </svg>
-                                                <div class="flex text-sm text-gray-600 mt-2">
-                                                    <label for="campaign_image" class="relative cursor-pointer bg-white rounded-md font-medium text-emerald-600 hover:text-emerald-500 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-emerald-500">
-                                                        <span>Upload a file</span>
-                                                        <input id="campaign_image" name="campaign_image" type="file" class="sr-only" accept="image/*" required>
-                                                    </label>
-                                                    <p class="pl-1">or drag and drop</p>
-                                                </div>
-                                                <p class="text-xs text-gray-500 mt-2">PNG, JPG, GIF up to 10MB</p>
-                                            </div>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <!-- Submit Section -->
-                            <div class="pt-6 border-t border-gray-200">
-                                <div class="flex flex-col-reverse sm:flex-row sm:items-center sm:justify-between gap-4">
-                                    <p class="text-sm text-gray-500 text-center sm:text-left">
-                                        By creating this campaign, you agree to our Terms of Service and Privacy Policy.
-                                    </p>
-                                    <button type="submit" 
-                                        class="w-full sm:w-auto px-6 py-3 bg-emerald-600 text-white text-sm font-medium rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition duration-150">
-                                        Create Campaign
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
+        <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
+            <?php renderCreateCampaignContent($error); ?>
         </main>
     </div>
-
-    <!-- Preview Image Script -->
-    <script>
-        const imageInput = document.getElementById('campaign_image');
-        const imagePreview = document.getElementById('image-preview');
-        const defaultUploadContent = document.querySelector('.space-y-2 .flex.flex-col');
-
-        imageInput.addEventListener('change', function(e) {
-            const file = e.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    imagePreview.querySelector('img').src = e.target.result;
-                    imagePreview.classList.remove('hidden');
-                    defaultUploadContent.classList.add('hidden');
-                }
-                reader.readAsDataURL(file);
-            }
-        });
-
-        // Drag and drop functionality
-        const dropZone = document.querySelector('.border-dashed');
-        
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, preventDefaults, false);
-        });
-
-        function preventDefaults (e) {
-            e.preventDefault();
-            e.stopPropagation();
-        }
-
-        ['dragenter', 'dragover'].forEach(eventName => {
-            dropZone.addEventListener(eventName, highlight, false);
-        });
-
-        ['dragleave', 'drop'].forEach(eventName => {
-            dropZone.addEventListener(eventName, unhighlight, false);
-        });
-
-        function highlight(e) {
-            dropZone.classList.add('border-emerald-500', 'bg-emerald-50');
-        }
-
-        function unhighlight(e) {
-            dropZone.classList.remove('border-emerald-500', 'bg-emerald-50');
-        }
-
-        dropZone.addEventListener('drop', handleDrop, false);
-
-        function handleDrop(e) {
-            const dt = e.dataTransfer;
-            const file = dt.files[0];
-            
-            if (file && file.type.startsWith('image/')) {
-                imageInput.files = dt.files;
-                const event = new Event('change');
-                imageInput.dispatchEvent(event);
-            }
-        }
-    </script>
 </body>
 </html>
+<?php
+} else {
+    renderCreateCampaignContent($error);
+    echo ob_get_clean();
+}

@@ -470,7 +470,7 @@ class Campaign {
 
         // Active donors (last 30 days)
         $activeDonors = $this->db->fetchOne(
-            "SELECT COUNT(DISTINCT d.user_id) as count 
+            "SELECT COUNT(DISTINCT COALESCE(NULLIF(d.donor_email, ''), CONCAT('donation-', d.id))) as count 
              FROM campaigns c 
              JOIN donations d ON c.id = d.campaign_id 
              WHERE c.user_id = ? 
@@ -518,7 +518,7 @@ class Campaign {
         )['total'];
 
         $previousDonors = $this->db->fetchOne(
-            "SELECT COUNT(DISTINCT d.user_id) as count 
+            "SELECT COUNT(DISTINCT COALESCE(NULLIF(d.donor_email, ''), CONCAT('donation-', d.id))) as count 
              FROM campaigns c 
              JOIN donations d ON c.id = d.campaign_id 
              WHERE c.user_id = ? 
@@ -559,7 +559,7 @@ class Campaign {
             $sql = "SELECT 
                 c.*,
                 COALESCE(SUM(d.amount), 0) as current_amount,
-                COUNT(DISTINCT d.user_id) as donors,
+                COUNT(DISTINCT COALESCE(NULLIF(d.donor_email, ''), CONCAT('donation-', d.id))) as donors,
                 c.category as name,
                 (COALESCE(SUM(d.amount), 0) / c.goal_amount * 100) as progress,
                 DATE_FORMAT(c.end_date, '%b %d, %Y') as formatted_end_date

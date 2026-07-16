@@ -21,7 +21,7 @@ $userCampaigns = $campaign->getUserCampaigns($_SESSION['user_id'], 'all', 'newes
             </div>
             <h3 class="mb-2 text-lg font-medium text-gray-900">No campaigns yet</h3>
             <p class="mb-4 text-sm text-gray-500">Get started by creating your first fundraising campaign</p>
-            <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-150">
+            <a href="<?php echo BASE_URL; ?>/campaigns/create.php" data-dashboard-ajax="create-campaign" class="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-150">
                 <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
                 </svg>

@@ -6,61 +6,188 @@ require_once __DIR__ . '/../config/User.php';
 
 $user = new User();
 if (!$user->isLoggedIn()) {
-    header("Location: " . BASE_URL . "/login.php");
+    header('Location: ' . BASE_URL . '/login.php');
     exit();
 }
 
 $currentUser = $user->getCurrentUser();
-
+$isAjaxRequest = isset($_GET['ajax']) && $_GET['ajax'] === '1';
 $successMessage = '';
+$errorMessage = '';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
-        if (isset($_POST['update_profile'])) {
-            $email = trim($_POST['email']);
-            $phone = trim($_POST['phone']);
-            
-            if (empty($email)) {
-                error_log("Profile update validation failed for user " . $_SESSION['user_id'] . ": Email is required");
-            } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
-                error_log("Profile update validation failed for user " . $_SESSION['user_id'] . ": Invalid email format");
-            } else {
-                $user->updateProfile($_SESSION['user_id'], [
-                    'email' => $email,
-                    'phone' => $phone
-                ]);
-                
-                $successMessage = "Profile updated successfully";
-                $currentUser = $user->getCurrentUser();
-            }
-        }
-        
         if (isset($_POST['change_password'])) {
-            $currentPassword = $_POST['current_password'];
-            $newPassword = $_POST['new_password'];
-            $confirmPassword = $_POST['confirm_password'];
-            
+            $currentPassword = $_POST['current_password'] ?? '';
+            $newPassword = $_POST['new_password'] ?? '';
+            $confirmPassword = $_POST['confirm_password'] ?? '';
+
             if ($newPassword !== $confirmPassword) {
-                error_log("Password change validation failed for user " . $_SESSION['user_id'] . ": Passwords do not match");
+                $errorMessage = 'New passwords do not match.';
             } elseif (strlen($newPassword) < 8) {
-                error_log("Password change validation failed for user " . $_SESSION['user_id'] . ": Password too short");
+                $errorMessage = 'New password must be at least 8 characters long.';
             } else {
                 $user->changePassword($_SESSION['user_id'], $currentPassword, $newPassword);
-                $successMessage = "Password changed successfully";
+                $successMessage = 'Password changed successfully.';
             }
         }
     } catch (Exception $e) {
-        error_log("Account settings error for user " . $_SESSION['user_id'] . ": " . $e->getMessage());
-        error_log("Stack trace: " . $e->getTraceAsString());
+        error_log('Account settings error for user ' . $_SESSION['user_id'] . ': ' . $e->getMessage());
+        error_log('Stack trace: ' . $e->getTraceAsString());
+        $errorMessage = 'Something went wrong. Please try again.';
     } catch (Error $e) {
-        error_log("Account settings PHP error for user " . $_SESSION['user_id'] . ": " . $e->getMessage());
-        error_log("Stack trace: " . $e->getTraceAsString());
+        error_log('Account settings PHP error for user ' . $_SESSION['user_id'] . ': ' . $e->getMessage());
+        error_log('Stack trace: ' . $e->getTraceAsString());
+        $errorMessage = 'Something went wrong. Please try again.';
     }
 }
 
-include '../components/header.php';
-?>
+if ($isAjaxRequest) {
+    ob_start();
+}
 
+function renderAccountSettingsContent(array $currentUser, string $successMessage, string $errorMessage): void {
+?>
+<div class="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr),360px]">
+        <div class="space-y-6">
+            <section class="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 shadow-sm">
+                <div class="relative px-6 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
+                    <div class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
+                        <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
+                        Account settings
+                    </div>
+                    <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Manage your account</h1>
+                    <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                        Review your locked account identity details and keep your login credentials secure from one place.
+                    </p>
+                </div>
+            </section>
+
+            <?php if ($successMessage !== ''): ?>
+                <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-emerald-800 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                        </svg>
+                        <p class="text-sm font-medium"><?php echo htmlspecialchars($successMessage); ?></p>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <?php if ($errorMessage !== ''): ?>
+                <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-red-700 shadow-sm">
+                    <div class="flex items-start gap-3">
+                        <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                        </svg>
+                        <p class="text-sm font-medium"><?php echo htmlspecialchars($errorMessage); ?></p>
+                    </div>
+                </div>
+            <?php endif; ?>
+
+            <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
+                    <h2 class="text-lg font-semibold text-slate-900">Protected account details</h2>
+                    <p class="mt-1 text-sm text-slate-500">For security and verification reasons, these details cannot be changed from settings.</p>
+                </div>
+                <div class="space-y-6 px-5 py-5 sm:px-6 sm:py-6">
+                    <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
+                        <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-500">Account owner</p>
+                        <p class="mt-2 text-lg font-semibold text-slate-900"><?php echo htmlspecialchars($currentUser['name'] ?? ''); ?></p>
+                    </div>
+
+                    <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700">Full name</label>
+                            <div class="mt-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                <span class="text-base text-slate-900"><?php echo htmlspecialchars($currentUser['name'] ?? ''); ?></span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700">Email address</label>
+                            <div class="mt-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                <span class="text-base text-slate-900"><?php echo htmlspecialchars($currentUser['email'] ?? ''); ?></span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700">Phone number</label>
+                            <div class="mt-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                <span class="text-base text-slate-900"><?php echo htmlspecialchars($currentUser['phone'] ?? 'Not provided'); ?></span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-semibold text-slate-700">Username</label>
+                            <div class="mt-2 rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3">
+                                <span class="text-base text-slate-900"><?php echo htmlspecialchars($currentUser['name'] ?? ''); ?></span>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
+                    <h2 class="text-lg font-semibold text-slate-900">Change password</h2>
+                    <p class="mt-1 text-sm text-slate-500">Use a strong password you don’t reuse elsewhere.</p>
+                </div>
+                <div class="px-5 py-5 sm:px-6 sm:py-6">
+                    <form method="POST" class="space-y-5">
+                        <div class="grid grid-cols-1 gap-5 sm:grid-cols-2">
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700">Current password</label>
+                                <input type="password" name="current_password" required
+                                       class="mt-2 block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-semibold text-slate-700">New password</label>
+                                <input type="password" name="new_password" required
+                                       class="mt-2 block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
+                            </div>
+                            <div class="sm:col-span-2">
+                                <label class="block text-sm font-semibold text-slate-700">Confirm new password</label>
+                                <input type="password" name="confirm_password" required
+                                       class="mt-2 block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
+                            </div>
+                        </div>
+                        <div class="flex justify-end">
+                            <button type="submit" name="change_password" class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800 focus:outline-none focus:ring-4 focus:ring-slate-500/20">
+                                Update password
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <aside class="space-y-6">
+            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                <h2 class="text-lg font-semibold text-slate-900">Profile checklist</h2>
+                <div class="mt-5 space-y-4">
+                    <div class="rounded-2xl bg-slate-50 px-4 py-4">
+                        <p class="text-sm font-semibold text-slate-900">Use an active email</p>
+                        <p class="mt-1 text-sm text-slate-500">Important account notices and verification messages are sent there.</p>
+                    </div>
+                    <div class="rounded-2xl bg-slate-50 px-4 py-4">
+                        <p class="text-sm font-semibold text-slate-900">Keep your phone current</p>
+                        <p class="mt-1 text-sm text-slate-500">It helps with account recovery and contact verification workflows.</p>
+                    </div>
+                    <div class="rounded-2xl bg-slate-50 px-4 py-4">
+                        <p class="text-sm font-semibold text-slate-900">Refresh passwords regularly</p>
+                        <p class="mt-1 text-sm text-slate-500">Choose a password with a mix of letters, numbers, and symbols.</p>
+                    </div>
+                </div>
+            </div>
+        </aside>
+    </div>
+</div>
+<?php
+}
+
+if (!$isAjaxRequest) {
+    include '../components/header.php';
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -71,140 +198,18 @@ include '../components/header.php';
     <link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
     <title>Account Settings - CroFunding</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        emerald: {
-                            50: '#ecfdf5',
-                            100: '#d1fae5',
-                            500: '#10b981',
-                            600: '#059669',
-                            700: '#047857'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen pt-16">
         <?php include '../components/sidebar.php'; ?>
-        
         <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
-            <div class="p-3 sm:p-6">
-                <?php if ($successMessage): ?>
-                    <div class="mb-4 sm:mb-6 bg-green-50 border-l-4 border-green-500 p-3 sm:p-4">
-                        <div class="flex">
-                            <div class="flex-shrink-0">
-                                <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                                </svg>
-                            </div>
-                            <div class="ml-3">
-                                <p class="text-xs sm:text-sm text-green-700"><?php echo htmlspecialchars($successMessage); ?></p>
-                            </div>
-                        </div>
-                    </div>
-                <?php endif; ?>
-
-                <div class="bg-white rounded-lg shadow-sm mb-4 sm:mb-6">
-                    <div class="p-3 sm:p-6 border-b border-gray-200">
-                        <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Profile Settings</h2>
-                    </div>
-                    <div class="p-3 sm:p-6">
-                        <div class="mb-4 sm:mb-6 p-3 sm:p-4 bg-gray-50 rounded-lg border border-gray-200">
-                            <div class="flex items-center">
-                                <div class="flex-shrink-0">
-                                    <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                                    </svg>
-                                </div>
-                                <div class="ml-3">
-                                    <h3 class="text-xs sm:text-sm font-medium text-gray-900">Full Name</h3>
-                                    <p class="text-xs sm:text-sm text-gray-600"><?php echo htmlspecialchars($currentUser['name']); ?></p>
-                                </div>
-                            </div>
-                        </div>
-
-                        <form method="POST" class="space-y-4 sm:space-y-6">
-                            <div class="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2">
-                                <div class="space-y-1 sm:space-y-2">
-                                    <label class="block text-xs sm:text-sm font-medium text-gray-700">Email Address</label>
-                                    <div class="relative rounded-md shadow-sm">
-                                        <input type="email" name="email" 
-                                            value="<?php echo htmlspecialchars($currentUser['email']); ?>" 
-                                            class="block w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200 ease-in-out hover:border-gray-300"
-                                            required>
-                                    </div>
-                                </div>
-                                
-                                <div class="space-y-1 sm:space-y-2">
-                                    <label class="block text-xs sm:text-sm font-medium text-gray-700">Phone Number</label>
-                                    <div class="relative rounded-md shadow-sm">
-                                        <input type="tel" name="phone" 
-                                            value="<?php echo htmlspecialchars($currentUser['phone'] ?? ''); ?>" 
-                                            class="block w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200 ease-in-out hover:border-gray-300">
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex justify-end">
-                                <button type="submit" name="update_profile" 
-                                    class="px-4 sm:px-6 py-2 sm:py-3 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 transition-colors duration-200 ease-in-out shadow-sm text-xs sm:text-sm">
-                                    Update Profile
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-
-                <div class="bg-white rounded-lg shadow-sm">
-                    <div class="p-3 sm:p-6 border-b border-gray-200">
-                        <h2 class="text-lg sm:text-xl font-semibold text-gray-900">Change Password</h2>
-                    </div>
-                    <div class="p-3 sm:p-6">
-                        <form method="POST" class="space-y-4 sm:space-y-6">
-                            <div class="grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2">
-                                <div class="space-y-1 sm:space-y-2">
-                                    <label class="block text-xs sm:text-sm font-medium text-gray-700">Current Password</label>
-                                    <div class="relative rounded-md shadow-sm">
-                                        <input type="password" name="current_password" 
-                                            class="block w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200 ease-in-out hover:border-gray-300"
-                                            required>
-                                    </div>
-                                </div>
-                                
-                                <div class="space-y-1 sm:space-y-2">
-                                    <label class="block text-xs sm:text-sm font-medium text-gray-700">New Password</label>
-                                    <div class="relative rounded-md shadow-sm">
-                                        <input type="password" name="new_password" 
-                                            class="block w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200 ease-in-out hover:border-gray-300"
-                                            required>
-                                    </div>
-                                </div>
-                                
-                                <div class="space-y-1 sm:space-y-2">
-                                    <label class="block text-xs sm:text-sm font-medium text-gray-700">Confirm New Password</label>
-                                    <div class="relative rounded-md shadow-sm">
-                                        <input type="password" name="confirm_password" 
-                                            class="block w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-emerald-500 focus:border-emerald-500 transition-colors duration-200 ease-in-out hover:border-gray-300"
-                                            required>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="flex justify-end">
-                                <button type="submit" name="change_password" 
-                                    class="px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-emerald-500 text-xs sm:text-sm">
-                                    Change Password
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-                </div>
-            </div>
+            <?php renderAccountSettingsContent($currentUser, $successMessage, $errorMessage); ?>
         </main>
     </div>
 </body>
 </html>
+<?php
+} else {
+    renderAccountSettingsContent($currentUser, $successMessage, $errorMessage);
+    echo ob_get_clean();
+}

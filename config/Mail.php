@@ -189,10 +189,82 @@ class Mail {
     }
 
     /**
-     * Send welcome email (with verification)
+     * Send welcome email
      */
-    public function sendWelcomeEmail($to, $data) {
-        return $this->sendVerificationEmail($to, $data['verificationLink']);
+    public function sendWelcomeEmail($to, $name) {
+        try {
+            $this->mail->clearAddresses();
+            $this->mail->clearReplyTos();
+            
+            $this->mail->addAddress($to);
+            $this->mail->addReplyTo('no-reply@crofund.org', SITE_NAME);
+
+            $this->mail->Subject = 'Welcome to ' . SITE_NAME . '!';
+            $this->mail->Body = $this->getWelcomeEmailTemplate($name);
+            $this->mail->AltBody = $this->getWelcomeEmailPlainText($name);
+            $this->mail->MessageID = $this->generateMessageId();
+
+            return $this->sendWithRetry();
+        } catch (Exception $e) {
+            throw new Exception("Welcome email could not be sent. Mailer Error: {$this->mail->ErrorInfo}");
+        }
+    }
+    
+    private function getWelcomeEmailTemplate($name) {
+        $greeting = $name ? "Hi $name," : "Hi,";
+        
+        return '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Welcome to ' . SITE_NAME . '</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #ffffff;">
+        <h2 style="color: #111827; margin-top: 0;">Welcome to ' . SITE_NAME . '!</h2>
+        <p>' . htmlspecialchars($greeting) . '</p>
+        <p>Thank you for registering with ' . SITE_NAME . '! Your account has been created successfully.</p>
+        <p>You can now log in to your account and start using our platform.</p>
+        
+        <p style="margin: 30px 0; text-align: center;">
+            <a href="' . htmlspecialchars(BASE_URL) . '/login.php" 
+               style="background-color: #059669; 
+                      color: white; 
+                      padding: 14px 32px; 
+                      text-decoration: none; 
+                      border-radius: 8px; 
+                      display: inline-block;
+                      font-weight: 600;
+                      font-size: 16px;">
+                Log In Now
+            </a>
+        </p>
+        
+        <p style="color: #4b5563; font-size: 14px;">
+            If you have any questions, please don\'t hesitate to contact us.
+        </p>
+        
+        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
+        
+        <p style="color: #6b7280; font-size: 13px;">
+            If you didn\'t create an account with ' . SITE_NAME . ', you can safely ignore this email.
+        </p>
+    </div>
+</body>
+</html>';
+    }
+    
+    private function getWelcomeEmailPlainText($name) {
+        $greeting = $name ? "Hi $name," : "Hi,";
+        
+        return "Welcome to " . SITE_NAME . "!\n\n" .
+               htmlspecialchars($greeting) . "\n\n" .
+               "Thank you for registering with " . SITE_NAME . "! Your account has been created successfully.\n\n" .
+               "You can now log in to your account and start using our platform.\n\n" .
+               "Log in here: " . BASE_URL . "/login.php\n\n" .
+               "If you have any questions, please don't hesitate to contact us.\n\n" .
+               "If you didn't create an account with " . SITE_NAME . ", you can safely ignore this email.";
     }
 
     /**

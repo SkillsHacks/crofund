@@ -1,248 +1,218 @@
 <?php
 ?>
-<nav class="bg-white shadow fixed w-full z-50">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div class="flex justify-between h-16">
-            <!-- Logo -->
-           <div class="flex-shrink-0 flex items-center space-x-2" id="header-logo">
-                <img src="<?php echo BASE_URL; ?>/assets/images/Logo.png" alt="Logo" class="h-6 w-6">
-                <a href="<?php echo BASE_URL; ?>" class="text-2xl font-bold text-emerald-600">
-                    CroFunding
+<nav class="fixed inset-x-0 top-0 z-50 border-b border-white/60 bg-white/90 backdrop-blur-xl shadow-sm">
+    <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div class="flex h-16 items-center justify-between gap-4">
+            <div class="flex min-w-0 items-center gap-3" id="header-logo">
+                <a href="<?php echo BASE_URL; ?>" class="inline-flex items-center gap-3">
+                    <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 ring-1 ring-emerald-100 shadow-sm">
+                        <img src="<?php echo BASE_URL; ?>/assets/images/Logo.png" alt="CroFunding logo" class="h-6 w-6">
+                    </div>
+                    <div class="min-w-0">
+                        <span class="block truncate text-lg font-bold tracking-tight text-slate-900 sm:text-xl">CroFunding</span>
+                        <span class="hidden text-xs font-medium text-slate-500 sm:block">Fundraising made simple</span>
+                    </div>
                 </a>
             </div>
 
-            <!-- Search Icon and Field -->
-            <div class="flex items-center flex-1 justify-center" id="header-search-section">
-                <!-- Search Icon Button -->
-                <button onclick="toggleHeaderSearch()" 
-                        class="p-2 text-gray-600 hover:text-emerald-600 hover:bg-emerald-50 rounded-lg transition-colors"
+            <div class="hidden flex-1 justify-center lg:flex" id="header-search-section">
+                <div class="relative w-full max-w-xl">
+                    <input type="text"
+                           id="header-search-input-desktop"
+                           placeholder="Search campaigns..."
+                           class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-2.5 pl-11 pr-12 text-sm text-slate-700 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
+                    <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                        <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                        </svg>
+                    </div>
+                    <button onclick="performHeaderSearch('desktop')" type="button" class="absolute inset-y-0 right-0 flex items-center pr-4 text-sm font-semibold text-emerald-600 transition hover:text-emerald-700">
+                        Search
+                    </button>
+                </div>
+            </div>
+
+            <div class="hidden items-center gap-2 md:flex lg:gap-3" id="header-nav">
+                <a href="<?php echo BASE_URL; ?>" class="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+                    Home
+                </a>
+                <a href="<?php echo BASE_URL; ?>/campaigns/v/" class="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+                    Verified
+                </a>
+                <a href="<?php echo BASE_URL; ?>/campaigns/view_compaigns.php" class="rounded-xl px-3 py-2 text-sm font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900">
+                    Browse
+                </a>
+                <a href="<?php echo BASE_URL; ?>/login.php" class="rounded-xl px-3 py-2 text-sm font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900">
+                    Sign in
+                </a>
+                <a href="<?php echo BASE_URL; ?>/register.php" class="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700">
+                    Sign up
+                </a>
+            </div>
+
+            <div class="flex items-center gap-2 md:hidden">
+                <button onclick="toggleHeaderSearch()"
+                        type="button"
+                        class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50"
                         title="Search Campaigns"
                         id="search-icon-btn">
                     <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
                 </button>
-                
-                <!-- Mobile Header Search Field (Hidden by default) -->
-                <div class="hidden w-full max-w-sm mx-2 md:max-w-md lg:max-w-lg" id="header-search-container">
-                    <div class="relative w-full">
-                        <input type="text" 
-                               id="header-search-input" 
-                               placeholder="Search campaigns..." 
-                               class="w-full px-4 py-2 pl-10 pr-12 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500 transition-colors">
-                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                            <svg class="h-4 w-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                            </svg>
-                        </div>
-                        <button onclick="closeHeaderSearch()" 
-                                class="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600">
-                            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </button>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Navigation Links -->
-            <div class="hidden md:flex md:items-center md:space-x-8" id="header-nav">
-                <a href="<?php echo BASE_URL; ?>" class="text-gray-600 hover:text-gray-900">
-                    Home
-                </a>
-                <a href="<?php echo BASE_URL; ?>/campaigns/v/" class="text-gray-600 hover:text-gray-900">
-                    Verified Campaigns
-                </a>
-                <a href="<?php echo BASE_URL; ?>/campaigns/view_compaigns.php" class="text-gray-600 hover:text-gray-900">
-                    Browse Campaigns
-                </a>
-                <a href="<?php echo BASE_URL; ?>/login.php" class="text-gray-600 hover:text-gray-900">
-                    Sign In
-                </a>
-                <a href="<?php echo BASE_URL; ?>/register.php" 
-                   class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition-colors">
-                    Sign Up
-                </a>
-            </div>
-
-            <!-- Mobile menu button -->
-            <div class="flex items-center md:hidden" id="header-mobile-btn">
-                <button type="button" 
-                        class="mobile-menu-button inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100"
-                        aria-controls="mobile-menu" 
+                <button type="button"
+                        class="mobile-menu-button inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50"
+                        aria-controls="mobile-menu"
                         aria-expanded="false">
                     <span class="sr-only">Open main menu</span>
-                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
                 </button>
             </div>
         </div>
+
+        <div class="hidden pb-4 md:hidden" id="header-search-container">
+            <div class="relative w-full">
+                <input type="text"
+                       id="header-search-input"
+                       placeholder="Search campaigns..."
+                       class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pl-11 pr-14 text-sm text-slate-700 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
+                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </div>
+                <div class="absolute inset-y-0 right-0 flex items-center gap-1 pr-3">
+                    <button onclick="performHeaderSearch('mobile')" type="button" class="text-sm font-semibold text-emerald-600 hover:text-emerald-700">
+                        Go
+                    </button>
+                    <button onclick="closeHeaderSearch()" type="button" class="text-slate-400 hover:text-slate-600">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
     </div>
 
-    <!-- Mobile menu -->
-    <div class="md:hidden hidden fixed inset-0 bg-white z-40 mt-16" id="mobile-menu">
-        <div class="flex flex-col h-full">
-            <!-- Navigation links section -->
-            <div class="flex-1 pt-4 pb-4 px-4 space-y-1">
-                <a href="<?php echo BASE_URL; ?>" 
-                   class="block px-3 py-3 text-lg font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg border-b border-gray-200">
-                    Home
-                </a>
-                <a href="<?php echo BASE_URL; ?>/campaigns/v/" 
-                   class="block px-3 py-3 text-lg font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg border-b border-gray-200">
-                    Verified Campaigns
-                </a>
-                <a href="<?php echo BASE_URL; ?>/campaigns/view_compaigns.php" 
-                   class="block px-3 py-3 text-lg font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg border-b border-gray-200">
-                    Browse Campaigns
-                </a>
-                <a href="<?php echo BASE_URL; ?>/campaigns/v/gaza/" 
-                   class="block px-3 py-3 text-lg font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg border-b border-gray-200">
-                    Gaza World
-                </a>
-            </div>
-            
-            <!-- Mobile authentication buttons at bottom -->
-            <div class="border-t border-gray-200 px-4 py-6 space-y-3">
-                <a href="<?php echo BASE_URL; ?>/register.php" 
-                   class="block w-full text-center px-4 py-3 text-lg font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors">
-                   Sign Up
-                </a>
-                <a href="<?php echo BASE_URL; ?>/login.php" 
-                   class="block w-full text-center px-4 py-3 text-lg font-medium text-emerald-600 border-2 border-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors">
-                    Sign In
-                </a>
-            </div>
+    <div class="hidden border-t border-slate-200 bg-white/95 md:hidden" id="mobile-menu">
+        <div class="space-y-2 px-4 py-4">
+            <a href="<?php echo BASE_URL; ?>" class="block rounded-2xl px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900">
+                Home
+            </a>
+            <a href="<?php echo BASE_URL; ?>/campaigns/v/" class="block rounded-2xl px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900">
+                Verified Campaigns
+            </a>
+            <a href="<?php echo BASE_URL; ?>/campaigns/view_compaigns.php" class="block rounded-2xl px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900">
+                Browse Campaigns
+            </a>
+            <a href="<?php echo BASE_URL; ?>/campaigns/v/gaza/" class="block rounded-2xl px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900">
+                Gaza World
+            </a>
+        </div>
+        <div class="border-t border-slate-200 px-4 py-4 space-y-3">
+            <a href="<?php echo BASE_URL; ?>/register.php" class="block w-full rounded-2xl bg-emerald-600 px-4 py-3 text-center text-base font-semibold text-white shadow-sm transition hover:bg-emerald-700">
+                Sign Up
+            </a>
+            <a href="<?php echo BASE_URL; ?>/login.php" class="block w-full rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-base font-semibold text-emerald-700 transition hover:bg-emerald-100">
+                Sign In
+            </a>
         </div>
     </div>
 </nav>
 
 <script>
-document.querySelector('.mobile-menu-button').addEventListener('click', function() {
-    document.getElementById('mobile-menu').classList.toggle('hidden');
-});
+(function () {
+    const mobileMenuButton = document.querySelector('.mobile-menu-button');
+    const mobileMenu = document.getElementById('mobile-menu');
 
-// Function to toggle header search visibility
+    mobileMenuButton?.addEventListener('click', function () {
+        mobileMenu?.classList.toggle('hidden');
+    });
+})();
+
+function getHeaderSearchInput(mode) {
+    if (mode === 'desktop') {
+        return document.getElementById('header-search-input-desktop');
+    }
+    return document.getElementById('header-search-input');
+}
+
 function toggleHeaderSearch() {
     const searchContainer = document.getElementById('header-search-container');
-    const searchIconBtn = document.getElementById('search-icon-btn');
     const searchInput = document.getElementById('header-search-input');
-    const headerLogo = document.getElementById('header-logo');
 
-    if (searchContainer.classList.contains('hidden')) {
-        // Show search field
-        searchContainer.classList.remove('hidden');
-        searchIconBtn.classList.add('text-emerald-600');
+    if (!searchContainer || !searchInput) return;
+
+    searchContainer.classList.toggle('hidden');
+    if (!searchContainer.classList.contains('hidden')) {
         searchInput.focus();
-        
-        // Hide logo text and search icon on mobile
-        const logoText = headerLogo.querySelector('a');
-        if (logoText) {
-            logoText.classList.add('hidden');
-        }
-        searchIconBtn.classList.add('hidden');
-        
-        // Add click outside listener
-        setTimeout(() => {
-            document.addEventListener('click', handleClickOutside);
-        }, 100);
+        setTimeout(() => document.addEventListener('click', handleClickOutside), 100);
     } else {
-        closeHeaderSearch();
+        document.removeEventListener('click', handleClickOutside);
     }
 }
 
-// Function to close header search
 function closeHeaderSearch() {
     const searchContainer = document.getElementById('header-search-container');
-    const searchIconBtn = document.getElementById('search-icon-btn');
     const searchInput = document.getElementById('header-search-input');
-    const headerLogo = document.getElementById('header-logo');
 
-    // Hide search field
+    if (!searchContainer || !searchInput) return;
+
     searchContainer.classList.add('hidden');
-    searchIconBtn.classList.remove('text-emerald-600');
     searchInput.blur();
-    
-    // Show logo text and search icon again
-    const logoText = headerLogo.querySelector('a');
-    if (logoText) {
-        logoText.classList.remove('hidden');
-    }
-    searchIconBtn.classList.remove('hidden');
-    
-    // Remove click outside listener
     document.removeEventListener('click', handleClickOutside);
 }
 
-// Handle clicks outside search container
 function handleClickOutside(event) {
     const searchContainer = document.getElementById('header-search-container');
     const searchIconBtn = document.getElementById('search-icon-btn');
-    
-    if (!searchContainer.contains(event.target) && !searchIconBtn.contains(event.target)) {
+
+    if (searchContainer && searchIconBtn && !searchContainer.contains(event.target) && !searchIconBtn.contains(event.target)) {
         closeHeaderSearch();
     }
 }
 
-// Function to perform search from header
-function performHeaderSearch() {
-    const searchInput = document.getElementById('header-search-input');
-    const searchTerm = searchInput.value.trim();
-    
+function performHeaderSearch(mode = 'mobile') {
+    const searchInput = getHeaderSearchInput(mode);
+    const searchTerm = searchInput?.value.trim();
+
     if (searchTerm) {
-        // Scroll to search section and trigger search
         const searchSection = document.getElementById('trending');
         if (searchSection) {
-            searchSection.scrollIntoView({ 
-                behavior: 'smooth',
-                block: 'start'
-            });
-            
-            // Wait for scroll to complete, then trigger search
+            searchSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
             setTimeout(() => {
                 const mainSearchInput = document.getElementById('campaign-search');
                 if (mainSearchInput) {
                     mainSearchInput.value = searchTerm;
                     mainSearchInput.dispatchEvent(new Event('input'));
                 }
-                
-                // Close header search
                 closeHeaderSearch();
             }, 500);
         }
     }
 }
 
-// Add event listeners for header search
 document.addEventListener('DOMContentLoaded', function() {
-    const headerSearchInput = document.getElementById('header-search-input');
-    
-    if (headerSearchInput) {
-        // Search on Enter key
-        headerSearchInput.addEventListener('keypress', function(e) {
+    const mobileSearchInput = document.getElementById('header-search-input');
+    const desktopSearchInput = document.getElementById('header-search-input-desktop');
+
+    [mobileSearchInput, desktopSearchInput].forEach((input, index) => {
+        if (!input) return;
+        input.addEventListener('keypress', function(e) {
             if (e.key === 'Enter') {
-                performHeaderSearch();
+                performHeaderSearch(index === 1 ? 'desktop' : 'mobile');
             }
         });
-        
-        // Search on input change (optional - for real-time search)
-        headerSearchInput.addEventListener('input', function() {
-            // You can add real-time search here if desired
-        });
-    }
+    });
 });
 
-// Function to scroll to search section
 function scrollToSearch() {
     const searchSection = document.getElementById('trending');
     if (searchSection) {
-        searchSection.scrollIntoView({ 
-            behavior: 'smooth',
-            block: 'start'
-        });
-        
-        // Focus on search input after scrolling
+        searchSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
         setTimeout(() => {
             const searchInput = document.getElementById('campaign-search');
             if (searchInput) {
