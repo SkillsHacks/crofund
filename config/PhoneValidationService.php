@@ -6,11 +6,13 @@ class PhoneValidationService {
     private $rules;
     private $unsupportedDialCodes;
     private $unsupportedCountryMessage;
+    private $allowNonFixedVoip;
 
-    public function __construct(array $rules, array $unsupportedDialCodes, string $unsupportedCountryMessage) {
+    public function __construct(array $rules, array $unsupportedDialCodes, string $unsupportedCountryMessage, bool $allowNonFixedVoip = true) {
         $this->rules = $rules;
         $this->unsupportedDialCodes = $unsupportedDialCodes;
         $this->unsupportedCountryMessage = $unsupportedCountryMessage;
+        $this->allowNonFixedVoip = $allowNonFixedVoip;
     }
 
     public function getRule(string $countryCode): array {
@@ -130,7 +132,12 @@ class PhoneValidationService {
         $score += min(max($recentDeviceRequests - 2, 0) * 5, 20);
         $score += min(max($recentIpPatterns - 2, 0) * 5, 20);
 
-        $allowed = $score < 70 && !in_array($lineType, ['fixedvoip', 'voip', 'tollfree', 'premium', 'landline', 'fixedline'], true);
+        $blockedLineTypes = ['fixedvoip', 'voip', 'tollfree', 'premium', 'landline', 'fixedline'];
+        if (!$this->allowNonFixedVoip) {
+            $blockedLineTypes[] = 'nonfixedvoip';
+        }
+
+        $allowed = $score < 70 && !in_array($lineType, $blockedLineTypes, true);
         $publicMessage = $allowed
             ? 'This number is ready for verification.'
             : 'This phone number cannot be used for verification.';

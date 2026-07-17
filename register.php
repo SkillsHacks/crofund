@@ -36,7 +36,8 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $unsupportedDialCodes = $phoneRestrictions['unsupported_dial_codes'] ?? [];
 $unsupportedCountryMessage = $phoneRestrictions['unsupported_country_message'] ?? 'Our services are currently not available in the selected country.';
-$phoneValidationService = new PhoneValidationService($phoneRules, $unsupportedDialCodes, $unsupportedCountryMessage);
+$allowNonFixedVoip = (bool) ($phoneRestrictions['allow_nonfixedvoip'] ?? true);
+$phoneValidationService = new PhoneValidationService($phoneRules, $unsupportedDialCodes, $unsupportedCountryMessage, $allowNonFixedVoip);
 $phoneVerificationService = new PhoneVerificationService($phoneValidationService);
 $emailValidationService = new EmailValidationService($emailRestrictions);
 $emailVerificationService = new EmailVerificationService($emailValidationService);
