@@ -110,7 +110,9 @@ class PhoneValidationService {
             $score += 25;
         }
 
-        if (in_array($lineType, ['nonfixedvoip', 'fixedvoip', 'voip', 'tollfree', 'premium'], true)) {
+        if ($lineType === 'nonfixedvoip') {
+            $score += 35;
+        } elseif (in_array($lineType, ['fixedvoip', 'voip', 'tollfree', 'premium'], true)) {
             $score += 90;
         } elseif (in_array($lineType, ['landline', 'fixedline'], true)) {
             $score += 80;
@@ -128,7 +130,7 @@ class PhoneValidationService {
         $score += min(max($recentDeviceRequests - 2, 0) * 5, 20);
         $score += min(max($recentIpPatterns - 2, 0) * 5, 20);
 
-        $allowed = $score < 70 && !in_array($lineType, ['nonfixedvoip', 'fixedvoip', 'voip', 'tollfree', 'premium', 'landline', 'fixedline'], true);
+        $allowed = $score < 70 && !in_array($lineType, ['fixedvoip', 'voip', 'tollfree', 'premium', 'landline', 'fixedline'], true);
         $publicMessage = $allowed
             ? 'This number is ready for verification.'
             : 'This phone number cannot be used for verification.';
