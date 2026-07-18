@@ -10,13 +10,25 @@ class Campaign {
 
     public function create($data) {
         try {
-           
+            error_log("[Campaign::create] Entered create() for user=" . ($_SESSION['user_id'] ?? 'unknown'));
             $this->validateCampaignData($data);
+            error_log("[Campaign::create] Data validation passed");
 
             if (!isset($_FILES['campaign_image'])) {
+                error_log("[Campaign::create] campaign_image missing from FILES");
                 throw new Exception("Campaign image is required");
             }
+
+            error_log("[Campaign::create] campaign_image metadata: " . json_encode([
+                'name' => $_FILES['campaign_image']['name'] ?? null,
+                'type' => $_FILES['campaign_image']['type'] ?? null,
+                'size' => $_FILES['campaign_image']['size'] ?? null,
+                'error' => $_FILES['campaign_image']['error'] ?? null,
+                'tmp_name' => $_FILES['campaign_image']['tmp_name'] ?? null,
+            ]));
+
             $imagePath = $this->handleImageUpload($_FILES['campaign_image']);
+            error_log("[Campaign::create] Image uploaded successfully to " . $imagePath);
 
             $sql = "INSERT INTO campaigns (
                 user_id, title, category, goal_amount, 
@@ -32,8 +44,12 @@ class Campaign {
                 $imagePath
             ];
 
-            return $this->db->insert($sql, $params);
+            error_log("[Campaign::create] Executing insert into campaigns table");
+            $campaignId = $this->db->insert($sql, $params);
+            error_log("[Campaign::create] Insert successful, campaign ID=" . $campaignId);
+            return $campaignId;
         } catch (Exception $e) {
+            error_log("[Campaign::create] Exception: " . $e->getMessage());
             throw new Exception("Failed to create campaign: " . $e->getMessage());
         }
     }
@@ -58,32 +74,113 @@ class Campaign {
     }
 
     private function handleImageUpload($file) {
-        if (!$file || $file['error'] !== UPLOAD_ERR_OK) {
+        error_log("[Campaign::handleImageUpload] Starting image upload handling");
+        if (!$file) {
             throw new Exception("Campaign image is required");
         }
 
-        $allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-        if (!in_array($file['type'], $allowedTypes)) {
-            throw new Exception("Invalid image format. Please use JPG, PNG, or GIF");
+        if (($file['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
+            error_log("[Campaign::handleImageUpload] Upload error code=" . ($file['error'] ?? 'null'));
+            switch ($file['error']) {
+                case UPLOAD_ERR_INI_SIZE:
+                case UPLOAD_ERR_FORM_SIZE:
+                    throw new Exception("Image size must be less than 10MB");
+                case UPLOAD_ERR_NO_FILE:
+                    throw new Exception("Campaign image is required");
+                default:
+                    throw new Exception("Failed to upload image");
+            }
         }
 
-        if ($file['size'] > 10 * 1024 * 1024) { 
-            throw new Exception("Image size must be less than 10MB");
-        }
-
-        $uploadDir = __DIR__ . '/../uploads/campaigns/';
-        if (!is_dir($uploadDir)) {
-            mkdir($uploadDir, 0777, true);
-        }
-
-        $filename = uniqid() . '_' . time() . '_' . basename($file['name']);
-        $targetPath = $uploadDir . $filename;
-
-        if (!move_uploaded_file($file['tmp_name'], $targetPath)) {
+        if (!is_uploaded_file($file['tmp_name'])) {
+            error_log("[Campaign::handleImageUpload] tmp_name is not a valid uploaded file: " . ($file['tmp_name'] ?? 'null'));
             throw new Exception("Failed to upload image");
         }
 
-        return 'uploads/campaigns/' . $filename;
+        $detectedMimeType = null;
+        if (function_exists('finfo_open')) {
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            if ($finfo) {
+                $detectedMimeType = finfo_file($finfo, $file['tmp_name']) ?: null;
+                finfo_close($finfo);
+            }
+        }
+
+        if ($detectedMimeType === null && function_exists('mime_content_type')) {
+            $detectedMimeType = mime_content_type($file['tmp_name']) ?: null;
+        }
+
+        $allowedMimeTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+        $allowedExtensions = ['jpg', 'jpeg', 'png', 'gif', 'webp'];
+        $extension = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+
+        error_log("[Campaign::handleImageUpload] Detected mime type=" . ($detectedMimeType ?? 'unknown') . ", extension=" . $extension);
+
+        if (($detectedMimeType && !in_array($detectedMimeType, $allowedMimeTypes, true)) || !in_array($extension, $allowedExtensions, true)) {
+            throw new Exception("Invalid image format. Please use JPG, PNG, GIF, or WEBP");
+        }
+
+        if ($file['size'] > 10 * 1024 * 1024) {
+            throw new Exception("Image size must be less than 10MB");
+        }
+
+        $uploadDir = rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'campaigns' . DIRECTORY_SEPARATOR;
+        $publicUploadPrefix = 'uploads/campaigns/';
+
+        if (!is_dir($uploadDir) && !mkdir($uploadDir, 0777, true) && !is_dir($uploadDir)) {
+            throw new Exception("Failed to prepare image upload directory");
+        }
+
+        @chmod(rtrim(UPLOAD_DIR, DIRECTORY_SEPARATOR), 0777);
+        @chmod($uploadDir, 0777);
+
+        if (!is_writable($uploadDir)) {
+            $permissions = substr(sprintf('%o', @fileperms($uploadDir)), -4);
+            $ownerId = @fileowner($uploadDir);
+            $groupId = @filegroup($uploadDir);
+            error_log("[Campaign::handleImageUpload] Upload directory is not writable: " . $uploadDir . ", perms=" . $permissions . ", owner=" . ($ownerId === false ? 'unknown' : $ownerId) . ", group=" . ($groupId === false ? 'unknown' : $groupId));
+            throw new Exception("Campaign uploads directory is not writable for the web server process. Please make /opt/lampp/htdocs/crofund/uploads/campaigns writable by Apache (daemon).");
+        }
+
+        $safeBaseName = preg_replace('/[^A-Za-z0-9._-]/', '_', pathinfo($file['name'], PATHINFO_FILENAME));
+        $safeBaseName = trim($safeBaseName, '._-');
+        if ($safeBaseName === '') {
+            $safeBaseName = 'campaign';
+        }
+
+        $filename = uniqid('', true) . '_' . $safeBaseName . '.' . $extension;
+        $targetPath = $uploadDir . $filename;
+
+        error_log("[Campaign::handleImageUpload] Moving uploaded file to " . $targetPath);
+
+        clearstatcache(true, $file['tmp_name']);
+        if (!file_exists($file['tmp_name'])) {
+            error_log("[Campaign::handleImageUpload] Temporary upload file does not exist: " . ($file['tmp_name'] ?? 'null'));
+            throw new Exception("Uploaded image temporary file could not be found");
+        }
+
+        $moved = move_uploaded_file($file['tmp_name'], $targetPath);
+
+        if (!$moved) {
+            $lastError = error_get_last();
+            error_log("[Campaign::handleImageUpload] move_uploaded_file failed for tmp_name=" . ($file['tmp_name'] ?? 'null') . ", targetPath=" . $targetPath . ", details=" . json_encode($lastError));
+
+            if (@rename($file['tmp_name'], $targetPath)) {
+                $moved = true;
+                error_log("[Campaign::handleImageUpload] Fallback rename() succeeded");
+            } elseif (@copy($file['tmp_name'], $targetPath)) {
+                @unlink($file['tmp_name']);
+                $moved = true;
+                error_log("[Campaign::handleImageUpload] Fallback copy() succeeded");
+            }
+        }
+
+        if (!$moved) {
+            throw new Exception("Failed to move uploaded image to the campaign uploads directory");
+        }
+
+        error_log("[Campaign::handleImageUpload] Upload move successful to " . $uploadDir);
+        return $publicUploadPrefix . $filename;
     }
 
     public function getUserCampaignStats($userId) {

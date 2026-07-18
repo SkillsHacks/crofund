@@ -666,10 +666,10 @@ if (!$isAjaxRequest) {
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 </head>
-<body class="bg-gray-50">
-    <div class="flex h-screen pt-16">
+<body class="bg-gray-50 min-h-screen">
+    <div class="flex min-h-screen pt-16">
         <?php include '../components/sidebar.php'; ?>
-        <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
+        <main class="flex-1 min-w-0 bg-gray-50 lg:ml-64">
             <?php renderWithdrawalInitiateContent(); ?>
         </main>
     </div>

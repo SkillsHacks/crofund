@@ -49,7 +49,7 @@ function renderCampaignsIndexContent(array $userCampaigns, array $stats, string 
                             Review campaign performance, filter your fundraising activity, and jump into edits or updates from one organized space.
                         </p>
                     </div>
-                    <a href="<?php echo BASE_URL; ?>/campaigns/create.php" data-dashboard-ajax="create-campaign" class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800">
+                    <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800">
                         <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -121,7 +121,7 @@ function renderCampaignsIndexContent(array $userCampaigns, array $stats, string 
                 </div>
                 <h3 class="mt-4 text-xl font-semibold text-slate-900">No campaigns yet</h3>
                 <p class="mt-2 text-sm text-slate-500">Get started by creating your first fundraising campaign.</p>
-                <a href="<?php echo BASE_URL; ?>/campaigns/create.php" data-dashboard-ajax="create-campaign" class="mt-6 inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700">
+                <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="mt-6 inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700">
                     Create campaign
                 </a>
             </section>
@@ -225,11 +225,11 @@ if (!$isAjaxRequest) {
         }
     </style>
 </head>
-<body class="bg-gray-50">
+<body class="bg-gray-50 min-h-screen">
     <?php include __DIR__ . '/../components/header.php'; ?>
-    <div class="flex h-screen pt-16">
+    <div class="flex min-h-screen pt-16">
         <?php include __DIR__ . '/../components/sidebar.php'; ?>
-        <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
+        <main class="flex-1 min-w-0 bg-gray-50 lg:ml-64">
             <?php renderCampaignsIndexContent($userCampaigns, $stats, $status, $sort, $search); ?>
         </main>
     </div>

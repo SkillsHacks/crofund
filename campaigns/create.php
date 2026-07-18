@@ -1,5 +1,7 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Campaign.php';
 require_once __DIR__ . '/../config/User.php';
@@ -20,64 +22,6 @@ if (!$user->isLoggedIn()) {
 $error = null;
 $success = null;
 $isAjaxRequest = isset($_GET['ajax']) && $_GET['ajax'] === '1';
-
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    try {
-        error_log("Campaign creation attempt for user " . $_SESSION['user_id'] . " with data: " . json_encode($_POST));
-
-        $required_fields = ['title', 'category', 'goal', 'description'];
-        $missing_fields = [];
-
-        foreach ($required_fields as $field) {
-            if (empty($_POST[$field])) {
-                $missing_fields[] = $field;
-            }
-        }
-
-        if (!empty($missing_fields)) {
-            error_log("Campaign creation validation failed for user " . $_SESSION['user_id'] . ": Missing fields: " . implode(', ', $missing_fields));
-            throw new Exception('Please fill in all required fields.');
-        }
-
-        if (!is_numeric($_POST['goal']) || $_POST['goal'] < 100) {
-            error_log("Campaign creation validation failed for user " . $_SESSION['user_id'] . ": Invalid goal amount: " . $_POST['goal']);
-            throw new Exception('Please enter a valid goal amount (minimum $100).');
-        }
-
-        $sanitized_data = [
-            'title' => trim(filter_var($_POST['title'], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES)),
-            'category' => trim(filter_var($_POST['category'], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES)),
-            'goal' => (float) $_POST['goal'],
-            'description' => trim(filter_var($_POST['description'], FILTER_SANITIZE_STRING, FILTER_FLAG_NO_ENCODE_QUOTES)),
-            'user_id' => $_SESSION['user_id'],
-        ];
-
-        if (isset($_FILES['campaign_image']) && $_FILES['campaign_image']['error'] === UPLOAD_ERR_OK) {
-            $sanitized_data['campaign_image'] = $_FILES['campaign_image'];
-        }
-
-        $campaign = new Campaign();
-        $result = $campaign->create($sanitized_data);
-
-        if ($result) {
-            error_log("Campaign created successfully with ID: " . $result . " for user " . $_SESSION['user_id']);
-            $success = 'Campaign created successfully!';
-            header('Location: view.php?id=' . $result);
-            exit();
-        }
-
-        error_log("Campaign creation failed for user " . $_SESSION['user_id'] . ": Campaign::create() returned false");
-        throw new Exception('Something went wrong. Please try again.');
-    } catch (Exception $e) {
-        error_log("Campaign creation error for user " . $_SESSION['user_id'] . ": " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
-        error_log('Stack trace: ' . $e->getTraceAsString());
-        $error = 'Something went wrong. Please try again.';
-    } catch (Error $e) {
-        error_log("Campaign creation PHP error for user " . $_SESSION['user_id'] . ": " . $e->getMessage() . " in " . $e->getFile() . " on line " . $e->getLine());
-        error_log('Stack trace: ' . $e->getTraceAsString());
-        $error = 'Something went wrong. Please try again.';
-    }
-}
 
 if ($isAjaxRequest) {
     ob_start();
@@ -102,32 +46,30 @@ function renderCreateCampaignContent(?string $error = null): void {
                                 Create a compelling fundraiser with a clear goal, a strong story, and an image that helps supporters instantly understand your cause.
                             </p>
                         </div>
-                        <a href="<?php echo BASE_URL; ?>/dashboard.php"
+                        <a href="<?php echo BASE_URL; ?>/campaigns/"
                            class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-700">
                             <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                             </svg>
-                            Back to Dashboard
+                            Back to Campaigns
                         </a>
                     </div>
                 </div>
             </section>
 
-            <?php if ($error): ?>
-                <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-red-700 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <div>
-                            <p class="text-sm font-semibold">We couldn’t create your campaign</p>
-                            <p class="mt-1 text-sm"><?php echo htmlspecialchars($error); ?></p>
-                        </div>
+            <div data-form-alert class="<?php echo $error ? '' : 'hidden '; ?>rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-red-700 shadow-sm">
+                <div class="flex items-start gap-3">
+                    <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                    </svg>
+                    <div>
+                        <p class="text-sm font-semibold">We couldn’t create your campaign</p>
+                        <p class="mt-1 text-sm" data-form-alert-message><?php echo htmlspecialchars($error ?? ''); ?></p>
                     </div>
                 </div>
-            <?php endif; ?>
+            </div>
 
-            <form method="POST" enctype="multipart/form-data" class="space-y-6">
+            <form method="POST" enctype="multipart/form-data" class="space-y-6" data-campaign-create-form="true">
                 <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
                     <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
                         <div class="flex items-center gap-3">
@@ -148,6 +90,7 @@ function renderCreateCampaignContent(?string $error = null): void {
                             <input type="text" id="title" name="title" required
                                    placeholder="e.g. Help rebuild a family home after the fire"
                                    class="mt-2 block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
+                            <p class="mt-2 hidden text-sm text-red-600" data-field-error="title"></p>
                             <p class="mt-2 text-sm text-slate-500">Aim for a clear, specific title that builds trust quickly.</p>
                         </div>
 
@@ -166,6 +109,7 @@ function renderCreateCampaignContent(?string $error = null): void {
                                 <option value="technology">Technology</option>
                                 <option value="environment">Environment</option>
                             </select>
+                            <p class="mt-2 hidden text-sm text-red-600" data-field-error="category"></p>
                         </div>
                     </div>
                 </div>
@@ -192,10 +136,12 @@ function renderCreateCampaignContent(?string $error = null): void {
                                 <input type="number" id="goal" name="goal" min="100" required placeholder="5000"
                                        class="block w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-8 pr-4 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
                             </div>
+                            <p class="mt-2 hidden text-sm text-red-600" data-field-error="goal"></p>
                             <p class="mt-2 text-sm text-slate-500">Minimum campaign goal is $100.</p>
                         </div>
                     </div>
                 </div>
+
 
                 <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
                     <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
@@ -217,6 +163,7 @@ function renderCreateCampaignContent(?string $error = null): void {
                             <textarea id="description" name="description" rows="8" required
                                       placeholder="Tell your story. Why are you raising funds? How will the money be used? What impact will it make?"
                                       class="mt-2 block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10"></textarea>
+                            <p class="mt-2 hidden text-sm text-red-600" data-field-error="description"></p>
                             <p class="mt-2 text-sm text-slate-500">Be honest, specific, and transparent about where the money will go.</p>
                         </div>
 
@@ -241,6 +188,7 @@ function renderCreateCampaignContent(?string $error = null): void {
                                         </label>
                                         <span class="text-sm text-slate-500">or drag and drop</span>
                                     </div>
+                                    <p class="mt-3 hidden text-sm text-red-600" data-field-error="campaign_image"></p>
                                     <p class="mt-3 text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
                                 </div>
                             </div>
@@ -301,65 +249,175 @@ function renderCreateCampaignContent(?string $error = null): void {
 </div>
 
 <script>
-    (function() {
-        const imageInput = document.getElementById('campaign_image');
-        const imagePreview = document.getElementById('image-preview');
+    function initializeCampaignCreateForm() {
+        const container = document.querySelector('.w-full');
+        const imageInput = container ? container.querySelector('#campaign_image') : null;
+        const imagePreview = container ? container.querySelector('#image-preview') : null;
         const imagePreviewImg = imagePreview ? imagePreview.querySelector('img') : null;
-        const uploadPlaceholder = document.getElementById('upload-placeholder');
-        const dropZone = document.getElementById('campaign-image-dropzone');
+        const uploadPlaceholder = container ? container.querySelector('#upload-placeholder') : null;
+        const dropZone = container ? container.querySelector('#campaign-image-dropzone') : null;
+        const form = container ? container.querySelector('form[data-campaign-create-form="true"]') : null;
+        const alertBox = container ? container.querySelector('[data-form-alert]') : null;
+        const alertMessage = container ? container.querySelector('[data-form-alert-message]') : null;
 
-        if (!imageInput || !dropZone || !imagePreview || !imagePreviewImg || !uploadPlaceholder) {
+        if (!container || !form) {
             return;
         }
 
-        imageInput.addEventListener('change', function(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+        if (form.dataset.initialized === 'true') {
+            return;
+        }
+        form.dataset.initialized = 'true';
 
-            const reader = new FileReader();
-            reader.onload = function(loadEvent) {
-                imagePreviewImg.src = loadEvent.target.result;
-                imagePreview.classList.remove('hidden');
-                uploadPlaceholder.classList.add('hidden');
-            };
-            reader.readAsDataURL(file);
-        });
+        const setFieldError = (fieldName, message) => {
+            const field = form.querySelector(`[name="${fieldName}"]`);
+            const errorNode = container.querySelector(`[data-field-error="${fieldName}"]`);
 
-        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
-            dropZone.addEventListener(eventName, function(e) {
-                e.preventDefault();
-                e.stopPropagation();
-            }, false);
-        });
-
-        ['dragenter', 'dragover'].forEach((eventName) => {
-            dropZone.addEventListener(eventName, function() {
-                dropZone.classList.add('border-emerald-400', 'bg-emerald-50');
-            }, false);
-        });
-
-        ['dragleave', 'drop'].forEach((eventName) => {
-            dropZone.addEventListener(eventName, function() {
-                dropZone.classList.remove('border-emerald-400', 'bg-emerald-50');
-            }, false);
-        });
-
-        dropZone.addEventListener('drop', function(e) {
-            const dt = e.dataTransfer;
-            const file = dt.files[0];
-
-            if (file && file.type.startsWith('image/')) {
-                imageInput.files = dt.files;
-                imageInput.dispatchEvent(new Event('change'));
+            if (field) {
+                field.classList.toggle('border-red-300', Boolean(message));
+                field.classList.toggle('focus:border-red-500', Boolean(message));
+                field.classList.toggle('focus:ring-red-500/10', Boolean(message));
             }
-        }, false);
-    })();
+
+            if (errorNode) {
+                errorNode.textContent = message || '';
+                errorNode.classList.toggle('hidden', !message);
+            }
+        };
+
+        const clearErrors = () => {
+            form.querySelectorAll('[name]').forEach((field) => {
+                field.classList.remove('border-red-300', 'focus:border-red-500', 'focus:ring-red-500/10');
+            });
+            container.querySelectorAll('[data-field-error]').forEach((node) => {
+                node.textContent = '';
+                node.classList.add('hidden');
+            });
+            if (alertBox) {
+                alertBox.classList.add('hidden');
+            }
+            if (alertMessage) {
+                alertMessage.textContent = '';
+            }
+        };
+
+        if (imageInput && dropZone && imagePreview && imagePreviewImg && uploadPlaceholder) {
+            imageInput.addEventListener('change', function(event) {
+                const file = event.target.files[0];
+                if (!file) return;
+
+                const reader = new FileReader();
+                reader.onload = function(loadEvent) {
+                    imagePreviewImg.src = loadEvent.target.result;
+                    imagePreview.classList.remove('hidden');
+                    uploadPlaceholder.classList.add('hidden');
+                };
+                reader.readAsDataURL(file);
+                setFieldError('campaign_image', '');
+            });
+
+            ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
+                dropZone.addEventListener(eventName, function(e) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                }, false);
+            });
+
+            ['dragenter', 'dragover'].forEach((eventName) => {
+                dropZone.addEventListener(eventName, function() {
+                    dropZone.classList.add('border-emerald-400', 'bg-emerald-50');
+                }, false);
+            });
+
+            ['dragleave', 'drop'].forEach((eventName) => {
+                dropZone.addEventListener(eventName, function() {
+                    dropZone.classList.remove('border-emerald-400', 'bg-emerald-50');
+                }, false);
+            });
+
+            dropZone.addEventListener('drop', function(e) {
+                const dt = e.dataTransfer;
+                const file = dt.files[0];
+
+                if (file && file.type.startsWith('image/')) {
+                    imageInput.files = dt.files;
+                    imageInput.dispatchEvent(new Event('change'));
+                }
+            }, false);
+        }
+
+        form.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            clearErrors();
+
+            const submitButton = form.querySelector('button[type="submit"]');
+            const originalButtonText = submitButton ? submitButton.innerHTML : null;
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.innerHTML = 'Creating...';
+            }
+
+            try {
+                const response = await fetch('<?php echo BASE_URL; ?>/api/dashboard/create_campaign.php', {
+                    method: 'POST',
+                    body: new FormData(form),
+                    credentials: 'same-origin',
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'Accept': 'application/json'
+                    }
+                });
+
+                const responseText = await response.text();
+                let result = null;
+
+                try {
+                    result = responseText ? JSON.parse(responseText) : null;
+                } catch (parseError) {
+                    console.error('[campaign-create] Non-JSON response:', responseText);
+                    const readableResponse = responseText && responseText.trim()
+                        ? responseText.trim().replace(/<[^>]*>/g, '').slice(0, 400)
+                        : 'The server returned an empty response.';
+                    throw new Error(readableResponse);
+                }
+
+                if (!result || !response.ok || !result.success) {
+                    if (result.errors && typeof result.errors === 'object') {
+                        Object.entries(result.errors).forEach(([fieldName, message]) => {
+                            setFieldError(fieldName, message);
+                        });
+                    }
+
+                    if (alertBox && alertMessage) {
+                        alertMessage.textContent = result.message || 'Unable to create the campaign.';
+                        alertBox.classList.remove('hidden');
+                    }
+                    return;
+                }
+
+                window.location.href = result.redirect_url;
+            } catch (error) {
+                console.error('[campaign-create] AJAX submit failed', error);
+                if (alertBox && alertMessage) {
+                    alertMessage.textContent = error instanceof Error && error.message ? error.message : 'A network error occurred. Please try again.';
+                    alertBox.classList.remove('hidden');
+                }
+            } finally {
+                if (submitButton && originalButtonText !== null) {
+                    submitButton.disabled = false;
+                    submitButton.innerHTML = originalButtonText;
+                }
+            }
+        });
+    }
+
+    initializeCampaignCreateForm();
 </script>
 <?php
 }
 
 if (!$isAjaxRequest) {
-    include '../components/header.php';
+    include __DIR__ . '/../components/header.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -394,10 +452,10 @@ if (!$isAjaxRequest) {
         }
     </script>
 </head>
-<body class="bg-gray-50">
-    <div class="flex h-screen pt-16">
-        <?php include '../components/sidebar.php'; ?>
-        <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
+<body class="bg-gray-50 min-h-screen">
+    <div class="flex min-h-screen pt-16">
+        <?php include __DIR__ . '/../components/sidebar.php'; ?>
+        <main class="flex-1 min-w-0 bg-gray-50 lg:ml-64">
             <?php renderCreateCampaignContent($error); ?>
         </main>
     </div>

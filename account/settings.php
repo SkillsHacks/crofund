@@ -199,10 +199,10 @@ if (!$isAjaxRequest) {
     <title>Account Settings - CroFunding</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50">
-    <div class="flex h-screen pt-16">
+<body class="bg-gray-50 min-h-screen">
+    <div class="flex min-h-screen pt-16">
         <?php include __DIR__ . '/../components/sidebar.php'; ?>
-        <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
+        <main class="flex-1 min-w-0 bg-gray-50 lg:ml-64">
             <?php renderAccountSettingsContent($currentUser, $successMessage, $errorMessage); ?>
         </main>
     </div>

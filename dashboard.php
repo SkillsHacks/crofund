@@ -26,6 +26,87 @@ if (!$currentUser || !isset($currentUser['name'])) {
     exit();
 }
 
+define('DASHBOARD_ROUTES', [
+    'home' => [
+        'file' => null,
+        'path' => '/dashboard/'
+    ],
+    'create_campaign' => [
+        'file' => __DIR__ . '/campaigns/create.php',
+        'path' => '/campaigns/create/'
+    ],
+    'my_campaigns' => [
+        'file' => __DIR__ . '/campaigns/index.php',
+        'path' => '/campaigns/'
+    ],
+    'donations' => [
+        'file' => __DIR__ . '/withdrawals/logs.php',
+        'path' => '/donations/'
+    ],
+    'profile' => [
+        'file' => __DIR__ . '/account/settings.php',
+        'path' => '/profile/'
+    ],
+    'settings' => [
+        'file' => __DIR__ . '/account/settings.php',
+        'path' => '/settings/'
+    ],
+    'verification' => [
+        'file' => __DIR__ . '/account/verification.php',
+        'path' => '/verification/'
+    ],
+    'withdrawals' => [
+        'file' => __DIR__ . '/withdrawals/initiate.php',
+        'path' => '/withdrawals/'
+    ],
+    'withdrawal_logs' => [
+        'file' => __DIR__ . '/withdrawals/logs.php',
+        'path' => '/withdrawal-logs/'
+    ],
+]);
+
+function dashboardRouteUrl(string $routeName): string {
+    $routes = DASHBOARD_ROUTES;
+    if (!isset($routes[$routeName])) {
+        return BASE_URL . '/dashboard/';
+    }
+
+    return BASE_URL . $routes[$routeName]['path'];
+}
+
+function resolveDashboardRoute(?string $routeName): array {
+    $routeName = $routeName !== null ? trim($routeName) : 'home';
+    if ($routeName === '') {
+        $routeName = 'home';
+    }
+
+    $routes = DASHBOARD_ROUTES;
+    if (!array_key_exists($routeName, $routes)) {
+        return [
+            'name' => '404',
+            'file' => __DIR__ . '/404.php',
+            'is_home' => false,
+            'is_valid' => false,
+        ];
+    }
+
+    return [
+        'name' => $routeName,
+        'file' => $routes[$routeName]['file'],
+        'path' => $routes[$routeName]['path'],
+        'is_home' => $routeName === 'home',
+        'is_valid' => true,
+    ];
+}
+
+$currentDashboardRoute = resolveDashboardRoute($_GET['view'] ?? 'home');
+$isDashboardAjaxRequest = isset($_GET['ajax']) && $_GET['ajax'] === '1';
+
+if ($isDashboardAjaxRequest && !$currentDashboardRoute['is_home']) {
+    require $currentDashboardRoute['file'];
+    exit();
+}
+
 // 6. Now fetch data AFTER auth checks
 $campaign = new Campaign();
 $userId = $_SESSION['user_id'];
@@ -145,7 +226,7 @@ include 'components/header.php';
         <?php include 'components/sidebar.php'; ?>
 
         <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
-            <div id="dashboard-default-view" class="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8">
+            <div id="dashboard-default-view" class="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 <?php echo $currentDashboardRoute['is_home'] ? '' : 'hidden'; ?>">
                 <section class="dashboard-glow relative overflow-hidden rounded-3xl border border-emerald-100 shadow-sm">
                     <div class="absolute inset-y-0 right-0 hidden lg:block w-1/3 bg-gradient-to-l from-white/40 to-transparent"></div>
                     <div class="relative px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
@@ -164,7 +245,7 @@ include 'components/header.php';
                             </div>
 
                             <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:w-[420px]">
-                                <a href="<?php echo BASE_URL; ?>/campaigns/create.php" data-dashboard-ajax="create-campaign" class="group rounded-2xl bg-slate-900 px-4 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800">
+                                <a href="<?php echo dashboardRouteUrl('create_campaign'); ?>" data-dashboard-route="create_campaign" class="group rounded-2xl bg-slate-900 px-4 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800">
                                     <div class="flex items-center justify-between">
                                         <span class="text-sm font-semibold">Create campaign</span>
                                         <svg class="h-5 w-5 text-emerald-300 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -173,7 +254,7 @@ include 'components/header.php';
                                     </div>
                                     <p class="mt-2 text-xs text-slate-300">Launch a new fundraiser in a few steps.</p>
                                 </a>
-                                <a href="<?php echo BASE_URL; ?>/campaigns/index.php" data-dashboard-ajax="section" class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white">
+                                <a href="<?php echo dashboardRouteUrl('my_campaigns'); ?>" data-dashboard-route="my_campaigns" class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white">
                                     <div class="flex items-center justify-between">
                                         <span class="text-sm font-semibold">Manage campaigns</span>
                                         <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -182,7 +263,7 @@ include 'components/header.php';
                                     </div>
                                     <p class="mt-2 text-xs text-slate-500">Review active, ended, and draft campaigns.</p>
                                 </a>
-                                <a href="<?php echo BASE_URL; ?>/withdrawals/initiate.php" data-dashboard-ajax="section" class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white">
+                                <a href="<?php echo dashboardRouteUrl('withdrawals'); ?>" data-dashboard-route="withdrawals" class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white">
                                     <div class="flex items-center justify-between">
                                         <span class="text-sm font-semibold">Withdraw funds</span>
                                         <svg class="h-5 w-5 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -259,7 +340,7 @@ include 'components/header.php';
                                 <h2 class="text-lg font-semibold text-slate-900">Recent campaigns</h2>
                                 <p class="mt-1 text-sm text-slate-500">A quick look at the latest campaigns you’ve created.</p>
                             </div>
-                            <a href="<?php echo BASE_URL; ?>/campaigns/index.php" data-dashboard-ajax="section" class="hidden sm:inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700">
+                            <a href="<?php echo dashboardRouteUrl('my_campaigns'); ?>" data-dashboard-route="my_campaigns" class="hidden sm:inline-flex items-center gap-2 rounded-xl border border-slate-200 px-3 py-2 text-sm font-medium text-slate-600 transition hover:border-emerald-200 hover:text-emerald-700">
                                 View all
                                 <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
@@ -276,14 +357,14 @@ include 'components/header.php';
                             <h2 class="text-lg font-semibold text-slate-900">Quick actions</h2>
                             <p class="mt-1 text-sm text-slate-500">Common tasks you can jump into right away.</p>
                             <div class="mt-5 space-y-3">
-                                <a href="<?php echo BASE_URL; ?>/campaigns/create.php" data-dashboard-ajax="create-campaign" class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-emerald-200 hover:bg-emerald-50/60">
+                                <a href="<?php echo dashboardRouteUrl('create_campaign'); ?>" data-dashboard-route="create_campaign" class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-emerald-200 hover:bg-emerald-50/60">
                                     <div>
                                         <p class="text-sm font-semibold text-slate-900">Start a new campaign</p>
                                         <p class="text-xs text-slate-500">Launch a fresh fundraiser.</p>
                                     </div>
                                     <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">New</span>
                                 </a>
-                                <a href="<?php echo BASE_URL; ?>/account/verification.php" data-dashboard-ajax="section" class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-emerald-200 hover:bg-emerald-50/60">
+                                <a href="<?php echo dashboardRouteUrl('verification'); ?>" data-dashboard-route="verification" class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-emerald-200 hover:bg-emerald-50/60">
                                     <div>
                                         <p class="text-sm font-semibold text-slate-900">Check verification</p>
                                         <p class="text-xs text-slate-500">Review your account verification status.</p>
@@ -292,7 +373,7 @@ include 'components/header.php';
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/>
                                     </svg>
                                 </a>
-                                <a href="<?php echo BASE_URL; ?>/withdrawals/logs.php" data-dashboard-ajax="section" class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-emerald-200 hover:bg-emerald-50/60">
+                                <a href="<?php echo dashboardRouteUrl('withdrawal_logs'); ?>" data-dashboard-route="withdrawal_logs" class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-emerald-200 hover:bg-emerald-50/60">
                                     <div>
                                         <p class="text-sm font-semibold text-slate-900">Review withdrawal logs</p>
                                         <p class="text-xs text-slate-500">Track payout requests and status changes.</p>
@@ -340,7 +421,11 @@ include 'components/header.php';
                 </section>
             </div>
 
-            <div id="dashboard-ajax-view" class="hidden p-3 sm:p-6"></div>
+            <div id="dashboard-ajax-view" class="<?php echo $currentDashboardRoute['is_home'] ? 'hidden' : ''; ?> p-3 sm:p-6">
+                <?php if (!$currentDashboardRoute['is_home']): ?>
+                    <?php require $currentDashboardRoute['file']; ?>
+                <?php endif; ?>
+            </div>
         </main>
     </div>
 
@@ -443,14 +528,13 @@ include 'components/header.php';
         });
     }
 
-    async function loadDashboardSection(path, pushState = true) {
+    async function loadDashboardSection(routeName, pushState = true) {
         const ajaxView = document.getElementById('dashboard-ajax-view');
         setDashboardAjaxMode(true);
         ajaxView.innerHTML = '<div class="bg-white rounded-lg shadow-sm p-6 text-gray-600">Loading...</div>';
 
         try {
-            const separator = path.includes('?') ? '&' : '?';
-            const response = await fetch(`${path}${separator}ajax=1`, {
+            const response = await fetch(`${BASE_URL}/dashboard.php?view=${encodeURIComponent(routeName)}&ajax=1`, {
                 headers: {
                     'X-Requested-With': 'XMLHttpRequest'
                 }
@@ -466,7 +550,8 @@ include 'components/header.php';
             initializeDashboardLinks(ajaxView);
 
             if (pushState) {
-                window.history.pushState({ dashboardAjaxPath: path }, '', `${BASE_URL}/dashboard.php?view=${encodeURIComponent(path)}`);
+                const routeUrlMap = <?php echo json_encode(array_map(static fn ($route) => BASE_URL . $route['path'], DASHBOARD_ROUTES)); ?>;
+                window.history.pushState({ dashboardRoute: routeName }, '', routeUrlMap[routeName] || `${BASE_URL}/dashboard/`);
             }
         } catch (error) {
             console.error('Failed to load dashboard section:', error);
@@ -477,15 +562,20 @@ include 'components/header.php';
     function showDashboardHome(pushState = true) {
         setDashboardAjaxMode(false);
         if (pushState) {
-            window.history.pushState({ dashboardAjaxPath: null }, '', `${BASE_URL}/dashboard.php`);
+            window.history.pushState({ dashboardRoute: null }, '', `${BASE_URL}/dashboard/`);
         }
     }
 
     function initializeDashboardLinks(scope = document) {
-        scope.querySelectorAll('[data-dashboard-ajax]').forEach((link) => {
+        scope.querySelectorAll('[data-dashboard-route]').forEach((link) => {
             link.addEventListener('click', function(event) {
                 event.preventDefault();
-                loadDashboardSection(this.href);
+                const routeName = this.getAttribute('data-dashboard-route');
+                if (!routeName || routeName === 'home') {
+                    showDashboardHome();
+                    return;
+                }
+                loadDashboardSection(routeName);
             });
         });
 
@@ -511,6 +601,18 @@ include 'components/header.php';
 
     document.addEventListener('DOMContentLoaded', function() {
         initializeDashboardLinks();
+
+        const initialRoute = <?php echo json_encode($currentDashboardRoute['name']); ?>;
+        if (initialRoute && initialRoute !== 'home' && initialRoute !== '404') {
+            setDashboardAjaxMode(true);
+            const ajaxView = document.getElementById('dashboard-ajax-view');
+            executeInjectedScripts(ajaxView);
+            initializeDashboardLinks(ajaxView);
+        } else if (initialRoute === '404') {
+            setDashboardAjaxMode(true);
+            const ajaxView = document.getElementById('dashboard-ajax-view');
+            initializeDashboardLinks(ajaxView);
+        }
 
         const updateForm = document.getElementById('dashboard-update-form');
         if (updateForm) {
@@ -541,18 +643,23 @@ include 'components/header.php';
         }
 
         const params = new URLSearchParams(window.location.search);
-        const viewPath = params.get('view');
-        if (viewPath) {
-            loadDashboardSection(viewPath, false);
+        const routeName = params.get('view');
+        if (routeName && routeName !== 'home' && routeName !== initialRoute) {
+            loadDashboardSection(routeName, false);
         }
     });
 
     window.addEventListener('popstate', function(event) {
-        const dashboardPath = event.state?.dashboardAjaxPath;
-        if (dashboardPath) {
-            loadDashboardSection(dashboardPath, false);
+        if (event.state && event.state.dashboardRoute) {
+            loadDashboardSection(event.state.dashboardRoute, false);
         } else {
-            showDashboardHome(false);
+            const params = new URLSearchParams(window.location.search);
+            const routeName = params.get('view');
+            if (routeName && routeName !== 'home') {
+                loadDashboardSection(routeName, false);
+            } else {
+                showDashboardHome(false);
+            }
         }
     });
 

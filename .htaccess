@@ -1,0 +1,17 @@
+RewriteEngine On
+
+# Serve existing files and directories directly
+RewriteCond %{REQUEST_FILENAME} -f [OR]
+RewriteCond %{REQUEST_FILENAME} -d
+RewriteRule ^ - [L]
+
+# Clean dashboard-style routes
+RewriteRule ^dashboard/?$ dashboard.php?view=home [L,QSA]
+RewriteRule ^campaigns/create/?$ dashboard.php?view=create_campaign [L,QSA]
+RewriteRule ^campaigns/?$ dashboard.php?view=my_campaigns [L,QSA]
+RewriteRule ^donations/?$ dashboard.php?view=donations [L,QSA]
+RewriteRule ^profile/?$ dashboard.php?view=profile [L,QSA]
+RewriteRule ^settings/?$ dashboard.php?view=settings [L,QSA]
+RewriteRule ^verification/?$ dashboard.php?view=verification [L,QSA]
+RewriteRule ^withdrawals/?$ dashboard.php?view=withdrawals [L,QSA]
+RewriteRule ^withdrawal-logs/?$ dashboard.php?view=withdrawal_logs [L,QSA]
