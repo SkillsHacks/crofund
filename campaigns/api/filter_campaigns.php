@@ -128,11 +128,10 @@ try {
     ]);
 
 } catch (Exception $e) {
-    // Return error response
     error_log("Error in filter_campaigns.php: " . $e->getMessage());
     echo json_encode([
         'success' => false,
-        'error' => $e->getMessage(),
+        'error' => 'Unable to filter campaigns right now. Please try again.',
         'html' => '',
         'count' => 0,
         'total_count' => 0,

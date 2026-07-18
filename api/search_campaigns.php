@@ -117,8 +117,7 @@ try {
     error_log("Search campaigns error: " . $e->getMessage());
     echo json_encode([
         'success' => false,
-        'error' => 'An error occurred while searching campaigns',
-        'debug' => DEBUG ? $e->getMessage() : null
+        'error' => 'An error occurred while searching campaigns'
     ]);
 }
 ?> 

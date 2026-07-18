@@ -24,8 +24,9 @@ try {
 
     echo json_encode($response);
 } catch (Exception $e) {
+    error_log('browse_campaigns API error: ' . $e->getMessage());
     echo json_encode([
         'success' => false,
-        'error' => $e->getMessage()
+        'error' => 'Unable to load campaigns right now. Please try again.'
     ]);
 }

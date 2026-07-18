@@ -122,10 +122,6 @@ try {
         }, 3000); // 3 second delay to simulate processing
         
         function processDonation() {
-            console.log('Processing donation...');
-            console.log('Session ID:', '<?php echo $sessionId; ?>');
-            console.log('CSRF Token:', '<?php echo $_SESSION['csrf_token']; ?>');
-            
             // Send donation data to backend
             fetch('<?php echo BASE_URL; ?>/stripe/complete-payment.php', {
                 method: 'POST',
@@ -137,27 +133,14 @@ try {
                     csrf_token: '<?php echo $_SESSION['csrf_token']; ?>'
                 })
             })
-            .then(response => {
-                console.log('Response status:', response.status);
-                console.log('Response headers:', response.headers);
-                return response.text(); // Get response as text first
-            })
-            .then(text => {
-                console.log('Response text:', text);
-                try {
-                    const data = JSON.parse(text);
-                    if (data.success) {
-                        console.log('Donation processed successfully');
-                    } else {
-                        console.error('Error processing donation:', data.error);
-                    }
-                } catch (e) {
-                    console.error('Failed to parse JSON:', e);
-                    console.error('Raw response:', text);
+            .then(response => response.json())
+            .then(data => {
+                if (!data.success) {
+                    console.error('Error processing donation.');
                 }
             })
-            .catch(error => {
-                console.error('Fetch error:', error);
+            .catch(() => {
+                console.error('Unable to complete donation processing.');
             });
         }
     </script>

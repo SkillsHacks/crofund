@@ -290,7 +290,12 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'
                 exit;
             }
         } catch (Exception $e) {
-            echo json_encode(['success' => false, 'error' => $e->getMessage()]);
+            error_log('Register phone verification error: ' . $e->getMessage());
+            $message = $e->getMessage();
+            if (stripos($message, 'SQLSTATE') !== false || stripos($message, 'Fatal error') !== false || stripos($message, 'Stack trace') !== false) {
+                $message = 'Unable to complete phone verification right now. Please try again.';
+            }
+            echo json_encode(['success' => false, 'error' => $message]);
             exit;
         }
     }

@@ -460,11 +460,7 @@ async function processIdImage() {
             processedImage,
             'eng',
             {
-                logger: m => {
-                    if (m.status === 'recognizing text') {
-                        console.log(`Progress: ${Math.round(m.progress * 100)}%`);
-                    }
-                },
+                logger: () => {},
                 tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 :.,-()',
                 tessedit_pageseg_mode: Tesseract.PSM.AUTO,
                 preserve_interword_spaces: '1'
@@ -474,10 +470,6 @@ async function processIdImage() {
         rawOcrText = text;
         extractedData = extractNamesFromText(text);
         let verificationResult = compareExtractedData(extractedData, accountNames);
-
-        if (isDevelopmentMode) {
-            console.log('Development mode: Showing detailed verification results');
-        }
 
         displayVerificationResults(extractedData, verificationResult);
     } catch (error) {
