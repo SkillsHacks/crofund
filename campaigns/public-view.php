@@ -28,6 +28,63 @@ $totalDonors = $campaign->getCampaignDonorCount($campaignId);
 $totalPages  = ceil($totalDonors / $perPage);
 $donors      = $campaign->getCampaignDonors($campaignId, $perPage, $offset);
 
+function formatRelativeTime(?string $timestamp): string {
+  if (empty($timestamp)) {
+    return 'Recently';
+  }
+
+  try {
+    $donatedAt = new DateTime($timestamp);
+    $now = new DateTime();
+
+    if ($donatedAt > $now) {
+      $donatedAt = $now;
+    }
+
+    $seconds = $now->getTimestamp() - $donatedAt->getTimestamp();
+
+    if ($seconds < 45) {
+      return 'Just now';
+    }
+
+    if ($seconds < 90) {
+      return '1 minute ago';
+    }
+
+    $minutes = (int) floor($seconds / 60);
+    if ($minutes < 60) {
+      return $minutes . ' minute' . ($minutes === 1 ? '' : 's') . ' ago';
+    }
+
+    $hours = (int) floor($seconds / 3600);
+    if ($hours < 24) {
+      return $hours . ' hour' . ($hours === 1 ? '' : 's') . ' ago';
+    }
+
+    $days = (int) floor($seconds / 86400);
+    if ($days < 7) {
+      return $days . ' day' . ($days === 1 ? '' : 's') . ' ago';
+    }
+
+    $weeks = (int) floor($days / 7);
+    if ($weeks < 5) {
+      return $weeks . ' week' . ($weeks === 1 ? '' : 's') . ' ago';
+    }
+
+    $months = (int) floor($days / 30.4375);
+    if ($months < 12) {
+      $months = max(1, $months);
+      return $months . ' month' . ($months === 1 ? '' : 's') . ' ago';
+    }
+
+    $years = (int) floor($days / 365.25);
+    $years = max(1, $years);
+    return $years . ' year' . ($years === 1 ? '' : 's') . ' ago';
+  } catch (Exception $e) {
+    return 'Recently';
+  }
+}
+
 if (!$details) {
     $_SESSION['error'] = "Campaign not found";
     header("Location: " . BASE_URL . "/campaigns/view_compaigns.php");
@@ -409,15 +466,7 @@ $ogImageUrl = !empty($details['image_path'])
             $donorName    = $isAnon ? 'Anonymous Donor' : htmlspecialchars($donor['donor_name']);
             $grad         = $avatarGradients[$index % count($avatarGradients)];
 
-            $donatedAt = new DateTime($donor['donated_at']);
-            $now       = new DateTime();
-            $diff      = $now->diff($donatedAt);
-            if ($diff->y > 0)      $timeAgo = $diff->y . ' year' . ($diff->y > 1 ? 's' : '') . ' ago';
-            elseif ($diff->m > 0)  $timeAgo = $diff->m . ' month' . ($diff->m > 1 ? 's' : '') . ' ago';
-            elseif ($diff->d > 0)  $timeAgo = $diff->d . ' day' . ($diff->d > 1 ? 's' : '') . ' ago';
-            elseif ($diff->h > 0)  $timeAgo = $diff->h . ' hour' . ($diff->h > 1 ? 's' : '') . ' ago';
-            elseif ($diff->i > 0)  $timeAgo = $diff->i . ' min' . ($diff->i > 1 ? 's' : '') . ' ago';
-            else $timeAgo = 'Just now';
+            $timeAgo = formatRelativeTime($donor['donated_at'] ?? null);
           ?>
           <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
             <div class="donor-avatar bg-gradient-to-br <?php echo $grad; ?>">

@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once 'config/config.php';
+require_once __DIR__ . '/config/config.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -16,7 +16,7 @@ require_once 'config/config.php';
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50">
-    <?php include 'components/public-header.php'; ?>
+    <?php include __DIR__ . '/components/public-header.php'; ?>
 
     <div class="max-w-4xl mx-auto px-4 py-16 sm:px-6 lg:px-8">
         <h1 class="text-3xl font-bold text-gray-900 mb-8">Cookie Policy</h1>
@@ -48,6 +48,6 @@ require_once 'config/config.php';
         </div>
     </div>
 
-    <?php include 'components/footer.php'; ?>
+    <?php include __DIR__ . '/components/public-footer.php'; ?>
 </body>
 </html>

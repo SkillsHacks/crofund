@@ -64,7 +64,11 @@ try {
         $campaign['progress'] = $campaign['goal_amount'] > 0
             ? round(($campaign['current_amount'] / $campaign['goal_amount']) * 100, 2)
             : 0;
-        $campaign['formatted_end_date'] = date('M d, Y', strtotime($campaign['end_date']));
+
+        $endDate = $campaign['end_date'] ?? null;
+        $campaign['formatted_end_date'] = !empty($endDate)
+            ? date('M d, Y', strtotime($endDate))
+            : 'No end date';
         $campaign['name'] = "You";
     }
     unset($campaign);

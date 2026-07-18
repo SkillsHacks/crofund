@@ -1,6 +1,6 @@
 <?php
-require_once '../config/config.php';
-require_once '../config/Campaign.php';
+require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/Campaign.php';
 
 header('Content-Type: application/json');
 

@@ -158,7 +158,7 @@ function renderVerificationContent(array $userData, ?string $error): void {
 }
 
 if (!$isAjaxRequest) {
-    include '../components/header.php';
+    include __DIR__ . '/../components/header.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -170,7 +170,7 @@ if (!$isAjaxRequest) {
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div class="flex h-screen pt-16">
-        <?php include '../components/sidebar.php'; ?>
+        <?php include __DIR__ . '/../components/sidebar.php'; ?>
         <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
             <?php renderVerificationContent($userData, $error); ?>
         </main>

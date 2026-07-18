@@ -52,7 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     }
 }
 
-include '../components/header.php';
+include __DIR__ . '/../components/header.php';
 
 ?>
 
@@ -88,7 +88,7 @@ include '../components/header.php';
 </head>
 <body class="bg-gradient-to-br from-gray-50 to-gray-100">
     <div class="flex h-screen pt-16">
-        <?php include '../components/sidebar.php'; ?>
+        <?php include __DIR__ . '/../components/sidebar.php'; ?>
 
         <main class="flex-1 min-w-0 overflow-auto bg-gradient-to-br from-gray-50 to-gray-100 lg:ml-64">
             <div class="max-w-5xl mx-auto p-3 sm:p-4 md:p-6">

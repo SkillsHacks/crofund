@@ -186,7 +186,7 @@ function renderAccountSettingsContent(array $currentUser, string $successMessage
 }
 
 if (!$isAjaxRequest) {
-    include '../components/header.php';
+    include __DIR__ . '/../components/header.php';
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -201,7 +201,7 @@ if (!$isAjaxRequest) {
 </head>
 <body class="bg-gray-50">
     <div class="flex h-screen pt-16">
-        <?php include '../components/sidebar.php'; ?>
+        <?php include __DIR__ . '/../components/sidebar.php'; ?>
         <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
             <?php renderAccountSettingsContent($currentUser, $successMessage, $errorMessage); ?>
         </main>

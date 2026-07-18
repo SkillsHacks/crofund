@@ -1,5 +1,5 @@
 <?php
-require_once 'Database.php';
+require_once __DIR__ . '/Database.php';
 
 class Campaign {
     private $db;
@@ -1109,7 +1109,9 @@ public function getBrowseCampaigns($category = 'all', $sort = '', $page = 1, $pe
             // Format the data
             foreach ($donors as &$donor) {
                 $donor['amount'] = floatval($donor['amount']);
-                $donor['donated_at'] = date('M j, Y', strtotime($donor['donated_at']));
+                $donor['donated_at_formatted'] = !empty($donor['donated_at'])
+                    ? date('M j, Y', strtotime($donor['donated_at']))
+                    : null;
                 // Mask email for privacy
                 $email = $donor['donor_email'] ?? '';
                 if ($email) {
@@ -1284,8 +1286,7 @@ public function update($campaignId, $updateData) {
     public function updateCampaignAmount($campaignId, $amount) {
         try {
             $sql = "UPDATE campaigns SET 
-                    current_amount = current_amount + ?, 
-                    donor_count = donor_count + 1 
+                    current_amount = current_amount + ?
                     WHERE id = ?";
             
             $this->db->query($sql, [$amount, $campaignId]);
