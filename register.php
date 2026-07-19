@@ -7,7 +7,10 @@ require_once __DIR__ . '/config/PhoneValidationService.php';
 require_once __DIR__ . '/config/PhoneVerificationService.php';
 require_once __DIR__ . '/config/EmailValidationService.php';
 require_once __DIR__ . '/config/EmailVerificationService.php';
+require_once __DIR__ . '/config/location/LocationService.php';
 $countries = require_once __DIR__ . '/config/countries.php';
+$citiesByCountry = require_once __DIR__ . '/config/location/cities.php';
+$locationService = new LocationService($countries, $citiesByCountry);
 $phoneRestrictions = require_once __DIR__ . '/config/phone_restrictions.php';
 $phoneRules = require_once __DIR__ . '/config/phone_rules.php';
 $emailRestrictions = require_once __DIR__ . '/config/email_restrictions.php';
@@ -292,8 +295,15 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'
         } catch (Exception $e) {
             error_log('Register phone verification error: ' . $e->getMessage());
             $message = $e->getMessage();
-            if (stripos($message, 'SQLSTATE') !== false || stripos($message, 'Fatal error') !== false || stripos($message, 'Stack trace') !== false) {
-                $message = 'Unable to complete phone verification right now. Please try again.';
+            if (
+                stripos($message, 'SQLSTATE') !== false ||
+                stripos($message, 'Fatal error') !== false ||
+                stripos($message, 'Stack trace') !== false ||
+                stripos($message, 'SMTP') !== false ||
+                stripos($message, 'Mailer Error') !== false ||
+                stripos($message, 'Failed to connect') !== false
+            ) {
+                $message = 'We could not complete that request right now. Please try again in a few minutes.';
             }
             echo json_encode(['success' => false, 'error' => $message]);
             exit;
@@ -378,6 +388,32 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             throw new Exception('Phone number already registered');
         }
 
+        $countryCode = strtoupper(trim($_POST['country'] ?? ''));
+        $nationality = trim($_POST['nationality'] ?? '');
+        $submittedCity = trim($_POST['city'] ?? '');
+
+        if (!$locationService->isValidCountry($countryCode)) {
+            throw new Exception('Please select a valid country.');
+        }
+
+        $selectedCountry = $locationService->getCountryByCode($countryCode);
+        if (!$selectedCountry) {
+            throw new Exception('Please select a valid country.');
+        }
+
+        if ($nationality === '') {
+            throw new Exception('Please select your nationality.');
+        }
+
+        if (strcasecmp($selectedCountry['nationality'] ?? '', $nationality) !== 0) {
+            throw new Exception('Selected nationality does not match the selected country.');
+        }
+
+        $normalizedCity = $locationService->normalizeCityForCountry($countryCode, $submittedCity);
+        if ($normalizedCity === null) {
+            throw new Exception('Please select a valid city for the selected country.');
+        }
+
         $userData = [
             'name' => $_POST['name'] ?? '',
             'email' => $_POST['email'] ?? '',
@@ -385,9 +421,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             'phone' => $normalizedPhone,
             'phone_country_code' => $phoneCountryCode,
             'nin' => $_POST['nin'] ?? '',
-            'country' => $_POST['country'] ?? '',
-            'nationality' => $_POST['nationality'] ?? '',
-            'city' => $_POST['city'] ?? '',
+            'country' => $countryCode,
+            'nationality' => $selectedCountry['nationality'] ?? $nationality,
+            'city' => $normalizedCity,
             'newsletter' => isset($_POST['newsletter']),
             'avatar' => $_FILES['avatar'] ?? null,
             'account_type' => $_POST['account_type'] ?? 'personal',
@@ -877,8 +913,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </div>
                             
                             <div>
-                                <label for="city" class="block text-sm font-semibold text-slate-700 mb-2">City/Region</label>
-                                <input type="text" id="city" name="city" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200" placeholder="Enter your city or region">
+                                <label for="city-search" class="block text-sm font-semibold text-slate-700 mb-2">City/Region</label>
+                                <div class="space-y-2">
+                                    <input type="text" id="city-search" class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60" placeholder="Select a country first" disabled autocomplete="off">
+                                    <select id="city" name="city" required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 disabled:cursor-not-allowed disabled:opacity-60" disabled>
+                                        <option value="">Select a country first</option>
+                                    </select>
+                                    <p id="city-status" class="text-sm text-slate-500">Select a country first</p>
+                                    <div id="city-error" class="text-red-600 text-sm hidden"></div>
+                                </div>
                             </div>
                             
                             <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 pt-2">
@@ -991,6 +1034,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         const phoneRules = <?php echo json_encode($phoneRuleMap); ?>;
         const unsupportedDialCodes = <?php echo json_encode($unsupportedDialCodes); ?>;
         const unsupportedCountryMessage = <?php echo json_encode($unsupportedCountryMessage); ?>;
+        const cityCache = {};
         let currentStep = 1;
         const totalSteps = 5;
         let emailVerified = false;
@@ -1004,6 +1048,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         let phoneCheckTimeout = null;
         let latestNormalizedPhone = '';
         let lastPhoneOtpRequest = '';
+        const messageTimeouts = {};
 
         function resetRegistrationForm() {
             currentStep = 1;
@@ -1025,6 +1070,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             document.getElementById('phone').value = '';
             document.getElementById('phone-otp-input').value = '';
             document.getElementById('nin').value = '';
+            document.getElementById('city-search').value = '';
             document.getElementById('city').value = '';
             document.getElementById('terms').checked = false;
             document.getElementById('newsletter').checked = false;
@@ -1079,10 +1125,132 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             document.getElementById('phone-verification-badge').classList.add('hidden');
 
             hideAllErrors();
+            resetCitySelectionState();
             updateStepIndicators();
             goToStep(1);
             updateStep3ContinueButton();
             syncPhonePlaceholder();
+        }
+
+        function resetCitySelectionState(placeholder = 'Select a country first') {
+            const citySelect = document.getElementById('city');
+            const citySearch = document.getElementById('city-search');
+            const cityStatus = document.getElementById('city-status');
+
+            citySearch.value = '';
+            citySearch.disabled = true;
+            citySearch.placeholder = placeholder;
+            citySelect.disabled = true;
+            citySelect.innerHTML = `<option value="">${placeholder}</option>`;
+            cityStatus.textContent = placeholder;
+            cityStatus.className = 'text-sm text-slate-500';
+            document.getElementById('city-error').classList.add('hidden');
+        }
+
+        function setCityLoadingState() {
+            const citySearch = document.getElementById('city-search');
+            const citySelect = document.getElementById('city');
+            const cityStatus = document.getElementById('city-status');
+
+            citySearch.value = '';
+            citySearch.disabled = true;
+            citySearch.placeholder = 'Loading cities...';
+            citySelect.disabled = true;
+            citySelect.innerHTML = '<option value="">Loading cities...</option>';
+            cityStatus.textContent = 'Loading cities...';
+            cityStatus.className = 'text-sm text-slate-500';
+        }
+
+        function renderCityOptions(cities, selectedValue = '') {
+            const citySelect = document.getElementById('city');
+            const citySearch = document.getElementById('city-search');
+            const cityStatus = document.getElementById('city-status');
+            const normalizedSelectedValue = selectedValue.trim().toLowerCase();
+
+            citySelect.innerHTML = '<option value="">Select your city</option>';
+
+            cities.forEach(city => {
+                const option = document.createElement('option');
+                option.value = city.city_name;
+                option.textContent = city.city_name;
+                if (normalizedSelectedValue !== '' && city.city_name.toLowerCase() === normalizedSelectedValue) {
+                    option.selected = true;
+                }
+                citySelect.appendChild(option);
+            });
+
+            citySearch.disabled = false;
+            citySearch.placeholder = cities.length > 0 ? 'Search cities...' : 'No cities available';
+            citySelect.disabled = cities.length === 0;
+            cityStatus.textContent = cities.length > 0 ? `${cities.length} cities available` : 'No cities available for this country';
+            cityStatus.className = cities.length > 0 ? 'text-sm text-slate-500' : 'text-sm text-amber-600';
+        }
+
+        function filterCityOptions() {
+            const searchTerm = document.getElementById('city-search').value.trim().toLowerCase();
+            const citySelect = document.getElementById('city');
+            const cityStatus = document.getElementById('city-status');
+            let visibleCount = 0;
+
+            Array.from(citySelect.options).forEach((option, index) => {
+                if (index === 0) {
+                    option.hidden = false;
+                    return;
+                }
+
+                const matches = option.textContent.toLowerCase().includes(searchTerm);
+                option.hidden = !matches;
+                if (matches) {
+                    visibleCount++;
+                }
+            });
+
+            if (searchTerm === '') {
+                cityStatus.textContent = `${Math.max(citySelect.options.length - 1, 0)} cities available`;
+                cityStatus.className = 'text-sm text-slate-500';
+            } else if (visibleCount > 0) {
+                cityStatus.textContent = `${visibleCount} matching cities`;
+                cityStatus.className = 'text-sm text-slate-500';
+            } else {
+                cityStatus.textContent = 'No matching cities found';
+                cityStatus.className = 'text-sm text-amber-600';
+            }
+        }
+
+        async function loadCitiesForCountry(countryCode) {
+            const normalizedCountryCode = (countryCode || '').trim().toUpperCase();
+            if (!normalizedCountryCode) {
+                resetCitySelectionState();
+                return;
+            }
+
+            document.getElementById('city').value = '';
+            document.getElementById('city-error').classList.add('hidden');
+
+            if (cityCache[normalizedCountryCode]) {
+                renderCityOptions(cityCache[normalizedCountryCode]);
+                return;
+            }
+
+            setCityLoadingState();
+
+            try {
+                const response = await fetch(`<?php echo BASE_URL; ?>/api/cities.php?country=${encodeURIComponent(normalizedCountryCode)}`);
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    throw new Error(result.error || 'Unable to load cities.');
+                }
+
+                cityCache[normalizedCountryCode] = result.cities || [];
+                renderCityOptions(cityCache[normalizedCountryCode]);
+            } catch (error) {
+                console.error('Failed to load cities:', error);
+                resetCitySelectionState('Unable to load cities');
+                const cityStatus = document.getElementById('city-status');
+                cityStatus.textContent = 'Unable to load cities. Please try again.';
+                cityStatus.className = 'text-sm text-red-600';
+            }
         }
 
         function updateAccountTypeStyling() {
@@ -1212,6 +1380,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             });
 
             document.getElementById('phone').addEventListener('blur', checkPhone);
+            document.getElementById('city-search').addEventListener('input', filterCityOptions);
+            document.getElementById('city').addEventListener('change', function() {
+                document.getElementById('city-error').classList.add('hidden');
+            });
 
             const ninInput = document.getElementById('nin');
             ninInput.addEventListener('input', function() {
@@ -1240,6 +1412,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 codeOption.textContent = `${country.code} (${country.dial_code})`;
                 countryCodeSelect.appendChild(codeOption);
             });
+
+            resetCitySelectionState();
             
             const defaultCountry = countries.find(c => c.code === 'US') || countries[0];
             if (defaultCountry) {
@@ -1247,15 +1421,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 nationalitySelect.value = defaultCountry.nationality;
                 countryCodeSelect.value = defaultCountry.code;
                 document.getElementById('phone-country-code-hidden').value = defaultCountry.code;
+                loadCitiesForCountry(defaultCountry.code);
             }
             
             countrySelect.addEventListener('change', function() {
                 const selectedCountry = countries.find(c => c.code === this.value);
+                document.getElementById('city-search').value = '';
+                document.getElementById('city').value = '';
+
                 if (selectedCountry) {
                     nationalitySelect.value = selectedCountry.nationality;
                     countryCodeSelect.value = selectedCountry.code;
                     document.getElementById('phone-country-code-hidden').value = selectedCountry.code;
                     syncPhonePlaceholder();
+                    loadCitiesForCountry(selectedCountry.code);
+                } else {
+                    nationalitySelect.value = '';
+                    resetCitySelectionState();
                 }
             });
         }
@@ -1366,6 +1548,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (step === 4) {
                 const country = document.getElementById('country').value;
                 const nationality = document.getElementById('nationality').value;
+                const city = document.getElementById('city').value;
                 
                 if (!country) {
                     showError('country-error', 'Please select a country');
@@ -1374,6 +1557,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 
                 if (!nationality) {
                     showError('nationality-error', 'Please select your nationality');
+                    isValid = false;
+                }
+
+                if (!city) {
+                    showError('city-error', 'Please select a city for the selected country');
                     isValid = false;
                 }
             }
@@ -1402,16 +1590,79 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             }
         }
 
-        function showError(elementId, message) {
-            const el = document.getElementById(elementId);
-            el.textContent = message;
-            el.classList.remove('hidden');
+        function clearMessageTimeout(elementId) {
+            if (messageTimeouts[elementId]) {
+                clearTimeout(messageTimeouts[elementId]);
+                delete messageTimeouts[elementId];
+            }
         }
 
-        function showSuccess(elementId, message) {
+        function hideMessage(elementId) {
+            clearMessageTimeout(elementId);
+            const el = document.getElementById(elementId);
+            if (!el) return;
+            el.textContent = '';
+            el.classList.add('hidden');
+        }
+
+        function hideMessageGroup(group) {
+            const groups = {
+                email: ['email-error', 'email-success', 'otp-error', 'otp-success'],
+                phone: ['phone-error', 'phone-success', 'phone-otp-error', 'phone-otp-success'],
+                location: ['city-error'],
+            };
+
+            (groups[group] || []).forEach(hideMessage);
+        }
+
+        function getMessageGroup(elementId) {
+            if (['email-error', 'email-success', 'otp-error', 'otp-success'].includes(elementId)) {
+                return 'email';
+            }
+            if (['phone-error', 'phone-success', 'phone-otp-error', 'phone-otp-success'].includes(elementId)) {
+                return 'phone';
+            }
+            if (['city-error'].includes(elementId)) {
+                return 'location';
+            }
+            return null;
+        }
+
+        function showError(elementId, message, options = {}) {
+            const group = options.group || getMessageGroup(elementId);
+            if (group) {
+                hideMessageGroup(group);
+            } else {
+                hideMessage(elementId);
+            }
+
             const el = document.getElementById(elementId);
             el.textContent = message;
             el.classList.remove('hidden');
+
+            if (options.autoHideMs) {
+                clearMessageTimeout(elementId);
+                messageTimeouts[elementId] = setTimeout(() => hideMessage(elementId), options.autoHideMs);
+            }
+        }
+
+        function showSuccess(elementId, message, options = {}) {
+            const group = options.group || getMessageGroup(elementId);
+            if (group) {
+                hideMessageGroup(group);
+            } else {
+                hideMessage(elementId);
+            }
+
+            const el = document.getElementById(elementId);
+            el.textContent = message;
+            el.classList.remove('hidden');
+
+            const autoHideMs = options.autoHideMs ?? 1000;
+            if (autoHideMs) {
+                clearMessageTimeout(elementId);
+                messageTimeouts[elementId] = setTimeout(() => hideMessage(elementId), autoHideMs);
+            }
         }
 
         function togglePasswordVisibility(inputId, eyeIconId, eyeOffIconId) {
@@ -1432,12 +1683,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         function hideAllErrors() {
             document.querySelectorAll('[id$="-error"]').forEach(el => {
-                el.textContent = '';
-                el.classList.add('hidden');
+                hideMessage(el.id);
             });
             document.querySelectorAll('[id$="-success"]').forEach(el => {
-                el.textContent = '';
-                el.classList.add('hidden');
+                hideMessage(el.id);
             });
         }
 
@@ -1497,20 +1746,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             const parts = email.split('@');
             if (parts.length !== 2 || !parts[0] || !parts[1]) {
                 emailValid = false;
-                showError('email-error', 'Please enter a valid email address.');
-                emailSuccess.classList.add('hidden');
+                showError('email-error', 'Please enter a valid email address.', { group: 'email' });
                 return null;
             }
 
             const domain = parts[1];
             if (!/^(?=.{1,253}$)(?!-)(?:[a-z0-9-]{1,63}\.)+[a-z]{2,63}$/i.test(domain)) {
                 emailValid = false;
-                showError('email-error', 'This email address format is not supported.');
-                emailSuccess.classList.add('hidden');
+                showError('email-error', 'This email address format is not supported.', { group: 'email' });
                 return null;
             }
 
-            document.getElementById('email-error').classList.add('hidden');
+            hideMessage('email-error');
             return email;
         }
 
@@ -1538,21 +1785,18 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 if (!result.valid) {
                     emailValid = false;
                     latestValidatedEmail = '';
-                    showError('email-error', result.error || 'We cannot verify this email address. Please try another email.');
-                    document.getElementById('email-success').classList.add('hidden');
+                    showError('email-error', result.error || 'We cannot verify this email address. Please try another email.', { group: 'email' });
                     return;
                 }
 
                 emailValid = true;
                 latestValidatedEmail = result.validation?.email || email;
-                showSuccess('email-success', result.message || 'Email address looks good.');
-                document.getElementById('email-error').classList.add('hidden');
+                showSuccess('email-success', result.message || 'Email address looks good.', { group: 'email', autoHideMs: 1000 });
             } catch (e) {
                 console.error(e);
                 emailValid = false;
                 latestValidatedEmail = '';
-                showError('email-error', 'We cannot verify this email address. Please try another email.');
-                document.getElementById('email-success').classList.add('hidden');
+                showError('email-error', 'We cannot verify this email address. Please try another email.', { group: 'email' });
             }
         }
 
@@ -1590,14 +1834,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 const result = await response.json();
                 
                 if (result.success) {
-                    showSuccess('email-success', result.message);
+                    showSuccess('email-success', result.message, { group: 'email', autoHideMs: 1000 });
                     document.getElementById('otp-section').classList.remove('hidden');
                     startOtpCountdown();
                 } else {
-                    showError('email-error', result.error);
+                    showError('email-error', result.error, { group: 'email' });
                 }
             } catch (e) {
-                showError('email-error', 'An error occurred. Please try again.');
+                showError('email-error', 'An error occurred. Please try again.', { group: 'email' });
             } finally {
                 if (otpCountdown === 0) {
                     btn.disabled = false;
@@ -1612,7 +1856,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             const otp = document.getElementById('otp-input').value.trim();
             
             if (!otp || otp.length !== 6) {
-                showError('otp-error', 'Please enter a valid 6-digit OTP');
+                showError('otp-error', 'Please enter a valid 6-digit OTP', { group: 'email' });
                 return;
             }
             
@@ -1638,7 +1882,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 const result = await response.json();
                 
                 if (result.success) {
-                    showSuccess('otp-success', result.message);
+                    showSuccess('otp-success', result.message, { group: 'email', autoHideMs: 1000 });
                     emailVerified = true;
                     emailValid = true;
                     latestValidatedEmail = email;
@@ -1649,10 +1893,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     document.getElementById('verify-otp-btn').disabled = true;
                     document.getElementById('otp-input').disabled = true;
                 } else {
-                    showError('otp-error', result.error);
+                    showError('otp-error', result.error, { group: 'email' });
                 }
             } catch (e) {
-                showError('otp-error', 'An error occurred. Please try again.');
+                showError('otp-error', 'An error occurred. Please try again.', { group: 'email' });
             } finally {
                 btn.disabled = false;
                 btn.textContent = 'Verify';
@@ -1781,7 +2025,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             phoneVerified = false;
             lastPhoneOtpRequest = '';
             document.getElementById('phone-otp-input').value = '';
-            document.getElementById('phone-otp-success').classList.add('hidden');
+            hideMessageGroup('phone');
             document.getElementById('phone-verification-badge').classList.add('hidden');
             updateStep3ContinueButton();
         }
@@ -1794,8 +2038,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (!rule) {
                 phoneValid = false;
                 latestNormalizedPhone = '';
-                showError('phone-error', 'Please select a valid country code.');
-                document.getElementById('phone-success').classList.add('hidden');
+                showError('phone-error', 'Please select a valid country code.', { group: 'phone' });
                 updateStep3ContinueButton();
                 return null;
             }
@@ -1805,8 +2048,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (!rawValue) {
                 phoneValid = false;
                 latestNormalizedPhone = '';
-                document.getElementById('phone-success').classList.add('hidden');
-                document.getElementById('phone-error').classList.add('hidden');
+                hideMessageGroup('phone');
                 updateStep3ContinueButton();
                 return null;
             }
@@ -1825,16 +2067,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             latestNormalizedPhone = normalizedPhone;
 
             if (unsupportedDialCodes.includes(rule.dial_code)) {
-                showError('phone-error', unsupportedCountryMessage);
-                document.getElementById('phone-success').classList.add('hidden');
+                showError('phone-error', unsupportedCountryMessage, { group: 'phone' });
                 phoneValid = false;
                 updateStep3ContinueButton();
                 return null;
             }
 
             if (digits.length < (rule.min_length || 7) || digits.length > (rule.max_length || 12)) {
-                showError('phone-error', 'Please enter a valid phone number for the selected country.');
-                document.getElementById('phone-success').classList.add('hidden');
+                showError('phone-error', 'Please enter a valid phone number for the selected country.', { group: 'phone' });
                 phoneValid = false;
                 updateStep3ContinueButton();
                 return null;
@@ -1843,15 +2083,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if ((rule.allowed_prefixes || []).length > 0) {
                 const hasAllowedPrefix = rule.allowed_prefixes.some(prefix => digits.startsWith(prefix));
                 if (!hasAllowedPrefix) {
-                    showError('phone-error', 'Please enter a valid mobile number for the selected country.');
-                    document.getElementById('phone-success').classList.add('hidden');
+                    showError('phone-error', 'Please enter a valid mobile number for the selected country.', { group: 'phone' });
                     phoneValid = false;
                     updateStep3ContinueButton();
                     return null;
                 }
             }
 
-            document.getElementById('phone-error').classList.add('hidden');
+            hideMessage('phone-error');
             phoneValid = true;
             updateStep3ContinueButton();
 
@@ -1885,22 +2124,20 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 const result = await response.json();
 
                 if (!result.available) {
-                    showError('phone-error', result.error || 'This phone number cannot be used for verification.');
-                    document.getElementById('phone-success').classList.add('hidden');
+                    showError('phone-error', result.error || 'This phone number cannot be used for verification.', { group: 'phone' });
                     phoneValid = false;
                 } else {
                     const rule = getSelectedPhoneRule();
                     latestNormalizedPhone = result.validation?.normalized_phone || phoneData.normalizedPhone;
                     document.getElementById('phone').value = getNationalDisplayFromNormalized(latestNormalizedPhone, rule);
                     document.getElementById('phone-hint').textContent = result.validation?.placeholder || document.getElementById('phone-hint').textContent;
-                    showSuccess('phone-success', phoneVerified ? 'Phone number verified successfully.' : 'Phone number looks good. Continue with SMS verification.');
-                    document.getElementById('phone-error').classList.add('hidden');
+                    showSuccess('phone-success', phoneVerified ? 'Phone number verified successfully.' : 'Phone number looks good. Continue with SMS verification.', { group: 'phone', autoHideMs: 1000 });
                     phoneValid = true;
                 }
             } catch (e) {
                 console.error(e);
                 phoneValid = false;
-                showError('phone-error', 'We could not validate this number right now. Please try again.');
+                showError('phone-error', 'We could not validate this number right now. Please try again.', { group: 'phone' });
             } finally {
                 updateStep3ContinueButton();
             }
@@ -1934,7 +2171,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 const result = await response.json();
                 if (!result.success) {
-                    showError('phone-otp-error', result.error || 'We are unable to verify this number. Please try another number.');
+                    showError('phone-otp-error', result.error || 'We are unable to verify this number. Please try another number.', { group: 'phone' });
                     return;
                 }
 
@@ -1942,8 +2179,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 lastPhoneOtpRequest = latestNormalizedPhone;
                 document.getElementById('phone-hidden').value = latestNormalizedPhone;
                 phoneVerified = false;
-                showSuccess('phone-otp-success', result.message || 'Verification code sent successfully.');
-                document.getElementById('phone-otp-error').classList.add('hidden');
+                showSuccess('phone-otp-success', result.message || 'Verification code sent successfully.', { group: 'phone', autoHideMs: 1000 });
                 updateStep3ContinueButton();
             } catch (e) {
                 console.error(e);
@@ -1958,12 +2194,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             hideAllErrors();
             const code = document.getElementById('phone-otp-input').value.trim();
             if (!lastPhoneOtpRequest) {
-                showError('phone-otp-error', 'Please request a verification code first.');
+                showError('phone-otp-error', 'Please request a verification code first.', { group: 'phone' });
                 return;
             }
 
             if (!/^\d{4,8}$/.test(code)) {
-                showError('phone-otp-error', 'Please enter the verification code.');
+                showError('phone-otp-error', 'Please enter the verification code.', { group: 'phone' });
                 return;
             }
 
@@ -1988,17 +2224,14 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
                 const result = await response.json();
                 if (!result.success) {
-                    showError('phone-otp-error', result.error || 'This phone number cannot be used for verification.');
+                    showError('phone-otp-error', result.error || 'This phone number cannot be used for verification.', { group: 'phone' });
                     return;
                 }
 
                 phoneVerified = true;
                 latestNormalizedPhone = lastPhoneOtpRequest;
                 document.getElementById('phone-hidden').value = latestNormalizedPhone;
-                showSuccess('phone-success', 'Phone number verified successfully.');
-                showSuccess('phone-otp-success', result.message || 'Phone number verified successfully.');
-                document.getElementById('phone-error').classList.add('hidden');
-                document.getElementById('phone-otp-error').classList.add('hidden');
+                showSuccess('phone-otp-success', result.message || 'Phone number verified successfully.', { group: 'phone', autoHideMs: 1000 });
                 document.getElementById('phone-verification-badge').classList.remove('hidden');
                 document.getElementById('country_code').disabled = true;
                 document.getElementById('phone').disabled = true;
@@ -2007,7 +2240,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 document.getElementById('phone-otp-input').disabled = true;
             } catch (e) {
                 console.error(e);
-                showError('phone-otp-error', 'We are unable to verify this number. Please try another number.');
+                showError('phone-otp-error', 'We are unable to verify this number. Please try another number.', { group: 'phone' });
             } finally {
                 updateStep3ContinueButton();
                 if (!phoneVerified) {

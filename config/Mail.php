@@ -10,6 +10,12 @@ class Mail {
     private $maxRetries = 3;
     private $retryDelay = 2; // seconds between retries
 
+    private function throwUserSafeMailException(string $contextMessage, Exception $e): void {
+        $technicalDetails = trim($this->mail->ErrorInfo ?: $e->getMessage());
+        error_log($contextMessage . ' | ' . $technicalDetails);
+        throw new Exception('We could not send the email right now. Please try again in a few minutes.');
+    }
+
     public function __construct() {
         $this->mail = new PHPMailer(true);
 
@@ -133,7 +139,7 @@ class Mail {
 
             return $this->sendWithRetry();
         } catch (Exception $e) {
-            throw new Exception("Verification email could not be sent. Mailer Error: {$this->mail->ErrorInfo}");
+            $this->throwUserSafeMailException('Verification email could not be sent', $e);
         }
     }
 
@@ -206,7 +212,7 @@ class Mail {
 
             return $this->sendWithRetry();
         } catch (Exception $e) {
-            throw new Exception("Welcome email could not be sent. Mailer Error: {$this->mail->ErrorInfo}");
+            $this->throwUserSafeMailException('Welcome email could not be sent', $e);
         }
     }
     
@@ -286,8 +292,7 @@ class Mail {
 
             return $this->sendWithRetry();
         } catch (Exception $e) {
-            error_log("Failed to send admin notification email: " . $e->getMessage());
-            throw new Exception("Admin email notification could not be sent. Mailer Error: {$this->mail->ErrorInfo}");
+            $this->throwUserSafeMailException('Admin registration notification could not be sent', $e);
         }
     }
 
@@ -348,7 +353,7 @@ class Mail {
 
             return $this->sendWithRetry();
         } catch (Exception $e) {
-            throw new Exception("2FA code email could not be sent. Mailer Error: {$this->mail->ErrorInfo}");
+            $this->throwUserSafeMailException('2FA code email could not be sent', $e);
         }
     }
 
@@ -404,7 +409,7 @@ class Mail {
 
             return $this->sendWithRetry();
         } catch (Exception $e) {
-            throw new Exception("Verification code email could not be sent: " . $this->mail->ErrorInfo);
+            $this->throwUserSafeMailException('Verification code email could not be sent', $e);
         }
     }
 
