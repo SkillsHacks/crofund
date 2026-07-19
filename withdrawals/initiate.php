@@ -52,6 +52,45 @@ if ($attemptCount >= MAX_WITHDRAWAL_ATTEMPTS) {
     $errorMessage = 'Maximum withdrawal attempts reached. Please try again later.';
 }
 
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_national_id'])) {
+    if (!hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
+        $_SESSION['error_message'] = 'Invalid verification request. Please try again.';
+        header('Location: ' . BASE_URL . '/withdrawals/initiate.php');
+        exit();
+    }
+
+    if ($hasVerifiedId) {
+        $_SESSION['success_message'] = 'Your ID is already verified. You can proceed to make a withdrawal.';
+        header('Location: ' . BASE_URL . '/withdrawals/initiate.php');
+        exit();
+    }
+
+    if ($hasExceededMaxAttempts) {
+        $_SESSION['error_message'] = 'You have exceeded the maximum number of verification attempts.';
+        header('Location: ' . BASE_URL . '/withdrawals/initiate.php');
+        exit();
+    }
+
+    $verificationPassed = ($_POST['id_verified'] ?? '0') === '1';
+
+    try {
+        $campaign->markVerificationAttempted($_SESSION['user_id']);
+
+        if ($verificationPassed) {
+            $campaign->markIdAsVerified($_SESSION['user_id']);
+            $_SESSION['success_message'] = 'ID verification successful. You can now proceed to make a withdrawal.';
+        } else {
+            $campaign->incrementVerificationAttempts($_SESSION['user_id']);
+            $_SESSION['error_message'] = 'ID verification failed. Please try again with a clearer image.';
+        }
+    } catch (Exception $e) {
+        $_SESSION['error_message'] = 'Unable to update verification status right now. Please try again.';
+    }
+
+    header('Location: ' . BASE_URL . '/withdrawals/initiate.php');
+    exit();
+}
+
 if ($isAjaxRequest) {
     ob_start();
 }
@@ -204,7 +243,11 @@ function renderWithdrawalInitiateContent(): void {
                                 <div id="verificationStatus" class="text-sm font-medium"></div>
                             </div>
 
-                            <input type="hidden" id="idVerified" name="id_verified" value="0">
+                            <form id="idVerificationForm" method="POST" action="<?php echo BASE_URL; ?>/withdrawals/initiate.php" class="hidden">
+                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                                <input type="hidden" name="verify_national_id" value="1">
+                                <input type="hidden" id="idVerified" name="id_verified" value="0">
+                            </form>
                         </div>
                     </div>
                 </div>
@@ -593,11 +636,17 @@ function displayVerificationResults(extractedData, verificationResult) {
     namesDiv.innerHTML = namesText;
 
     if (verificationResult) {
-        statusDiv.innerHTML = '<strong class="text-emerald-600">✅ Verification Successful!</strong> You can now proceed to make a withdrawal.';
+        statusDiv.innerHTML = '<strong class="text-emerald-600">✅ Verification Successful!</strong> Finalizing your verification and unlocking withdrawals...';
         document.getElementById('idVerified').value = '1';
+        setTimeout(() => {
+            document.getElementById('idVerificationForm').submit();
+        }, 300);
     } else {
         statusDiv.innerHTML = '<strong class="text-red-600">❌ Verification Failed!</strong> We could not verify your identity from the provided image. Please try again with a clearer photo.';
         document.getElementById('idVerified').value = '0';
+        setTimeout(() => {
+            document.getElementById('idVerificationForm').submit();
+        }, 300);
     }
 
     resultsDiv.classList.remove('hidden');
