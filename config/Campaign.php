@@ -388,7 +388,11 @@ class Campaign {
         try {
             $params = [];
             $sql = "SELECT c.*, 
-                    u.name as creator_name,
+                    CASE 
+                        WHEN u.account_type = 'organization' AND u.organization_name IS NOT NULL AND u.organization_name != '' 
+                            THEN u.organization_name
+                        ELSE u.name
+                    END as creator_name,
                     COUNT(DISTINCT CASE WHEN d.status = 'completed' THEN d.id END) as donor_count,
                     COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as current_amount
                     FROM campaigns c 
@@ -404,7 +408,7 @@ class Campaign {
 
             $sql .= " GROUP BY c.id, c.title, c.description, c.goal_amount, 
                            c.image_path, c.category, c.status, c.created_at, 
-                           c.user_id, u.name";
+                           c.user_id, u.name, u.account_type, u.organization_name";
 
             // Add sorting
             switch ($sort) {
@@ -472,7 +476,12 @@ class Campaign {
 
     public function getCampaignById($id) {
         try {
-            $sql = "SELECT c.*, u.name as creator_name, 
+            $sql = "SELECT c.*, 
+                    CASE 
+                        WHEN u.account_type = 'organization' AND u.organization_name IS NOT NULL AND u.organization_name != '' 
+                            THEN u.organization_name
+                        ELSE u.name
+                    END as creator_name,
                     COUNT(DISTINCT CASE WHEN d.status = 'completed' THEN d.id END) as donor_count,
                     COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as current_amount,
                     COALESCE(SUM(CASE WHEN d.status = 'pending' THEN d.amount ELSE 0 END), 0) as pending_amount,
@@ -483,7 +492,7 @@ class Campaign {
                     WHERE c.id = ? 
                     GROUP BY c.id, c.title, c.description, c.goal_amount, 
                              c.image_path, c.category, c.status, c.created_at, 
-                             c.user_id, u.name";
+                             c.user_id, u.name, u.account_type, u.organization_name";
             
             $campaign = $this->db->fetchOne($sql, [$id]);
             
@@ -686,7 +695,11 @@ class Campaign {
     public function getTrendingCampaigns($limit = 6) {
         try {
             $sql = "SELECT c.*, 
-                    u.name as creator_name,
+                    CASE 
+                        WHEN u.account_type = 'organization' AND u.organization_name IS NOT NULL AND u.organization_name != '' 
+                            THEN u.organization_name
+                        ELSE u.name
+                    END as creator_name,
                     COUNT(DISTINCT CASE WHEN d.status = 'completed' THEN d.id END) as donor_count,
                     COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as current_amount,
                     COALESCE(MAX(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as biggest_donation
@@ -697,7 +710,7 @@ class Campaign {
                     AND c.end_date > NOW()
                     GROUP BY c.id, c.title, c.description, c.goal_amount, 
                              c.image_path, c.category, c.status, c.created_at, 
-                             c.user_id, u.name
+                             c.user_id, u.name, u.account_type, u.organization_name
                     ORDER BY biggest_donation DESC, current_amount DESC, donor_count DESC, c.created_at DESC 
                     LIMIT ?";
             
@@ -855,7 +868,11 @@ class Campaign {
 public function getActiveCampaigns($limit = 10) {
     try {
         $sql = "SELECT c.*, 
-                u.name as creator_name,
+                CASE 
+                    WHEN u.account_type = 'organization' AND u.organization_name IS NOT NULL AND u.organization_name != '' 
+                        THEN u.organization_name
+                    ELSE u.name
+                END as creator_name,
                 COUNT(DISTINCT CASE WHEN d.status = 'completed' THEN d.id END) as donor_count,
                 COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as current_amount
                 FROM campaigns c 
@@ -864,7 +881,7 @@ public function getActiveCampaigns($limit = 10) {
                 WHERE c.status = 'active'
                 GROUP BY c.id, c.title, c.description, c.goal_amount, 
                          c.image_path, c.category, c.status, c.created_at, 
-                         c.user_id, u.name 
+                         c.user_id, u.name, u.account_type, u.organization_name 
                 ORDER BY current_amount DESC 
                 LIMIT ?";
 
@@ -895,7 +912,11 @@ public function getAllActiveCampaigns($page = 1, $perPage = 12, $filters = []) {
     try {
         // Build base query
         $sql = "SELECT c.*, 
-                u.name as creator_name,
+                CASE 
+                    WHEN u.account_type = 'organization' AND u.organization_name IS NOT NULL AND u.organization_name != '' 
+                        THEN u.organization_name
+                    ELSE u.name
+                END as creator_name,
                 COUNT(DISTINCT CASE WHEN d.status = 'completed' THEN d.id END) as donor_count,
                 COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as current_amount
                 FROM campaigns c 
@@ -920,7 +941,7 @@ public function getAllActiveCampaigns($page = 1, $perPage = 12, $filters = []) {
         // Group by clause
         $sql .= " GROUP BY c.id, c.title, c.description, c.goal_amount, 
                          c.image_path, c.category, c.status, c.created_at, 
-                         c.user_id, u.name";
+                         c.user_id, u.name, u.account_type, u.organization_name";
 
         // Add sorting
         $sort = $filters['sort'] ?? 'newest';
@@ -1025,7 +1046,11 @@ public function getFormattedCampaigns() {
         // Direct database query to get all campaign data
         $sql = "SELECT 
                 c.*,
-                u.name as creator_name,
+                CASE 
+                    WHEN u.account_type = 'organization' AND u.organization_name IS NOT NULL AND u.organization_name != '' 
+                        THEN u.organization_name
+                    ELSE u.name
+                END as creator_name,
                 COUNT(DISTINCT CASE WHEN d.status = 'completed' THEN d.id END) as donor_count,
                 COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as current_amount
                 FROM campaigns c 
@@ -1034,7 +1059,7 @@ public function getFormattedCampaigns() {
                 WHERE c.status = 'active'
                 GROUP BY c.id, c.title, c.description, c.goal_amount, 
                          c.image_path, c.category, c.status, c.created_at, 
-                         c.user_id, u.name 
+                         c.user_id, u.name, u.account_type, u.organization_name 
                 ORDER BY c.created_at DESC";
 
         $campaigns = $this->db->fetchAll($sql);
