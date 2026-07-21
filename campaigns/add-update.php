@@ -1,23 +1,31 @@
 <?php
-session_start();
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+header('Content-Type: application/json');
+
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Campaign.php';
 
-// Check if user is logged in
 if (!isset($_SESSION['user_id'])) {
+    http_response_code(401);
     echo json_encode(['success' => false, 'error' => 'User not logged in']);
     exit();
 }
 
-// Check if it's a POST request
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    http_response_code(405);
     echo json_encode(['success' => false, 'error' => 'Invalid request method']);
     exit();
 }
 
-// Verify CSRF token
-if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-    echo json_encode(['success' => false, 'error' => 'Invalid CSRF token']);
+if (
+    !isset($_POST['csrf_token'], $_SESSION['csrf_token']) ||
+    !hash_equals((string) $_SESSION['csrf_token'], (string) $_POST['csrf_token'])
+) {
+    http_response_code(403);
+    echo json_encode(['success' => false, 'error' => 'Invalid request token']);
     exit();
 }
 

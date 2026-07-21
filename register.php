@@ -360,20 +360,23 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             $phoneCountryCode = strtoupper(trim((string) $_SESSION['pending_phone_country_code']));
         }
 
-        $deviceId = trim($_POST['device_id'] ?? 'web-browser');
-        $phoneValidationResult = $phoneVerificationService->validatePhoneForVerification($submittedPhone, $phoneCountryCode, $deviceId, $_SERVER['REMOTE_ADDR']);
-
-        if (!$phoneValidationResult['success']) {
-            throw new Exception($phoneValidationResult['error'] ?? 'Please use a valid mobile number supported by our services.');
-        }
-
-        $normalizedPhone = $phoneValidationResult['validation']['normalized_phone'];
-
         if (!isset($_SESSION['phone_verified']) || !$_SESSION['phone_verified']) {
             throw new Exception('Please verify your phone number first');
         }
 
-        if (!isset($_SESSION['verified_phone']) || $_SESSION['verified_phone'] !== $normalizedPhone) {
+        if (!isset($_SESSION['verified_phone']) || $_SESSION['verified_phone'] === '') {
+            throw new Exception('Please verify your phone number first');
+        }
+
+        $deviceId = trim($_POST['device_id'] ?? 'web-browser');
+        $phoneValidationResult = $phoneVerificationService->validatePhoneForVerification($submittedPhone, $phoneCountryCode, $deviceId, $_SERVER['REMOTE_ADDR']);
+        $normalizedPhone = $phoneValidationResult['validation']['normalized_phone'] ?? $submittedPhone;
+
+        if ($normalizedPhone === '') {
+            throw new Exception('Please enter a valid phone number for the selected country.');
+        }
+
+        if ($_SESSION['verified_phone'] !== $normalizedPhone) {
             throw new Exception('Phone mismatch. Please verify your phone number again');
         }
         
