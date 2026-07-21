@@ -132,10 +132,14 @@ class PhoneVerificationService {
         }
 
         $data = $response['data'];
-        if (($data['status'] ?? '') !== 'approved') {
+        $status = $data['status'] ?? 'unknown';
+
+        if ($status !== 'approved') {
+            error_log('Twilio verification check not approved. Status: ' . $status . ' Phone: ' . $phone);
+
             return [
                 'success' => false,
-                'error' => 'This phone number cannot be used for verification.',
+                'error' => 'Invalid or expired verification code. Please request a new code and try again.',
             ];
         }
 
