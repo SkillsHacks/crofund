@@ -17,7 +17,7 @@ try {
     $offset = ($page - 1) * $limit;
     
     // Build the search query
-    $whereConditions = ["status = 'active'"];
+    $whereConditions = ["c.status = 'active'", "COALESCE(u.risk_status, 'ACTIVE') NOT IN ('UNDER_REVIEW', 'SUSPENDED', 'BANNED')"];
     $params = [];
     
     if (!empty($searchTerm)) {
@@ -38,7 +38,7 @@ try {
     $whereClause = implode(" AND ", $whereConditions);
     
     // Count total results for pagination
-    $countQuery = "SELECT COUNT(*) as total FROM campaigns WHERE {$whereClause}";
+    $countQuery = "SELECT COUNT(*) as total FROM campaigns c LEFT JOIN users u ON c.user_id = u.id WHERE {$whereClause}";
     $totalResult = $db->fetchOne($countQuery, $params);
     $totalCampaigns = $totalResult['total'];
     
@@ -55,6 +55,7 @@ try {
             COALESCE(d.donor_count, 0) as donor_count,
             COALESCE(d.total_amount, 0) as current_amount
         FROM campaigns c
+        LEFT JOIN users u ON c.user_id = u.id
         LEFT JOIN (
             SELECT 
                 campaign_id, 

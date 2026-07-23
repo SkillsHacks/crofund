@@ -7,6 +7,7 @@ header('Content-Type: application/json');
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Campaign.php';
+require_once __DIR__ . '/../config/TrustRiskGuard.php';
 
 if (!isset($_SESSION['user_id'])) {
     http_response_code(401);
@@ -30,6 +31,8 @@ if (
 }
 
 try {
+    TrustRiskGuard::enforceOrAbort((int) $_SESSION['user_id'], 'edit_campaign', true);
+
     $campaign = new Campaign();
     
     // Validate required fields

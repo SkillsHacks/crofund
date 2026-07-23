@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Campaign.php';
+require_once __DIR__ . '/../config/TrustRiskService.php';
 
 header('Content-Type: application/json');
 
@@ -23,7 +24,8 @@ try {
             LEFT JOIN users u ON c.user_id = u.id 
             LEFT JOIN donations d ON c.id = d.campaign_id 
             WHERE c.status = 'active' 
-            AND c.end_date > NOW()";
+            AND c.end_date > NOW()
+            AND COALESCE(u.risk_status, 'ACTIVE') NOT IN ('UNDER_REVIEW', 'SUSPENDED', 'BANNED')";
 
     // Add category filter
     if ($category !== 'all') {
@@ -65,7 +67,7 @@ try {
     }
 
     // Check if there are more campaigns
-    $totalCampaigns = $campaign->getDB()->count("SELECT COUNT(*) FROM campaigns WHERE status = 'active'");
+    $totalCampaigns = $campaign->getDB()->count("SELECT COUNT(*) FROM campaigns c LEFT JOIN users u ON c.user_id = u.id WHERE c.status = 'active' AND c.end_date > NOW() AND COALESCE(u.risk_status, 'ACTIVE') NOT IN ('UNDER_REVIEW', 'SUSPENDED', 'BANNED')");
     $hasMore = ($offset + $limit) < $totalCampaigns;
 
     echo json_encode([

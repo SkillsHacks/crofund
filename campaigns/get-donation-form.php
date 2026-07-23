@@ -8,6 +8,7 @@ header('Content-Type: application/json');
 try {
     require_once __DIR__ . '/../config/config.php';
     require_once __DIR__ . '/../config/Campaign.php';
+    require_once __DIR__ . '/../config/TrustRiskService.php';
 
     if (!isset($_GET['id'])) {
         ob_end_clean();
@@ -26,6 +27,9 @@ try {
         echo json_encode(['success' => false, 'error' => 'Campaign not found']);
         exit();
     }
+
+    $trustRisk = new TrustRiskService();
+    $trustRisk->enforceForAction((int) $details['user_id'], 'receive_donations');
 
     if (!isset($_SESSION['csrf_token'])) {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -237,7 +241,12 @@ try {
     // Discard any partial output so we always return valid JSON
     if (ob_get_level() > 0) ob_end_clean();
     error_log('get-donation-form.php error: ' . $e->getMessage());
-    http_response_code(500);
+    $code = (int) $e->getCode();
+    if ($code >= 400) {
+        http_response_code($code);
+    } else {
+        http_response_code(500);
+    }
     echo json_encode([
         'success' => false,
         'error'   => 'Unable to load the donation form. Please try again.',

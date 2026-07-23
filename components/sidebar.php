@@ -1,7 +1,11 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/trust_risk_ui.php';
 $current_page = basename($_SERVER['PHP_SELF'], '.php');
 $current_dir = basename(dirname($_SERVER['PHP_SELF']));
+$sidebarTrustRiskUi = isset($trustRiskUi) && is_array($trustRiskUi)
+    ? $trustRiskUi
+    : getTrustRiskUiState($currentUser ?? null);
 ?>
 <button type="button"
         class="fixed top-3 left-4 z-50 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-lg transition-all duration-200 hover:bg-gray-50 hover:text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
@@ -31,12 +35,12 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
 
             <div class="space-y-1">
                 <h3 class="sidebar-section-title px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Fundraising</h3>
-                <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="sidebar-link <?php echo $current_dir === 'campaigns' && $current_page === 'create' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700'; ?> group flex items-center rounded-lg px-3 py-3 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-600" title="Create Campaign">
-                    <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
-                    </svg>
-                    <span class="sidebar-label ml-3 truncate text-sm font-medium">Create Campaign</span>
-                </a>
+                <?php renderSidebarNavItem([
+                    'label' => 'Create Campaign',
+                    'href' => BASE_URL . '/campaigns/create.php',
+                    'action_key' => 'create_campaign',
+                    'icon_html' => '<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>',
+                ], $current_dir === 'campaigns' && $current_page === 'create' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
                 <a href="<?php echo BASE_URL; ?>/campaigns/index.php" class="sidebar-link <?php echo $current_dir === 'campaigns' && $current_page === 'index' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700'; ?> group flex items-center rounded-lg px-3 py-3 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-600" title="My Campaigns">
                     <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
@@ -47,12 +51,12 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
 
             <div class="space-y-1">
                 <h3 class="sidebar-section-title px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Finance</h3>
-                <a href="<?php echo BASE_URL; ?>/withdrawals/initiate.php" class="sidebar-link <?php echo $current_dir === 'withdrawals' && $current_page === 'initiate' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700'; ?> group flex items-center rounded-lg px-3 py-3 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-600" title="Initiate Withdrawal">
-                    <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/>
-                    </svg>
-                    <span class="sidebar-label ml-3 truncate text-sm font-medium">Initiate Withdrawal</span>
-                </a>
+                <?php renderSidebarNavItem([
+                    'label' => 'Initiate Withdrawal',
+                    'href' => BASE_URL . '/withdrawals/initiate.php',
+                    'action_key' => 'withdraw_funds',
+                    'icon_html' => '<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>',
+                ], $current_dir === 'withdrawals' && $current_page === 'initiate' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
                 <a href="<?php echo BASE_URL; ?>/withdrawals/logs.php" class="sidebar-link <?php echo $current_dir === 'withdrawals' && $current_page === 'logs' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700'; ?> group flex items-center rounded-lg px-3 py-3 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-600" title="Withdraw Logs">
                     <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
@@ -63,12 +67,12 @@ $current_dir = basename(dirname($_SERVER['PHP_SELF']));
 
             <div class="space-y-1">
                 <h3 class="sidebar-section-title px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Account</h3>
-                <a href="<?php echo BASE_URL; ?>/account/settings.php" class="sidebar-link <?php echo $current_dir === 'account' && $current_page === 'settings' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700'; ?> group flex items-center rounded-lg px-3 py-3 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-600" title="Account Settings">
-                    <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
-                    </svg>
-                    <span class="sidebar-label ml-3 truncate text-sm font-medium">Account Settings</span>
-                </a>
+                <?php renderSidebarNavItem([
+                    'label' => 'Account Settings',
+                    'href' => BASE_URL . '/account/settings.php',
+                    'action_key' => 'update_sensitive_profile',
+                    'icon_html' => '<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>',
+                ], $current_dir === 'account' && $current_page === 'settings' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
                 <a href="<?php echo BASE_URL; ?>/account/verification.php" class="sidebar-link <?php echo $current_dir === 'account' && $current_page === 'verification' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700'; ?> group flex items-center rounded-lg px-3 py-3 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-600" title="Verification">
                     <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>

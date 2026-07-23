@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/../config/config.php';
+require_once __DIR__ . '/../config/TrustRiskService.php';
 
 /**
  * Legacy PayPal "Standard" donate form (posts to https://www.paypal.com/cgi-bin/webscr).
@@ -26,6 +27,22 @@ $campaign = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$campaign || $campaign['status'] !== 'active') {
     http_response_code(404);
     exit('Campaign not found or not accepting donations.');
+}
+
+$ownerStmt = $pdo->prepare('SELECT user_id FROM campaigns WHERE id = ? LIMIT 1');
+$ownerStmt->execute([$campaignId]);
+$campaignOwner = $ownerStmt->fetch(PDO::FETCH_ASSOC);
+if (!$campaignOwner) {
+    http_response_code(404);
+    exit('Campaign not found or not accepting donations.');
+}
+
+try {
+    $trustRisk = new TrustRiskService();
+    $trustRisk->enforceForAction((int) $campaignOwner['user_id'], 'receive_donations');
+} catch (RuntimeException $e) {
+    http_response_code($e->getCode() >= 400 ? $e->getCode() : 403);
+    exit($e->getMessage());
 }
 
 // The receiving PayPal account. Store this in `settings` (see getSetting() in

@@ -7,6 +7,7 @@ require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/Database.php';
 require_once __DIR__ . '/config/Campaign.php';
 require_once __DIR__ . '/config/User.php';
+require_once __DIR__ . '/components/trust_risk_ui.php';
 
 // 3. Check authentication BEFORE any HTML/component includes
 $user = new User();
@@ -17,6 +18,7 @@ if (!$user->isLoggedIn()) {
 
 // 4. Get current user BEFORE including header.php
 $currentUser = $user->getCurrentUser();
+$trustRiskUi = getTrustRiskUiState($currentUser);
 
 // 5. Defensive checks for user data
 if (!$currentUser || !isset($currentUser['name'])) {
@@ -227,6 +229,7 @@ include 'components/header.php';
 
         <main class="app-main flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
             <div id="dashboard-default-view" class="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 <?php echo $currentDashboardRoute['is_home'] ? '' : 'hidden'; ?>">
+                <?php renderTrustRiskBanner($trustRiskUi); ?>
                 <section class="dashboard-glow relative overflow-hidden rounded-3xl border border-emerald-100 shadow-sm">
                     <div class="absolute inset-y-0 right-0 hidden lg:block w-1/3 bg-gradient-to-l from-white/40 to-transparent"></div>
                     <div class="relative px-5 py-6 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
@@ -245,6 +248,16 @@ include 'components/header.php';
                             </div>
 
                             <div class="grid grid-cols-1 gap-3 sm:grid-cols-3 lg:w-[420px]">
+                                <?php $createCampaignBlocked = trustRiskActionDisabled($trustRiskUi, 'create_campaign'); ?>
+                                <?php if ($createCampaignBlocked): ?>
+                                    <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-100 px-4 py-4 text-slate-500 shadow-sm opacity-80">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-semibold">Create campaign</span>
+                                            <span class="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700">Blocked</span>
+                                        </div>
+                                        <p class="mt-2 text-xs"><?php echo htmlspecialchars((string) ($trustRiskUi['message']['short'] ?? 'Unavailable right now.')); ?></p>
+                                    </div>
+                                <?php else: ?>
                                 <a href="<?php echo dashboardRouteUrl('create_campaign'); ?>" data-dashboard-route="create_campaign" class="group rounded-2xl bg-slate-900 px-4 py-4 text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800">
                                     <div class="flex items-center justify-between">
                                         <span class="text-sm font-semibold">Create campaign</span>
@@ -254,6 +267,7 @@ include 'components/header.php';
                                     </div>
                                     <p class="mt-2 text-xs text-slate-300">Launch a new fundraiser in a few steps.</p>
                                 </a>
+                                <?php endif; ?>
                                 <a href="<?php echo dashboardRouteUrl('my_campaigns'); ?>" data-dashboard-route="my_campaigns" class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white">
                                     <div class="flex items-center justify-between">
                                         <span class="text-sm font-semibold">Manage campaigns</span>
@@ -263,6 +277,16 @@ include 'components/header.php';
                                     </div>
                                     <p class="mt-2 text-xs text-slate-500">Review active, ended, and draft campaigns.</p>
                                 </a>
+                                <?php $withdrawBlocked = trustRiskActionDisabled($trustRiskUi, 'withdraw_funds'); ?>
+                                <?php if ($withdrawBlocked): ?>
+                                    <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-100 px-4 py-4 text-slate-500 shadow-sm opacity-80">
+                                        <div class="flex items-center justify-between">
+                                            <span class="text-sm font-semibold">Withdraw funds</span>
+                                            <span class="rounded-full bg-amber-100 px-2.5 py-1 text-[11px] font-semibold text-amber-700">Blocked</span>
+                                        </div>
+                                        <p class="mt-2 text-xs"><?php echo htmlspecialchars((string) ($trustRiskUi['message']['short'] ?? 'Unavailable right now.')); ?></p>
+                                    </div>
+                                <?php else: ?>
                                 <a href="<?php echo dashboardRouteUrl('withdrawals'); ?>" data-dashboard-route="withdrawals" class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white">
                                     <div class="flex items-center justify-between">
                                         <span class="text-sm font-semibold">Withdraw funds</span>
@@ -272,6 +296,7 @@ include 'components/header.php';
                                     </div>
                                     <p class="mt-2 text-xs text-slate-500">Move available funds when you’re ready.</p>
                                 </a>
+                                <?php endif; ?>
                             </div>
                         </div>
                     </div>
@@ -327,7 +352,7 @@ include 'components/header.php';
                         <p class="text-sm font-medium text-slate-300">Next best action</p>
                         <p class="mt-3 text-xl font-semibold">Grow your momentum</p>
                         <p class="mt-2 text-sm leading-6 text-slate-300">Publish updates, share campaign links, and keep supporters informed to build trust and improve conversions.</p>
-                        <button type="button" onclick="showDashboardUpdateForm(<?php echo !empty($recentCampaigns[0]['id']) ? (int) $recentCampaigns[0]['id'] : 0; ?>)" <?php echo empty($recentCampaigns[0]['id']) ? 'disabled' : ''; ?> class="mt-4 inline-flex items-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50">
+                        <button type="button" onclick="showDashboardUpdateForm(<?php echo !empty($recentCampaigns[0]['id']) ? (int) $recentCampaigns[0]['id'] : 0; ?>)" <?php echo (empty($recentCampaigns[0]['id']) || trustRiskActionDisabled($trustRiskUi, 'edit_campaign')) ? 'disabled' : ''; ?> class="mt-4 inline-flex items-center rounded-xl bg-white px-4 py-2 text-sm font-semibold text-slate-900 transition hover:bg-slate-100 disabled:cursor-not-allowed disabled:opacity-50">
                             Add update now
                         </button>
                     </div>
@@ -357,6 +382,15 @@ include 'components/header.php';
                             <h2 class="text-lg font-semibold text-slate-900">Quick actions</h2>
                             <p class="mt-1 text-sm text-slate-500">Common tasks you can jump into right away.</p>
                             <div class="mt-5 space-y-3">
+                                <?php if (trustRiskActionDisabled($trustRiskUi, 'create_campaign')): ?>
+                                    <div class="flex items-center justify-between rounded-2xl border border-dashed border-slate-300 bg-slate-100 px-4 py-3 text-slate-500 opacity-80">
+                                        <div>
+                                            <p class="text-sm font-semibold">Start a new campaign</p>
+                                            <p class="text-xs"><?php echo htmlspecialchars((string) ($trustRiskUi['message']['short'] ?? 'Unavailable right now.')); ?></p>
+                                        </div>
+                                        <span class="rounded-full bg-amber-100 px-2.5 py-1 text-xs font-semibold text-amber-700">Blocked</span>
+                                    </div>
+                                <?php else: ?>
                                 <a href="<?php echo dashboardRouteUrl('create_campaign'); ?>" data-dashboard-route="create_campaign" class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-emerald-200 hover:bg-emerald-50/60">
                                     <div>
                                         <p class="text-sm font-semibold text-slate-900">Start a new campaign</p>
@@ -364,6 +398,7 @@ include 'components/header.php';
                                     </div>
                                     <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-semibold text-emerald-700">New</span>
                                 </a>
+                                <?php endif; ?>
                                 <a href="<?php echo dashboardRouteUrl('verification'); ?>" data-dashboard-route="verification" class="flex items-center justify-between rounded-2xl border border-slate-200 px-4 py-3 transition hover:border-emerald-200 hover:bg-emerald-50/60">
                                     <div>
                                         <p class="text-sm font-semibold text-slate-900">Check verification</p>
