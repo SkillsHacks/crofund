@@ -1,4 +1,6 @@
 <?php
+require_once __DIR__ . '/TrustRiskService.php';
+
 class Withdrawal {
     private $db;
     
@@ -21,6 +23,9 @@ class Withdrawal {
     }
 
     public function createWithdrawal($user_id, $method, $amount, $details) {
+        $trustRisk = new TrustRiskService();
+        $trustRisk->enforceForAction((int) $user_id, 'withdraw_funds');
+
         $stmt = $this->db->prepare("INSERT INTO withdrawals (user_id, method, amount, details, status, created_at) VALUES (?, ?, ?, ?, 'pending', NOW())");
         return $stmt->execute([
             $user_id,

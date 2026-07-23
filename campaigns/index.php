@@ -229,7 +229,7 @@ if (!$isAjaxRequest) {
     <?php include __DIR__ . '/../components/header.php'; ?>
     <div class="flex min-h-screen pt-16">
         <?php include __DIR__ . '/../components/sidebar.php'; ?>
-        <main class="flex-1 min-w-0 bg-gray-50 lg:ml-64">
+        <main class="app-main flex-1 min-w-0 bg-gray-50 lg:ml-64">
             <?php renderCampaignsIndexContent($userCampaigns, $stats, $status, $sort, $search); ?>
         </main>
     </div>

@@ -6,6 +6,7 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Campaign.php';
 require_once __DIR__ . '/../config/Withdrawal.php';
 require_once __DIR__ . '/../config/User.php';
+require_once __DIR__ . '/../config/TrustRiskGuard.php';
 
 $user = new User();
 if (!$user->isLoggedIn()) {
@@ -20,6 +21,8 @@ if (!$currentUser || !isset($currentUser['name'])) {
     header('Location: ' . BASE_URL . '/login.php');
     exit();
 }
+
+TrustRiskGuard::enforceOrAbort((int) $_SESSION['user_id'], 'withdraw_funds');
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
@@ -710,7 +713,7 @@ if (!$isAjaxRequest) {
 <body class="bg-gray-50 min-h-screen">
     <div class="flex min-h-screen pt-16">
         <?php include '../components/sidebar.php'; ?>
-        <main class="flex-1 min-w-0 bg-gray-50 lg:ml-64">
+        <main class="app-main flex-1 min-w-0 bg-gray-50 lg:ml-64">
             <?php renderWithdrawalInitiateContent(); ?>
         </main>
     </div>

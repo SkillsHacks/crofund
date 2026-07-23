@@ -91,7 +91,7 @@ $statusLabel = ucfirst((string) ($campaignDetails['status'] ?? 'active'));
     <div class="flex min-h-screen pt-16">
         <?php include __DIR__ . '/../components/sidebar.php'; ?>
 
-        <main class="flex-1 min-w-0 bg-gray-50 lg:ml-64">
+        <main class="app-main flex-1 min-w-0 bg-gray-50 lg:ml-64">
             <div class="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
                 <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.65fr),360px]">
                     <div class="space-y-6">

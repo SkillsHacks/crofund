@@ -5,11 +5,14 @@ if (session_status() === PHP_SESSION_NONE) {
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Campaign.php';
+require_once __DIR__ . '/../config/TrustRiskGuard.php';
 
 if (!isset($_SESSION['user_id'])) {
     header('Location: ' . BASE_URL . '/login.php');
     exit();
 }
+
+TrustRiskGuard::enforceOrAbort((int) $_SESSION['user_id'], 'edit_campaign');
 
 $campaign = new Campaign();
 $campaignId = $_GET['id'] ?? null;
@@ -81,7 +84,7 @@ $categoryOptions = [
     <div class="flex min-h-screen pt-16">
         <?php include __DIR__ . '/../components/sidebar.php'; ?>
 
-        <main class="flex-1 min-w-0 bg-gray-50 lg:ml-64">
+        <main class="app-main flex-1 min-w-0 bg-gray-50 lg:ml-64">
             <div class="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
                 <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.65fr),360px]">
                     <div class="space-y-6">

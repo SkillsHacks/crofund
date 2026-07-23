@@ -225,7 +225,7 @@ include 'components/header.php';
     <div class="flex h-screen pt-16">
         <?php include 'components/sidebar.php'; ?>
 
-        <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
+        <main class="app-main flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
             <div id="dashboard-default-view" class="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 <?php echo $currentDashboardRoute['is_home'] ? '' : 'hidden'; ?>">
                 <section class="dashboard-glow relative overflow-hidden rounded-3xl border border-emerald-100 shadow-sm">
                     <div class="absolute inset-y-0 right-0 hidden lg:block w-1/3 bg-gradient-to-l from-white/40 to-transparent"></div>
@@ -429,51 +429,77 @@ include 'components/header.php';
         </main>
     </div>
 
-    <div id="update-modal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden">
-        <div class="flex items-center justify-center min-h-screen p-3 sm:p-4">
-            <div class="bg-white rounded-lg max-w-md w-full max-h-screen overflow-y-auto">
-                <div class="flex items-center justify-between p-3 sm:p-4 border-b border-gray-200">
-                    <h3 class="text-base sm:text-lg font-semibold text-gray-900">Add Campaign Update</h3>
-                    <button onclick="hideDashboardUpdateForm()" class="text-gray-400 hover:text-gray-600">
-                        <svg class="w-5 h-5 sm:w-6 sm:h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
+    <div id="update-modal" class="fixed inset-0 z-50 hidden bg-slate-950/50 p-4">
+        <div class="flex min-h-screen items-center justify-center">
+            <div class="w-full max-w-2xl overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-2xl">
+                <div class="border-b border-slate-200 bg-gradient-to-br from-emerald-50 via-white to-slate-50 px-5 py-5 sm:px-6 sm:py-6">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex items-start gap-3">
+                            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-100 text-emerald-700 shadow-sm">
+                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
+                                </svg>
+                            </div>
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">Campaign update</p>
+                                <h3 class="mt-1 text-xl font-bold text-slate-900 sm:text-2xl">Post an update to supporters</h3>
+                                <p class="mt-2 max-w-xl text-sm leading-6 text-slate-500">Share progress, milestones, or important news so supporters stay informed and engaged.</p>
+                            </div>
+                        </div>
+                        <button type="button" onclick="hideDashboardUpdateForm()" class="rounded-2xl border border-slate-200 bg-white p-2 text-slate-400 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
+                            </svg>
+                        </button>
+                    </div>
                 </div>
-                
-                <form id="dashboard-update-form" class="p-3 sm:p-4 space-y-3 sm:space-y-4">
+
+                <form id="dashboard-update-form" class="space-y-6 px-5 py-5 sm:px-6 sm:py-6">
                     <input type="hidden" id="update-campaign-id" name="campaign_id">
                     <input type="hidden" name="csrf_token" value="<?php echo $_SESSION['csrf_token'] ?? bin2hex(random_bytes(32)); ?>">
-                    
-                    <div>
-                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Update Title</label>
-                        <input type="text" name="update_title" required 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                               placeholder="e.g., Milestone Reached!">
+
+                    <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
+                        <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
+                            <h4 class="text-base font-semibold text-slate-900">Update details</h4>
+                            <p class="mt-1 text-sm text-slate-500">Write a short, clear message that explains what changed.</p>
+                        </div>
+                        <div class="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
+                            <div>
+                                <label class="mb-1.5 block text-sm font-semibold text-slate-700">Update title</label>
+                                <input type="text" name="update_title" required
+                                       class="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20"
+                                       placeholder="e.g., Milestone reached!">
+                            </div>
+
+                            <div>
+                                <label class="mb-1.5 block text-sm font-semibold text-slate-700">Update content</label>
+                                <textarea name="update_content" rows="5" required
+                                          class="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 placeholder-slate-400 transition-all focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20 resize-none"
+                                          placeholder="Share the latest progress, donor impact, or any important next step..."></textarea>
+                            </div>
+                        </div>
                     </div>
-                    
-                    <div>
-                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Update Content</label>
-                        <textarea name="update_content" rows="3 sm:rows-4" required 
-                                  class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500"
-                                  placeholder="Share the latest news, progress, or thank you message..."></textarea>
+
+                    <div class="rounded-3xl border border-slate-200 bg-white shadow-sm">
+                        <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
+                            <h4 class="text-base font-semibold text-slate-900">Optional image</h4>
+                            <p class="mt-1 text-sm text-slate-500">Add a supporting image to make the update more engaging.</p>
+                        </div>
+                        <div class="px-5 py-5 sm:px-6 sm:py-6">
+                            <input type="file" name="update_image" accept="image/*"
+                                   class="w-full rounded-2xl border-2 border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 transition-all file:mr-4 file:rounded-xl file:border-0 file:bg-emerald-50 file:px-4 file:py-2 file:font-semibold file:text-emerald-700 hover:file:bg-emerald-100 focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/20">
+                            <p class="mt-3 text-sm text-slate-500">Max size: 5MB. Supported formats: JPG, PNG, GIF.</p>
+                        </div>
                     </div>
-                    
-                    <div>
-                        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1">Image (Optional)</label>
-                        <input type="file" name="update_image" accept="image/*" 
-                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                        <p class="text-[10px] sm:text-xs text-gray-500 mt-1">Max size: 5MB. Formats: JPG, PNG, GIF</p>
-                    </div>
-                    
-                    <div class="flex gap-2 sm:gap-3 pt-2">
-                        <button type="submit" 
-                                class="flex-1 px-3 sm:px-4 py-2 bg-emerald-600 text-white rounded-md hover:bg-emerald-700 transition-colors text-sm">
-                            Post Update
-                        </button>
-                        <button type="button" onclick="hideDashboardUpdateForm()" 
-                                class="flex-1 px-3 sm:px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors text-sm">
+
+                    <div class="flex flex-col gap-3 border-t border-slate-200 pt-2 sm:flex-row sm:justify-end">
+                        <button type="button" onclick="hideDashboardUpdateForm()"
+                                class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-5 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700">
                             Cancel
+                        </button>
+                        <button type="submit"
+                                class="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700">
+                            Post update
                         </button>
                     </div>
                 </form>

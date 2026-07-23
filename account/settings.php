@@ -3,12 +3,15 @@ session_start();
 
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/User.php';
+require_once __DIR__ . '/../config/TrustRiskGuard.php';
 
 $user = new User();
 if (!$user->isLoggedIn()) {
     header('Location: ' . BASE_URL . '/login.php');
     exit();
 }
+
+TrustRiskGuard::enforceOrAbort((int) $_SESSION['user_id'], 'update_sensitive_profile');
 
 $currentUser = $user->getCurrentUser();
 $isAjaxRequest = isset($_GET['ajax']) && $_GET['ajax'] === '1';
@@ -202,7 +205,7 @@ if (!$isAjaxRequest) {
 <body class="bg-gray-50 min-h-screen">
     <div class="flex min-h-screen pt-16">
         <?php include __DIR__ . '/../components/sidebar.php'; ?>
-        <main class="flex-1 min-w-0 bg-gray-50 lg:ml-64">
+        <main class="app-main flex-1 min-w-0 bg-gray-50 lg:ml-64">
             <?php renderAccountSettingsContent($currentUser, $successMessage, $errorMessage); ?>
         </main>
     </div>

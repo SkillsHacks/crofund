@@ -36,6 +36,18 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
 <link rel="shortcut icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
 <link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
 
+<style>
+    @media (min-width: 1024px) {
+        body .app-main {
+            transition: margin-left 0.3s ease-in-out;
+        }
+
+        body.sidebar-collapsed .app-main {
+            margin-left: 5rem !important;
+        }
+    }
+</style>
+
 <!-- Navigation -->
 <nav class="fixed top-0 left-0 right-0 bg-white border-b border-gray-200 z-30">
     <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">

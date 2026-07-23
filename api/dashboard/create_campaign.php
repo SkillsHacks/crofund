@@ -11,6 +11,7 @@ try {
     require_once __DIR__ . '/../../config/config.php';
     require_once __DIR__ . '/../../config/Campaign.php';
     require_once __DIR__ . '/../../config/User.php';
+    require_once __DIR__ . '/../../config/TrustRiskGuard.php';
     if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
         http_response_code(405);
         echo json_encode([
@@ -38,6 +39,8 @@ try {
         ]);
         exit();
     }
+
+    TrustRiskGuard::enforceOrAbort((int) $_SESSION['user_id'], 'create_campaign', true);
 
     $requiredFields = ['title', 'category', 'goal', 'description'];
     $fieldErrors = [];

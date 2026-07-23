@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Campaign.php';
+require_once __DIR__ . '/../config/TrustRiskGuard.php';
 
 // Set content type to JSON
 header('Content-Type: application/json');
@@ -19,6 +20,8 @@ if (!isset($_POST['campaign_id']) || empty($_POST['campaign_id'])) {
 }
 
 $campaign_id = (int)$_POST['campaign_id'];
+
+TrustRiskGuard::enforceOrAbort((int) $_SESSION['user_id'], 'delete_campaign', true);
 
 try {
     $campaign = new Campaign();

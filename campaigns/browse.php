@@ -49,7 +49,7 @@ include __DIR__ . '/../components/header.php';
     <div class="flex h-screen pt-16">
         <?php include __DIR__ . '/../components/sidebar.php'; ?>
         
-        <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
+        <main class="app-main flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
             <div class="p-6">
                 <!-- Search and Filters -->
                 <div class="bg-white rounded-lg shadow-sm p-6 mb-6">

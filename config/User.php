@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/Database.php';
 require_once __DIR__ . '/Mail.php';
+require_once __DIR__ . '/TrustRiskService.php';
 
 class User {
     private $db;
@@ -115,13 +116,19 @@ class User {
             $this->checkLoginAttempts($email);
 
             $user = $this->db->fetchOne(
-                "SELECT id, email, password, name, is_verified FROM users WHERE email = ?",
+                "SELECT id, email, password, name, is_verified, risk_status FROM users WHERE email = ?",
                 [$email]
             );
 
             if (!$user || !password_verify($password, $user['password'])) {
                 $this->recordLoginAttempt($email, false);
                 throw new Exception("The email or password you entered is incorrect. Please try again.");
+            }
+
+            $trustRisk = new TrustRiskService();
+            $riskStatus = strtoupper((string) ($user['risk_status'] ?? TrustRiskService::STATUS_ACTIVE));
+            if (!$trustRisk->canLogin($riskStatus)) {
+                throw new Exception('Your account has been permanently disabled. Please contact support if you believe this is a mistake.');
             }
 
             // Check if email is verified first
@@ -218,7 +225,7 @@ class User {
         }
 
         $sql = "SELECT id, name, email, phone, country, city, newsletter, status, avatar, 
-                created_at, updated_at, email_verified, is_verified, verification_token 
+                created_at, updated_at, email_verified, is_verified, verification_token, risk_status, risk_status_reason, risk_review_expires_at, is_admin
                 FROM users 
                 WHERE id = ?";
         return $this->db->fetchOne($sql, [$_SESSION['user_id']]);

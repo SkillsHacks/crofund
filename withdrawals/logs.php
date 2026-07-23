@@ -116,7 +116,7 @@ if (!$isAjaxRequest) {
     <?php include '../components/header.php'; ?>
     <div class="flex h-screen pt-16">
         <?php include '../components/sidebar.php'; ?>
-        <main class="flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
+        <main class="app-main flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
             <?php renderWithdrawalLogsContent($withdrawalHistory); ?>
         </main>
     </div>
