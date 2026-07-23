@@ -125,24 +125,24 @@ class TrustRiskService
     public function getUserFacingStatusMessage(string $status, string $reason = ''): array
     {
         $reasonText = trim($reason);
-        $appealPath = '/account/notifications.php';
+        $reasonSuffix = $reasonText !== '' ? ' Reason: ' . $reasonText : '';
 
         return match (strtoupper($status)) {
             self::STATUS_UNDER_REVIEW => [
                 'short' => 'Your account is currently under review. Some actions are temporarily unavailable.',
-                'full' => 'Your account is currently under review because we detected activity that needs additional checks. You can still access your dashboard, but campaign creation, withdrawals, and new donations are temporarily disabled. Please complete any requested verification steps or contact support. Appeal link: ' . $appealPath . ($reasonText !== '' ? ' Reason: ' . $reasonText : ''),
+                'full' => 'Your account is currently under review because we detected activity that needs additional checks. You can still access your dashboard, but campaign creation, withdrawals, and new donations are temporarily disabled. Please complete any requested verification steps or contact support.' . $reasonSuffix,
             ],
             self::STATUS_LIMITED => [
                 'short' => 'Your account has limited access. Some features are disabled until the review is resolved.',
-                'full' => 'Your account has limited access due to trust and safety restrictions. Campaign creation, campaign editing, withdrawals, payout updates, and sensitive profile changes are currently disabled. Please complete any requested verification or contact support. Appeal link: ' . $appealPath . ($reasonText !== '' ? ' Reason: ' . $reasonText : ''),
+                'full' => 'Your account has limited access due to trust and safety restrictions. Campaign creation, campaign editing, withdrawals, payout updates, and sensitive profile changes are currently disabled. Please complete any requested verification or contact support.' . $reasonSuffix,
             ],
             self::STATUS_SUSPENDED => [
                 'short' => 'Your account is suspended. Most platform actions are currently locked.',
-                'full' => 'Your account is temporarily suspended while we investigate trust and safety concerns. Campaign activity, donations, and withdrawals are blocked. You may only access limited account areas if permitted by platform policy. Appeal link: ' . $appealPath . ($reasonText !== '' ? ' Reason: ' . $reasonText : ''),
+                'full' => 'Your account is temporarily suspended while we investigate trust and safety concerns. Campaign activity, donations, and withdrawals are blocked. You may only access limited account areas if permitted by platform policy.' . $reasonSuffix,
             ],
             self::STATUS_BANNED => [
                 'short' => 'Your account has been permanently disabled.',
-                'full' => 'Your account has been permanently disabled due to severe or repeated policy violations. Access to the platform is blocked and funds will be handled according to platform policy. Appeal link: ' . $appealPath . ($reasonText !== '' ? ' Reason: ' . $reasonText : ''),
+                'full' => 'Your account has been permanently disabled due to severe or repeated policy violations. Access to the platform is blocked and funds will be handled according to platform policy.' . $reasonSuffix,
             ],
             default => [
                 'short' => 'Your account is active.',

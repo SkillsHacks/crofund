@@ -51,8 +51,9 @@ function renderNotificationsContent(array $currentUser, array $trustRiskUi): voi
                                     <h3 class="mt-3 text-base font-semibold">Trust & safety notice</h3>
                                     <p class="mt-2 text-sm leading-6"><?php echo htmlspecialchars((string) ($trustRiskUi['message']['full'] ?? $trustRiskUi['message']['short'] ?? 'Your account currently has a trust and safety notice.')); ?></p>
                                 </div>
-                                <div class="shrink-0">
+                                <div class="shrink-0 flex flex-col gap-2 sm:items-end">
                                     <span class="inline-flex rounded-full bg-white/70 px-3 py-1 text-xs font-semibold">Active notice</span>
+                                    <a href="mailto:support@crofund.org?subject=<?php echo rawurlencode('Request review for account status ' . (string) $trustRiskUi['status']); ?>" class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-4 py-2 text-sm font-semibold text-white transition hover:bg-slate-800">Request review</a>
                                 </div>
                             </div>
                         </article>
