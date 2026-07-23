@@ -91,7 +91,7 @@ if (!function_exists('renderTrustRiskBanner')) {
 if (!function_exists('trustRiskActionDisabled')) {
     function trustRiskActionDisabled(array $trustRiskUi, string $actionKey): bool
     {
-        $alwaysAllowedWhenFlagged = ['dashboard_access', 'update_sensitive_profile', 'view_notifications'];
+        $alwaysAllowedWhenFlagged = ['dashboard_access', 'view_notifications'];
 
         if (!empty($trustRiskUi['is_flagged']) && !in_array($actionKey, $alwaysAllowedWhenFlagged, true)) {
             return true;
