@@ -45,6 +45,28 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
         body.sidebar-collapsed .app-main {
             margin-left: 5rem !important;
         }
+
+        body.sidebar-collapsed #sidebar .sidebar-label,
+        body.sidebar-collapsed #sidebar .sidebar-section-title {
+            opacity: 0;
+            width: 0;
+            max-width: 0;
+            margin: 0;
+            overflow: hidden;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+
+        body.sidebar-collapsed #sidebar .sidebar-link {
+            justify-content: center;
+        }
+
+        body.sidebar-collapsed #sidebar .sidebar-link > svg,
+        body.sidebar-collapsed #sidebar .sidebar-link > span:first-child > svg,
+        body.sidebar-collapsed #sidebar .sidebar-link > a > svg {
+            margin-left: 0;
+            margin-right: 0;
+        }
     }
 </style>
 
