@@ -12,6 +12,7 @@ if (!function_exists('getTrustRiskUiState')) {
             ],
             'restrictions' => [],
             'show_banner' => false,
+            'is_flagged' => false,
             'banner_class' => 'border-emerald-200 bg-emerald-50 text-emerald-900',
             'badge_class' => 'bg-emerald-100 text-emerald-700',
         ];
@@ -51,6 +52,7 @@ if (!function_exists('getTrustRiskUiState')) {
                 'message' => $profile['message'] ?? $defaultState['message'],
                 'restrictions' => $profile['restrictions'] ?? [],
                 'show_banner' => $status !== 'ACTIVE',
+                'is_flagged' => $status !== 'ACTIVE',
                 'banner_class' => $style['banner_class'] ?? $defaultState['banner_class'],
                 'badge_class' => $style['badge_class'] ?? $defaultState['badge_class'],
             ];
@@ -89,6 +91,12 @@ if (!function_exists('renderTrustRiskBanner')) {
 if (!function_exists('trustRiskActionDisabled')) {
     function trustRiskActionDisabled(array $trustRiskUi, string $actionKey): bool
     {
+        $alwaysAllowedWhenFlagged = ['dashboard_access', 'update_sensitive_profile', 'view_notifications'];
+
+        if (!empty($trustRiskUi['is_flagged']) && !in_array($actionKey, $alwaysAllowedWhenFlagged, true)) {
+            return true;
+        }
+
         return !empty($trustRiskUi['restrictions'][$actionKey]);
     }
 }

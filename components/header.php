@@ -67,6 +67,15 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
         body.sidebar-collapsed .app-main {
             margin-left: 5rem !important;
         }
+
+        body #app-brand-link {
+            transition: padding-left 0.3s ease-in-out;
+            padding-left: 0;
+        }
+
+        body.sidebar-collapsed #app-brand-link {
+            padding-left: 4.5rem;
+        }
     }
 </style>
 
@@ -75,7 +84,7 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
     <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
             <div class="flex-1 flex items-center justify-start">
-                <a href="<?php echo BASE_URL; ?>/dashboard" class="flex items-center flex-shrink-0 px-4">
+                <a href="<?php echo BASE_URL; ?>/dashboard" id="app-brand-link" class="flex items-center flex-shrink-0 px-4 lg:pl-0">
                     <span class="text-xl md:text-2xl font-bold text-emerald-600">CroFunding</span>
                 </a>
             </div>

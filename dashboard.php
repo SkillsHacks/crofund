@@ -268,6 +268,7 @@ include 'components/header.php';
                                     <p class="mt-2 text-xs text-slate-300">Launch a new fundraiser in a few steps.</p>
                                 </a>
                                 <?php endif; ?>
+                                <?php if (!trustRiskActionDisabled($trustRiskUi, 'dashboard_access')): ?>
                                 <a href="<?php echo dashboardRouteUrl('my_campaigns'); ?>" data-dashboard-route="my_campaigns" class="rounded-2xl border border-slate-200 bg-white/80 px-4 py-4 text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:bg-white">
                                     <div class="flex items-center justify-between">
                                         <span class="text-sm font-semibold">Manage campaigns</span>
@@ -277,6 +278,7 @@ include 'components/header.php';
                                     </div>
                                     <p class="mt-2 text-xs text-slate-500">Review active, ended, and draft campaigns.</p>
                                 </a>
+                                <?php endif; ?>
                                 <?php $withdrawBlocked = trustRiskActionDisabled($trustRiskUi, 'withdraw_funds'); ?>
                                 <?php if ($withdrawBlocked): ?>
                                     <div class="rounded-2xl border border-dashed border-slate-300 bg-slate-100 px-4 py-4 text-slate-500 shadow-sm opacity-80">
