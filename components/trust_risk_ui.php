@@ -78,8 +78,7 @@ if (!function_exists('renderTrustRiskBanner')) {
                     <p class="mt-2 text-sm leading-6"><?php echo htmlspecialchars((string) ($trustRiskUi['message']['full'] ?? $trustRiskUi['message']['short'] ?? 'Some account actions are currently unavailable.')); ?></p>
                 </div>
                 <div class="flex flex-wrap gap-3">
-                    <a href="<?php echo htmlspecialchars(BASE_URL); ?>/account/notifications.php" class="inline-flex items-center justify-center rounded-2xl border border-current/20 bg-white/70 px-4 py-3 text-sm font-semibold transition hover:bg-white">View notices</a>
-                    <a href="<?php echo htmlspecialchars(BASE_URL); ?>/account/verification.php" class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">Review verification</a>
+                    <a href="<?php echo htmlspecialchars(BASE_URL); ?>/account/notifications.php" class="inline-flex items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800">View notices</a>
                 </div>
             </div>
         </section>
