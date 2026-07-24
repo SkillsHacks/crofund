@@ -1,6 +1,7 @@
 {
     "require": {
         "phpmailer/phpmailer": "^6.10",
+        "resend/resend-php": "^1.6",
         "stripe/stripe-php": "^17.5",
         "paypal/paypal-checkout-sdk": "^1.0"
     },
