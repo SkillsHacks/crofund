@@ -536,10 +536,17 @@ $ogImageUrl = !empty($details['image_path'])
           </div>
           <p class="font-semibold text-slate-700 mb-1">No donations yet</p>
           <p class="text-sm text-slate-500">Be the first to make a difference!</p>
+          <?php if ($campaignUnderReview): ?>
+          <button type="button" disabled
+            class="mt-4 cursor-not-allowed rounded-xl border border-amber-200 bg-amber-50 px-6 py-2.5 text-sm font-semibold text-amber-700 opacity-90">
+            Campaign under review
+          </button>
+          <?php else: ?>
           <button onclick="openDonationModal()"
             class="mt-4 px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all">
             Donate Now
           </button>
+          <?php endif; ?>
         </div>
         <?php endif; ?>
       </div>
@@ -596,11 +603,18 @@ $ogImageUrl = !empty($details['image_path'])
           </div>
 
           <!-- Donate CTA -->
+          <?php if ($campaignUnderReview): ?>
+          <button type="button" disabled
+            class="mb-3 w-full cursor-not-allowed rounded-xl border border-amber-200 bg-amber-50 py-4 text-base font-bold text-amber-700 opacity-90">
+            <i class="fas fa-shield-alt mr-2"></i> Campaign under review
+          </button>
+          <?php else: ?>
           <button onclick="openDonationModal()"
             class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl text-base transition-all active:scale-[.98] mb-3"
             style="box-shadow:0 4px 14px rgba(5,150,105,.4)">
             <i class="fas fa-heart mr-2"></i> Donate Now
           </button>
+          <?php endif; ?>
 
           <!-- Social share -->
           <div class="grid grid-cols-4 gap-2">
@@ -684,10 +698,17 @@ $ogImageUrl = !empty($details['image_path'])
     <p class="text-xs text-slate-500 leading-none">Raised so far</p>
     <p class="text-base font-extrabold text-slate-900">$<?php echo number_format($details['current_amount'],0); ?></p>
   </div>
+  <?php if ($campaignUnderReview): ?>
+  <button type="button" disabled
+    class="flex-1 cursor-not-allowed rounded-xl border border-amber-200 bg-amber-50 py-3 text-sm font-bold text-amber-700 opacity-90">
+    <i class="fas fa-shield-alt mr-1.5"></i> Campaign under review
+  </button>
+  <?php else: ?>
   <button onclick="openDonationModal()"
     class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm transition-all">
     <i class="fas fa-heart mr-1.5"></i> Donate Now
   </button>
+  <?php endif; ?>
   <button onclick="copyShareLink()"
     class="w-11 h-11 flex items-center justify-center border-2 border-slate-200 rounded-xl text-slate-600 hover:border-emerald-400 hover:text-emerald-700 transition-all shrink-0">
     <i class="fas fa-share-alt text-sm"></i>
@@ -744,6 +765,11 @@ let paypalButtonsLoaded   = false;
 let paypalButtonsInstance = null;
 
 function openDonationModal() {
+  const campaignUnderReview = <?php echo $campaignUnderReview ? 'true' : 'false'; ?>;
+  if (campaignUnderReview) {
+    return;
+  }
+
   const modal         = document.getElementById('donationModal');
   const formContainer = document.getElementById('donationFormContainer');
   const formLoader    = document.getElementById('donationFormLoader');
