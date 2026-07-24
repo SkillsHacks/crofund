@@ -7,6 +7,7 @@ require_once __DIR__ . '/../config/Campaign.php';
 require_once __DIR__ . '/../config/Withdrawal.php';
 require_once __DIR__ . '/../config/User.php';
 require_once __DIR__ . '/../config/TrustRiskGuard.php';
+require_once __DIR__ . '/../config/IdVerificationService.php';
 
 $user = new User();
 if (!$user->isLoggedIn()) {
@@ -33,6 +34,7 @@ $isAjaxRequest = isset($_GET['ajax']) && $_GET['ajax'] === '1';
 
 $campaign = new Campaign();
 $withdrawal = new Withdrawal();
+$idVerificationService = new IdVerificationService();
 
 $totalDonations = $campaign->getUserTotalDonations($_SESSION['user_id']);
 $totalWithdrawn = $withdrawal->getTotalApprovedWithdrawals($_SESSION['user_id']);
@@ -45,6 +47,9 @@ $remainingAttempts = 3 - $verificationAttempts;
 $hasAttemptedVerification = $campaign->hasUserAttemptedVerification($_SESSION['user_id']);
 $availableBalance = $totalDonations - $totalWithdrawn - $pendingWithdrawals;
 $pendingWithdrawalsList = $withdrawal->getPendingWithdrawalsList($_SESSION['user_id']);
+$latestVerificationAttempt = $idVerificationService->getLatestAttempt((int) $_SESSION['user_id']);
+$hasPendingVerificationReview = $idVerificationService->hasPendingReview((int) $_SESSION['user_id']);
+$latestVerificationWorkflowLabel = $idVerificationService->getWorkflowStatusLabel($latestVerificationAttempt);
 
 if ($availableBalance < MIN_WITHDRAWAL_AMOUNT) {
     $errorMessage = 'Minimum withdrawal amount is $' . number_format(MIN_WITHDRAWAL_AMOUNT, 2);
@@ -74,20 +79,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_national_id'])
         exit();
     }
 
-    $verificationPassed = ($_POST['id_verified'] ?? '0') === '1';
+    if ($hasPendingVerificationReview) {
+        $_SESSION['error_message'] = 'Your most recent ID submission is still pending review. Please wait for the review outcome before uploading another image.';
+        header('Location: ' . BASE_URL . '/withdrawals/initiate.php');
+        exit();
+    }
 
     try {
+        $verificationUpload = $idVerificationService->storeUploadedNationalId($_FILES['national_id'] ?? [], (int) $_SESSION['user_id']);
         $campaign->markVerificationAttempted($_SESSION['user_id']);
 
-        if ($verificationPassed) {
-            $campaign->markIdAsVerified($_SESSION['user_id']);
-            $_SESSION['success_message'] = 'ID verification successful. You can now proceed to make a withdrawal.';
-        } else {
-            $campaign->incrementVerificationAttempts($_SESSION['user_id']);
-            $_SESSION['error_message'] = 'ID verification failed. Please try again with a clearer image.';
-        }
+        $ocrStatus = (string) ($verificationUpload['ocr']['status'] ?? 'unavailable');
+        $ocrSummary = $ocrStatus === 'extracted'
+            ? ' OCR extracted candidate identity text from the processed copy.'
+            : ' OCR is not yet available or did not extract readable text.';
+
+        $decision = $verificationUpload['decision'] ?? ['status' => 'manual_review', 'message' => 'Manual review is required.', 'score' => 0];
+        $decisionSummary = ' Decision status: ' . ucfirst(str_replace('_', ' ', (string) ($decision['status'] ?? 'manual_review'))) . ' (score ' . (int) ($decision['score'] ?? 0) . '). ' . (string) ($decision['message'] ?? '');
+
+        $_SESSION['success_message'] = sprintf(
+            'Your National ID image was uploaded successfully, passed initial quality checks (%dx%d), and a verification-ready processed copy was created. Stored file: %s.%s%s',
+            (int) ($verificationUpload['quality']['width'] ?? 0),
+            (int) ($verificationUpload['quality']['height'] ?? 0),
+            basename((string) ($verificationUpload['stored_path'] ?? '')),
+            $ocrSummary,
+            $decisionSummary
+        );
     } catch (Exception $e) {
-        $_SESSION['error_message'] = 'Unable to update verification status right now. Please try again.';
+        $_SESSION['error_message'] = $e->getMessage();
     }
 
     header('Location: ' . BASE_URL . '/withdrawals/initiate.php');
@@ -99,7 +118,7 @@ if ($isAjaxRequest) {
 }
 
 function renderWithdrawalInitiateContent(): void {
-    global $hasVerifiedId, $errorMessage, $verificationAttempts, $remainingAttempts, $hasExceededMaxAttempts, $pendingWithdrawalsList, $totalDonations, $pendingWithdrawals, $availableBalance, $totalWithdrawn, $userInfo;
+    global $hasVerifiedId, $errorMessage, $verificationAttempts, $remainingAttempts, $hasExceededMaxAttempts, $pendingWithdrawalsList, $totalDonations, $pendingWithdrawals, $availableBalance, $totalWithdrawn, $userInfo, $latestVerificationAttempt, $hasPendingVerificationReview, $latestVerificationWorkflowLabel;
 ?>
 <div class="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr),360px]">
@@ -212,46 +231,60 @@ function renderWithdrawalInitiateContent(): void {
                             </div>
                         <?php endif; ?>
 
-                        <div class="space-y-4">
+                        <?php if ($latestVerificationAttempt): ?>
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
+                                <p class="font-semibold text-slate-900">Latest verification attempt</p>
+                                <p class="mt-1"><strong>Workflow:</strong> <?php echo htmlspecialchars($latestVerificationWorkflowLabel); ?></p>
+                                <p class="mt-1"><strong>Stored status:</strong> <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', (string) ($latestVerificationAttempt['status'] ?? 'unknown')))); ?></p>
+                                <p class="mt-1"><strong>Decision:</strong> <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', (string) ($latestVerificationAttempt['decision_status'] ?? 'manual_review')))); ?><?php if (isset($latestVerificationAttempt['decision_score'])): ?> (score <?php echo (int) $latestVerificationAttempt['decision_score']; ?>)<?php endif; ?></p>
+                                <?php if (!empty($latestVerificationAttempt['failure_reason'])): ?>
+                                    <p class="mt-1"><strong>Reason:</strong> <?php echo htmlspecialchars((string) $latestVerificationAttempt['failure_reason']); ?></p>
+                                <?php endif; ?>
+                                <?php if (!empty($latestVerificationAttempt['ocr_message'])): ?>
+                                    <p class="mt-1"><strong>OCR:</strong> <?php echo htmlspecialchars((string) $latestVerificationAttempt['ocr_message']); ?></p>
+                                <?php endif; ?>
+                                <p class="mt-1 text-slate-500">Submitted <?php echo htmlspecialchars((string) ($latestVerificationAttempt['created_at'] ?? '')); ?></p>
+                            </div>
+                        <?php endif; ?>
+
+                        <?php if ($hasPendingVerificationReview): ?>
+                            <div class="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4 text-sm text-blue-800">
+                                Your latest ID submission is currently pending review. New uploads are temporarily disabled until that review is completed.
+                            </div>
+                        <?php endif; ?>
+
+                        <form id="idVerificationForm" method="POST" action="<?php echo BASE_URL; ?>/withdrawals/initiate.php" enctype="multipart/form-data" class="space-y-4 <?php echo $hasPendingVerificationReview ? 'opacity-60 pointer-events-none' : ''; ?>">
+                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                            <input type="hidden" name="verify_national_id" value="1">
+
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                                <input type="file" id="nationalIdFile" name="national_id" accept="image/*" class="hidden" onchange="handleIdUpload(event)">
-                                <button type="button" onclick="document.getElementById('nationalIdFile').click()" class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700">
+                                <input type="file" id="nationalIdFile" name="national_id" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleIdUpload(event)" <?php echo $hasPendingVerificationReview ? 'disabled' : ''; ?>>
+                                <button type="button" onclick="document.getElementById('nationalIdFile').click()" <?php echo $hasPendingVerificationReview ? 'disabled' : ''; ?> class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-70">
                                     <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
                                     </svg>
                                     <span id="uploadButtonText">Choose image</span>
                                 </button>
-                                <span class="text-sm text-slate-500">PNG, JPG, JPEG up to 10MB</span>
+                                <span class="text-sm text-slate-500">JPG, PNG, or WEBP up to 10MB. Use a bright, sharp photo with all edges visible.</span>
                             </div>
 
                             <div id="fileSelectedIndicator" class="hidden rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
                                 Image selected successfully.
                             </div>
 
+                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
+                                <p class="font-semibold text-slate-900">Verification note</p>
+                                <p class="mt-1">In this step, your ID image is uploaded securely to the server, checked for basic quality, and prepared for verification processing. Automatic browser-side approval has been disabled.</p>
+                                <p class="mt-2">Submitting an ID image does not automatically verify your account. Withdrawal access is enabled only after manual approval updates your account verification status.</p>
+                                <p class="mt-2">After submission, the latest verification attempt stays locked while it is awaiting review, so duplicate uploads are temporarily blocked.</p>
+                            </div>
+
                             <div class="flex justify-start">
-                                <button type="button" onclick="processIdImage()" class="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700">
-                                    Submit for verification
+                                <button type="submit" <?php echo $hasPendingVerificationReview ? 'disabled' : ''; ?> class="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70">
+                                    Upload for verification
                                 </button>
                             </div>
-
-                            <div id="ocrStatus" class="hidden rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
-                                <div class="flex items-center gap-3">
-                                    <div class="h-4 w-4 animate-spin rounded-full border-2 border-emerald-600 border-b-transparent"></div>
-                                    <span>Processing ID image...</span>
-                                </div>
-                            </div>
-
-                            <div id="verificationResults" class="hidden rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4">
-                                <div id="extractedNames" class="mb-3 text-sm text-slate-600"></div>
-                                <div id="verificationStatus" class="text-sm font-medium"></div>
-                            </div>
-
-                            <form id="idVerificationForm" method="POST" action="<?php echo BASE_URL; ?>/withdrawals/initiate.php" class="hidden">
-                                <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
-                                <input type="hidden" name="verify_national_id" value="1">
-                                <input type="hidden" id="idVerified" name="id_verified" value="0">
-                            </form>
-                        </div>
+                        </form>
                     </div>
                 </div>
             <?php else: ?>
@@ -418,241 +451,37 @@ function renderWithdrawalInitiateContent(): void {
 </div>
 
 <script>
-let uploadedImageFile = null;
-let extractedData = {};
-let rawOcrText = '';
-let isDevelopmentMode = true;
-let accountNames = {
-    full_name: '<?php echo isset($userInfo['name']) ? addslashes($userInfo['name']) : ''; ?>',
-    last_name: '<?php
-        if (isset($userInfo['name'])) {
-            $nameParts = explode(' ', trim($userInfo['name']));
-            echo addslashes(end($nameParts));
-        }
-    ?>'
-};
-
 function handleIdUpload(event) {
     const file = event.target.files[0];
-    if (!file) return;
+    const indicator = document.getElementById('fileSelectedIndicator');
+    const buttonText = document.getElementById('uploadButtonText');
 
-    if (!file.type.startsWith('image/')) {
-        alert('Please select a valid image file');
+    if (!file) {
+        indicator.classList.add('hidden');
+        buttonText.textContent = 'Choose image';
+        return;
+    }
+
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
+    if (!allowedTypes.includes(file.type)) {
+        alert('Please select a JPG, PNG, or WEBP image.');
+        event.target.value = '';
+        indicator.classList.add('hidden');
+        buttonText.textContent = 'Choose image';
         return;
     }
 
     if (file.size > 10 * 1024 * 1024) {
         alert('File size must be less than 10MB');
+        event.target.value = '';
+        indicator.classList.add('hidden');
+        buttonText.textContent = 'Choose image';
         return;
     }
 
-    uploadedImageFile = file;
-    document.getElementById('fileSelectedIndicator').classList.remove('hidden');
-    document.getElementById('uploadButtonText').textContent = 'Change image';
-}
-
-function clearImage() {
-    uploadedImageFile = null;
-    document.getElementById('nationalIdFile').value = '';
-    document.getElementById('fileSelectedIndicator').classList.add('hidden');
-    document.getElementById('uploadButtonText').textContent = 'Choose image';
-    document.getElementById('ocrStatus').classList.add('hidden');
-    document.getElementById('verificationResults').classList.add('hidden');
-    document.getElementById('idVerified').value = '0';
-}
-
-async function preprocessImage(file) {
-    return new Promise((resolve) => {
-        const canvas = document.createElement('canvas');
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-
-        img.onload = function() {
-            canvas.width = img.width;
-            canvas.height = img.height;
-            ctx.drawImage(img, 0, 0);
-
-            const imageData = ctx.getImageData(0, 0, canvas.width, canvas.height);
-            const data = imageData.data;
-
-            for (let i = 0; i < data.length; i += 4) {
-                const gray = data[i] * 0.299 + data[i + 1] * 0.587 + data[i + 2] * 0.114;
-                const enhanced = gray > 128 ? 255 : 0;
-                data[i] = enhanced;
-                data[i + 1] = enhanced;
-                data[i + 2] = enhanced;
-            }
-
-            ctx.putImageData(imageData, 0, 0);
-            canvas.toBlob((blob) => resolve(blob), 'image/png');
-        };
-
-        img.src = URL.createObjectURL(file);
-    });
-}
-
-async function processIdImage() {
-    if (!uploadedImageFile) {
-        alert('Please upload an ID image first');
-        return;
-    }
-
-    document.getElementById('ocrStatus').classList.remove('hidden');
-    document.getElementById('verificationResults').classList.add('hidden');
-
-    try {
-        const processedImage = await preprocessImage(uploadedImageFile);
-        const { data: { text } } = await Tesseract.recognize(
-            processedImage,
-            'eng',
-            {
-                logger: () => {},
-                tessedit_char_whitelist: 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789 :.,-()',
-                tessedit_pageseg_mode: Tesseract.PSM.AUTO,
-                preserve_interword_spaces: '1'
-            }
-        );
-
-        rawOcrText = text;
-        extractedData = extractNamesFromText(text);
-        let verificationResult = compareExtractedData(extractedData, accountNames);
-
-        displayVerificationResults(extractedData, verificationResult);
-    } catch (error) {
-        console.error('OCR Error:', error);
-        alert('Error processing ID image. Please try again with a clearer image.');
-    } finally {
-        document.getElementById('ocrStatus').classList.add('hidden');
-    }
-}
-
-function extractNamesFromText(text) {
-    const extractedData = {};
-    const surnamePatterns = [
-        /surname[:\s]+([A-Z\s]+)/i,
-        /surname[:\s]*\n?\s*([A-Z\s]+)/i,
-        /([A-Z]{3,})\s*[A-Z\s]*\s*[A-Z]{3,}/,
-        /([A-Z]{4,})/,
-        /REPUBLIC OF UGANDA[\s\S]*?([A-Z]{4,})/,
-        /NATIONAL ID CARD[\s\S]*?([A-Z]{4,})/
-    ];
-
-    for (const pattern of surnamePatterns) {
-        const match = text.match(pattern);
-        if (match) {
-            const extracted = match[1].trim();
-            if (extracted && extracted !== 'SURNAME' && extracted !== 'REPUBLIC' && extracted !== 'UGANDA' && extracted !== 'NATIONAL' && extracted.length > 2) {
-                extractedData.last_name = extracted;
-                break;
-            }
-        }
-    }
-
-    if (!extractedData.last_name) {
-        const knownNames = ['KYAMBADDE', 'NYAKASIKI', 'MUGISHA', 'KATONGOLE', 'NAKAMYA'];
-        for (const name of knownNames) {
-            const nameMatch = text.match(new RegExp(`(${name})`, 'i'));
-            if (nameMatch) {
-                extractedData.last_name = nameMatch[1];
-                break;
-            }
-        }
-    }
-
-    const dobPatterns = [
-        /date\s+of\s+birth[:\s]*([0-9]{2}\.[0-9]{2}\.[0-9]{4})/i,
-        /date\s+of\s+birth[:\s]*([0-9]{2}\/[0-9]{2}\/[0-9]{4})/i,
-        /date\s+of\s+birth[:\s]*([0-9]{2}-[0-9]{2}-[0-9]{4})/i,
-        /birth[:\s]*([0-9]{2}\.[0-9]{2}\.[0-9]{4})/i,
-        /birth[:\s]*([0-9]{2}\/[0-9]{2}\/[0-9]{4})/i,
-        /birth[:\s]*([0-9]{2}-[0-9]{2}-[0-9]{4})/i,
-        /([0-9]{2}\.[0-9]{2}\.[0-9]{4})/,
-        /([0-9]{2}\/[0-9]{2}\/[0-9]{4})/,
-        /([0-9]{2}-[0-9]{2}-[0-9]{4})/
-    ];
-
-    for (const pattern of dobPatterns) {
-        const match = text.match(pattern);
-        if (match) {
-            extractedData.date_of_birth = match[1];
-            break;
-        }
-    }
-
-    const idNumberMatch = text.match(/([0-9]{10,})/);
-    if (idNumberMatch) {
-        extractedData.id_number = idNumberMatch[1];
-    }
-
-    return extractedData;
-}
-
-function compareExtractedData(extractedData, accountNames) {
-    let nameMatch = false;
-    if (extractedData.last_name && accountNames.full_name) {
-        const extractedSurname = extractedData.last_name.toLowerCase().trim();
-        const fullName = accountNames.full_name.toLowerCase().trim();
-        const nameParts = fullName.split(' ');
-
-        for (let part of nameParts) {
-            part = part.trim();
-            const similarity = calculateSimilarity(extractedSurname, part);
-            if (part && similarity > 0.8) {
-                nameMatch = true;
-                break;
-            }
-        }
-
-        if (!nameMatch && fullName.includes(extractedSurname)) {
-            nameMatch = true;
-        }
-    }
-
-    return nameMatch;
-}
-
-function calculateSimilarity(str1, str2) {
-    const s1 = str1.toLowerCase().trim();
-    const s2 = str2.toLowerCase().trim();
-
-    if (s1 === s2) return 1.0;
-    if (s1.includes(s2) || s2.includes(s1)) return 0.9;
-    return 0;
-}
-
-function displayVerificationResults(extractedData, verificationResult) {
-    const resultsDiv = document.getElementById('verificationResults');
-    const namesDiv = document.getElementById('extractedNames');
-    const statusDiv = document.getElementById('verificationStatus');
-
-    let namesText = '';
-    if (extractedData.last_name) {
-        namesText += `<strong>Extracted Surname:</strong> ${extractedData.last_name}<br>`;
-    }
-    if (extractedData.date_of_birth) {
-        namesText += `<strong>Date of Birth:</strong> ${extractedData.date_of_birth}<br>`;
-    }
-    if (extractedData.id_number) {
-        namesText += `<strong>ID Number:</strong> ${extractedData.id_number}<br>`;
-    }
-
-    namesDiv.innerHTML = namesText;
-
-    if (verificationResult) {
-        statusDiv.innerHTML = '<strong class="text-emerald-600">✅ Verification Successful!</strong> Finalizing your verification and unlocking withdrawals...';
-        document.getElementById('idVerified').value = '1';
-        setTimeout(() => {
-            document.getElementById('idVerificationForm').submit();
-        }, 300);
-    } else {
-        statusDiv.innerHTML = '<strong class="text-red-600">❌ Verification Failed!</strong> We could not verify your identity from the provided image. Please try again with a clearer photo.';
-        document.getElementById('idVerified').value = '0';
-        setTimeout(() => {
-            document.getElementById('idVerificationForm').submit();
-        }, 300);
-    }
-
-    resultsDiv.classList.remove('hidden');
+    indicator.textContent = 'Selected: ' + file.name;
+    indicator.classList.remove('hidden');
+    buttonText.textContent = 'Change image';
 }
 
 function showFields(method) {
@@ -708,7 +537,6 @@ if (!$isAjaxRequest) {
     <link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
     <title>Initiate Withdrawal - CroFunding</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4/dist/tesseract.min.js"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
     <div class="flex min-h-screen pt-16">
