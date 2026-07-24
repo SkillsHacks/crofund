@@ -1,11 +1,7 @@
 <?php
 session_start();
 require_once __DIR__ . '/config/config.php';
-
-// Include PHPMailer
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-require __DIR__ . '/vendor/autoload.php'; // Adjust path if needed
+require_once __DIR__ . '/config/Mail.php';
 
 $success = '';
 $error = '';
@@ -15,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (filter_var($email, FILTER_VALIDATE_EMAIL)) {
         // Use the PDO object from config.php
         global $pdo;
-        $stmt = $pdo->prepare("SELECT id FROM users WHERE email = ?");
+        $stmt = $pdo->prepare("SELECT id, name FROM users WHERE email = ?");
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
@@ -31,100 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Prepare reset link
             $resetLink = BASE_URL . "/reset-password.php?token=$token";
-            $company_name = "CroFunding";
-            $current_year = date('Y');
-            $disclaimer = '<p style="font-size:12px;color:#888;margin-top:20px;">If you did not request a password reset, please ignore this email or contact us.</p>';
-
-            $emailBody = <<<HTML
-<!DOCTYPE html>
-<html>
-<head>
-    <meta charset="UTF-8">
-    <title>Password Reset Request</title>
-    <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; color: #333; }
-        .banner { background-color: #059669; text-align: center; padding: 30px; color: white; }
-        .banner h1 { margin: 0; font-size: 28px; font-weight: 600; }
-        .content { max-width: 600px; margin: 0 auto; padding: 30px 20px; }
-        .btn {
-            display: inline-block;
-            background-color: #059669;
-            color: #fff;
-            padding: 12px 24px;
-            border-radius: 6px;
-            text-decoration: none;
-            font-weight: bold;
-            margin: 20px 0;
-        }
-        .footer { background-color: #f3f4f6; text-align: center; padding: 20px; font-size: 12px; color: #666; }
-    </style>
-</head>
-<body>
-    <div class="banner">
-        <h1>{$company_name}</h1>
-    </div>
-    <div class="content">
-        <p>Dear User,</p>
-        <p>We received a request to reset your password for your {$company_name} account.</p>
-        <p>To reset your password, please click the button below or copy and paste the link into your browser:</p>
-        <p style="text-align:center;">
-            <a href="{$resetLink}" class="btn">Reset Password</a>
-        </p>
-        <p style="word-break:break-all;">{$resetLink}</p>
-        <div style="background-color: #e8f5e9; padding: 15px; border-left: 4px solid #4caf50; margin: 20px 0;">
-            <p style="margin: 0; color: #1b5e20; font-weight: 500;">
-                This link will expire in 1 hour for your security.
-            </p>
-        </div>
-        <p>If you did not request a password reset, you can safely ignore this email.</p>
-        <p>Thank you,<br>The {$company_name} Team</p>
-    </div>
-    <div class="footer">
-        <div style="margin-bottom: 20px;">
-            <a href="https://facebook.com/your-page" style="text-decoration: none; margin: 0 10px;">
-                <img src="https://cdn-icons-png.flaticon.com/32/174/174848.png" alt="Facebook" width="32" height="32">
-            </a>
-            <a href="https://twitter.com/your-handle" style="text-decoration: none; margin: 0 10px;">
-                <img src="https://cdn-icons-png.flaticon.com/32/733/733579.png" alt="Twitter" width="32" height="32">
-            </a>
-            <a href="https://instagram.com/your-profile" style="text-decoration: none; margin: 0 10px;">
-                <img src="https://cdn-icons-png.flaticon.com/32/174/174855.png" alt="Instagram" width="32" height="32">
-            </a>
-            <a href="https://linkedin.com/company/your-company" style="text-decoration: none; margin: 0 10px;">
-                <img src="https://cdn-icons-png.flaticon.com/32/174/174857.png" alt="LinkedIn" width="32" height="32">
-            </a>
-        </div>
-        <p>This is an automated message. Please do not reply directly to this email.</p>
-        <p>&copy; <?php echo date('Y'); ?> <?php echo $company_name; ?>. All rights reserved.</p>
-    </div>
-</body>
-</html>
-HTML;
-
-            // Send email using PHPMailer
-            $mail = new PHPMailer(true);
+            $mailer = new Mail();
             try {
-                //Server settings
-                $mail->isSMTP();
-                $mail->Host       = 'mail.crofund.org'; // Set your SMTP server
-                $mail->SMTPAuth   = true;
-                $mail->Username   = 'no-reply@crofund.org';   // SMTP username
-                $mail->Password   = 'Ihateu123#@!00!!';     // SMTP password
-                $mail->SMTPSecure = PHPMailer::ENCRYPTION_STARTTLS;
-                $mail->Port       = 587;
-
-                //Recipients
-                $mail->setFrom('no-reply@crofund.org', 'CroFunding');
-                $mail->addAddress($email);
-
-                // Content
-                $mail->isHTML(true);
-                $mail->Subject = "Password Reset Request";
-                $mail->Body    = $emailBody;
-
-                $mail->send();
-            } catch (Exception $e) {
-                // Optionally log $mail->ErrorInfo
+                $mailer->sendPasswordResetEmail($email, $resetLink, $user['name'] ?? null);
+            } catch (Throwable $e) {
+                error_log('Failed to send password reset email: ' . $e->getMessage());
             }
         }
 

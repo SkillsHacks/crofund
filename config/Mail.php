@@ -39,58 +39,53 @@ class Mail {
         }
     }
 
-    public function sendVerificationEmail($to, $verificationLink) {
+    public function sendVerificationEmail($to, $verificationLink, $name = null) {
         try {
             return $this->sendEmail(
                 $to,
-                'Verify Your Email Address - ' . SITE_NAME,
-                $this->getVerificationEmailTemplate($verificationLink),
-                $this->getVerificationEmailPlainText($verificationLink)
+                'Verify your CroFund email address',
+                $this->getVerificationEmailTemplate($verificationLink, $name),
+                $this->getVerificationEmailPlainText($verificationLink, $name)
             );
         } catch (Throwable $e) {
             $this->throwUserSafeMailException('Verification email could not be sent', $e);
         }
     }
 
-    private function getVerificationEmailTemplate($verificationLink) {
+    private function getVerificationEmailTemplate($verificationLink, $name = null) {
+        $greeting = $name ? 'Hi ' . htmlspecialchars($name) . ',' : 'Hi,';
+
         return '<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Your Email</title>
+    <title>Verify your CroFund email address</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background-color: #ffffff;">
-        <h2 style="color: #111827; margin-top: 0;">Verify Your Email Address</h2>
-        <p>Thank you for registering with ' . SITE_NAME . '. Please click the button below to verify your email address:</p>
-        <p style="margin: 30px 0; text-align: center;">
-            <a href="' . htmlspecialchars($verificationLink) . '"
-               style="background-color: #059669;
-                      color: white;
-                      padding: 14px 32px;
-                      text-decoration: none;
-                      border-radius: 8px;
-                      display: inline-block;
-                      font-weight: 600;
-                      font-size: 16px;">
-                Verify Email Address
-            </a>
+<body style="margin:0;padding:24px;background-color:#ffffff;color:#111827;font-family:Arial,sans-serif;line-height:1.6;">
+    <div style="max-width:560px;margin:0 auto;">
+        <p style="margin:0 0 16px 0;">' . $greeting . '</p>
+        <p style="margin:0 0 16px 0;">Use the link below to verify your CroFund email address:</p>
+        <p style="margin:0 0 16px 0;word-break:break-word;">
+            <a href="' . htmlspecialchars($verificationLink) . '" style="color:#111827;text-decoration:underline;">' . htmlspecialchars($verificationLink) . '</a>
         </p>
-        <p style="color: #4b5563; font-size: 14px;">If the button doesn\'t work, copy and paste this link in your browser:</p>
-        <p style="color: #059669; word-break: break-all; font-size: 14px;">' . htmlspecialchars($verificationLink) . '</p>
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-        <p style="color: #6b7280; font-size: 13px;">If you didn\'t create an account with ' . SITE_NAME . ', you can safely ignore this email.</p>
+        <p style="margin:0 0 16px 0;">This link will expire in 1 hour.</p>
+        <p style="margin:0 0 16px 0;">If you did not request this email, you can safely ignore it.</p>
+        <p style="margin:0;">CroFund Security Team</p>
     </div>
 </body>
 </html>';
     }
 
-    private function getVerificationEmailPlainText($verificationLink) {
-        return "Verify Your Email Address\n\n" .
-               "Thank you for registering with " . SITE_NAME . ". Please click the link below to verify your email address:\n\n" .
+    private function getVerificationEmailPlainText($verificationLink, $name = null) {
+        $greeting = $name ? "Hi $name," : "Hi,";
+
+        return $greeting . "\n\n" .
+               "Use the link below to verify your CroFund email address:\n\n" .
                $verificationLink . "\n\n" .
-               "If you didn't create an account with " . SITE_NAME . ", you can safely ignore this email.";
+               "This link will expire in 1 hour.\n\n" .
+               "If you did not request this email, you can safely ignore it.\n\n" .
+               "CroFund Security Team";
     }
 
     public function sendWelcomeEmail($to, $name) {
@@ -99,7 +94,7 @@ class Mail {
 
             return $this->sendEmail(
                 $to,
-                'Welcome to ' . SITE_NAME . '!',
+                'Your CroFund account is ready',
                 $this->getWelcomeEmailTemplate($resolvedName),
                 $this->getWelcomeEmailPlainText($resolvedName)
             );
@@ -109,37 +104,21 @@ class Mail {
     }
 
     private function getWelcomeEmailTemplate($name) {
-        $greeting = $name ? "Hi $name," : "Hi,";
+        $greeting = $name ? 'Hi ' . htmlspecialchars($name) . ',' : 'Hi,';
 
         return '<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Welcome to ' . SITE_NAME . '</title>
+    <title>Your CroFund account is ready</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background-color: #ffffff;">
-        <h2 style="color: #111827; margin-top: 0;">Welcome to ' . SITE_NAME . '!</h2>
-        <p>' . htmlspecialchars($greeting) . '</p>
-        <p>Thank you for registering with ' . SITE_NAME . '! Your account has been created successfully.</p>
-        <p>You can now log in to your account and start using our platform.</p>
-        <p style="margin: 30px 0; text-align: center;">
-            <a href="' . htmlspecialchars(BASE_URL) . '/login.php"
-               style="background-color: #059669;
-                      color: white;
-                      padding: 14px 32px;
-                      text-decoration: none;
-                      border-radius: 8px;
-                      display: inline-block;
-                      font-weight: 600;
-                      font-size: 16px;">
-                Log In Now
-            </a>
-        </p>
-        <p style="color: #4b5563; font-size: 14px;">If you have any questions, please don\'t hesitate to contact us.</p>
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-        <p style="color: #6b7280; font-size: 13px;">If you didn\'t create an account with ' . SITE_NAME . ', you can safely ignore this email.</p>
+<body style="margin:0;padding:24px;background-color:#ffffff;color:#111827;font-family:Arial,sans-serif;line-height:1.6;">
+    <div style="max-width:560px;margin:0 auto;">
+        <p style="margin:0 0 16px 0;">' . $greeting . '</p>
+        <p style="margin:0 0 16px 0;">Your CroFund account has been created successfully.</p>
+        <p style="margin:0 0 16px 0;">You can now sign in and continue using your account.</p>
+        <p style="margin:0;">CroFund Security Team</p>
     </div>
 </body>
 </html>';
@@ -148,13 +127,10 @@ class Mail {
     private function getWelcomeEmailPlainText($name) {
         $greeting = $name ? "Hi $name," : "Hi,";
 
-        return "Welcome to " . SITE_NAME . "!\n\n" .
-               $greeting . "\n\n" .
-               "Thank you for registering with " . SITE_NAME . "! Your account has been created successfully.\n\n" .
-               "You can now log in to your account and start using our platform.\n\n" .
-               "Log in here: " . BASE_URL . "/login.php\n\n" .
-               "If you have any questions, please don't hesitate to contact us.\n\n" .
-               "If you didn't create an account with " . SITE_NAME . ", you can safely ignore this email.";
+        return $greeting . "\n\n" .
+               "Your CroFund account has been created successfully.\n\n" .
+               "You can now sign in and continue using your account.\n\n" .
+               "CroFund Security Team";
     }
 
     public function sendAdminRegistrationNotification($userData) {
@@ -214,7 +190,7 @@ class Mail {
         try {
             return $this->sendEmail(
                 $to,
-                'Your Two-Factor Verification Code - ' . SITE_NAME,
+                'Your CroFund verification code',
                 $this->getTwoFactorEmailTemplate($code),
                 $this->getTwoFactorEmailPlainText($code)
             );
@@ -224,41 +200,18 @@ class Mail {
     }
 
     private function getTwoFactorEmailTemplate($code) {
-        return '<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Your Verification Code</title>
-</head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background-color: #ffffff;">
-        <h2 style="color: #111827; margin-top: 0;">Two-Factor Verification Code</h2>
-        <p>Here is your verification code to complete your login:</p>
-        <div style="background-color: #f0fdf4; padding: 30px; border-radius: 8px; margin: 30px 0; text-align: center;">
-            <span style="font-size: 36px; font-weight: 700; color: #059669; letter-spacing: 0.5em;">' . htmlspecialchars($code) . '</span>
-        </div>
-        <p style="color: #4b5563;">This code will expire in 5 minutes.</p>
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-        <p style="color: #6b7280; font-size: 13px;">If you didn\'t request this code, you can safely ignore this email.</p>
-    </div>
-</body>
-</html>';
+        return $this->getCodeEmailHtml(null, $code, '5 minutes');
     }
 
     private function getTwoFactorEmailPlainText($code) {
-        return "Two-Factor Verification Code\n\n" .
-               "Here is your verification code to complete your login:\n\n" .
-               "Verification Code: {$code}\n\n" .
-               "This code will expire in 5 minutes.\n\n" .
-               "If you didn't request this code, you can safely ignore this email.";
+        return $this->getCodeEmailText(null, $code, '5 minutes');
     }
 
     public function sendVerificationCode($to, $code, $name = null) {
         try {
             return $this->sendEmail(
                 $to,
-                'Verify Your Email - ' . SITE_NAME,
+                'Your CroFund verification code',
                 $this->getVerificationCodeEmailTemplate($code, $name),
                 $this->getVerificationCodeEmailPlainText($code, $name)
             );
@@ -268,39 +221,93 @@ class Mail {
     }
 
     private function getVerificationCodeEmailTemplate($code, $name = null) {
-        $greeting = $name ? "Hi $name," : "Hi,";
+        return $this->getCodeEmailHtml($name, $code, '1 hour');
+    }
+
+    private function getVerificationCodeEmailPlainText($code, $name = null) {
+        return $this->getCodeEmailText($name, $code, '1 hour');
+    }
+
+    public function sendPasswordResetEmail($to, $resetLink, $name = null) {
+        try {
+            return $this->sendEmail(
+                $to,
+                'Your CroFund password reset link',
+                $this->getPasswordResetEmailTemplate($resetLink, $name),
+                $this->getPasswordResetEmailPlainText($resetLink, $name)
+            );
+        } catch (Throwable $e) {
+            $this->throwUserSafeMailException('Password reset email could not be sent', $e);
+        }
+    }
+
+    private function getPasswordResetEmailTemplate($resetLink, $name = null) {
+        $greeting = $name ? 'Hi ' . htmlspecialchars($name) . ',' : 'Hi,';
 
         return '<!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Verify Your Email</title>
+    <title>Your CroFund password reset link</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
-    <div style="background-color: #ffffff;">
-        <h2 style="color: #111827; margin-top: 0;">Verify Your Email Address</h2>
-        <p>' . htmlspecialchars($greeting) . '</p>
-        <p>Thank you for signing up for ' . SITE_NAME . '! Please use the verification code below to verify your email address.</p>
-        <div style="background-color: #ecfdf5; padding: 30px; border-radius: 8px; margin: 30px 0; text-align: center;">
-            <span style="font-size: 36px; font-weight: 700; color: #059669; letter-spacing: 0.5em;">' . htmlspecialchars($code) . '</span>
-        </div>
-        <p style="color: #4b5563;">This code will expire in 1 hour.</p>
-        <hr style="border: none; border-top: 1px solid #e5e7eb; margin: 30px 0;">
-        <p style="color: #6b7280; font-size: 13px;">If you didn\'t create an account with ' . SITE_NAME . ', you can safely ignore this email.</p>
+<body style="margin:0;padding:24px;background-color:#ffffff;color:#111827;font-family:Arial,sans-serif;line-height:1.6;">
+    <div style="max-width:560px;margin:0 auto;">
+        <p style="margin:0 0 16px 0;">' . $greeting . '</p>
+        <p style="margin:0 0 16px 0;">We received a request to reset your CroFund password.</p>
+        <p style="margin:0 0 16px 0;word-break:break-word;">
+            <a href="' . htmlspecialchars($resetLink) . '" style="color:#111827;text-decoration:underline;">' . htmlspecialchars($resetLink) . '</a>
+        </p>
+        <p style="margin:0 0 16px 0;">This link will expire in 1 hour.</p>
+        <p style="margin:0 0 16px 0;">If you did not request a password reset, you can safely ignore this email.</p>
+        <p style="margin:0;">CroFund Security Team</p>
     </div>
 </body>
 </html>';
     }
 
-    private function getVerificationCodeEmailPlainText($code, $name = null) {
+    private function getPasswordResetEmailPlainText($resetLink, $name = null) {
         $greeting = $name ? "Hi $name," : "Hi,";
 
-        return "Verify Your Email Address\n\n" .
-               $greeting . "\n\n" .
-               "Thank you for signing up for " . SITE_NAME . "! Please use the verification code below to verify your email address.\n\n" .
-               "Verification Code: $code\n\n" .
-               "This code will expire in 1 hour.\n\n" .
-               "If you didn't create an account with " . SITE_NAME . ", you can safely ignore this email.";
+        return $greeting . "\n\n" .
+               "We received a request to reset your CroFund password.\n\n" .
+               $resetLink . "\n\n" .
+               "This link will expire in 1 hour.\n\n" .
+               "If you did not request a password reset, you can safely ignore this email.\n\n" .
+               "CroFund Security Team";
+    }
+
+    private function getCodeEmailHtml($name, $code, $expiresIn) {
+        $greeting = $name ? 'Hi ' . htmlspecialchars($name) . ',' : 'Hi,';
+
+        return '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your CroFund verification code</title>
+</head>
+<body style="margin:0;padding:24px;background-color:#ffffff;color:#111827;font-family:Arial,sans-serif;line-height:1.6;">
+    <div style="max-width:560px;margin:0 auto;">
+        <p style="margin:0 0 16px 0;">' . $greeting . '</p>
+        <p style="margin:0 0 16px 0;">Your CroFund verification code is:</p>
+        <p style="margin:0 0 16px 0;font-size:28px;font-weight:700;letter-spacing:0.2em;">' . htmlspecialchars($code) . '</p>
+        <p style="margin:0 0 16px 0;">This code will expire in ' . htmlspecialchars($expiresIn) . '.</p>
+        <p style="margin:0 0 16px 0;">If you did not request this code, you can safely ignore this email.</p>
+        <p style="margin:0;">CroFund Security Team</p>
+    </div>
+</body>
+</html>';
+    }
+
+    private function getCodeEmailText($name, $code, $expiresIn) {
+        $greeting = $name ? "Hi $name," : "Hi,";
+
+        return $greeting . "\n\n" .
+               "Your CroFund verification code is:\n\n" .
+               $code . "\n\n" .
+               "This code will expire in $expiresIn.\n\n" .
+               "If you did not request this code, you can safely ignore this email.\n\n" .
+               "CroFund Security Team";
     }
 }
