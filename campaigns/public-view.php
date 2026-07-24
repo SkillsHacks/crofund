@@ -4,6 +4,7 @@ session_start();
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../config/Campaign.php';
+require_once __DIR__ . '/../config/TrustRiskService.php';
 
 if (!isset($_GET['id'])) {
     header("Location: " . BASE_URL . "/campaigns/view_compaigns.php");
@@ -20,6 +21,7 @@ if (strpos($urlId, '/') !== false) {
 
 $campaign = new Campaign();
 $details  = $campaign->getCampaignById($campaignId);
+$campaignUnderReview = false;
 
 $page       = isset($_GET['page']) ? max(1, intval($_GET['page'])) : 1;
 $perPage    = 10;
@@ -89,6 +91,16 @@ if (!$details) {
     $_SESSION['error'] = "Campaign not found";
     header("Location: " . BASE_URL . "/campaigns/view_compaigns.php");
     exit();
+}
+
+try {
+    if (!empty($details['user_id'])) {
+        $trustRiskService = new TrustRiskService();
+        $campaignOwnerRiskProfile = $trustRiskService->getUserRiskProfile((int) $details['user_id']);
+        $campaignUnderReview = !empty(($campaignOwnerRiskProfile['restrictions'] ?? [])['receive_donations']);
+    }
+} catch (Throwable $e) {
+    error_log('Unable to load campaign owner trust/risk state: ' . $e->getMessage());
 }
 
 if (!isset($_SESSION['csrf_token'])) {
@@ -304,10 +316,17 @@ $ogImageUrl = !empty($details['image_path'])
           <span><strong class="text-slate-900"><?php echo (int)$details['donor_count']; ?></strong> donors</span>
           <span><strong class="text-slate-900"><?php echo round($percent); ?>%</strong> funded</span>
         </div>
+        <?php if ($campaignUnderReview): ?>
+        <button type="button" disabled
+          class="mt-5 w-full cursor-not-allowed rounded-xl border border-amber-200 bg-amber-50 py-3.5 text-base font-bold text-amber-700 opacity-90">
+          <i class="fas fa-shield-alt mr-2"></i> Campaign under review
+        </button>
+        <?php else: ?>
         <button onclick="openDonationModal()"
           class="mt-5 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-cta transition-all active:scale-[.98] text-base">
           <i class="fas fa-heart mr-2"></i> Donate Now
         </button>
+        <?php endif; ?>
       </div>
 
       <!-- About -->

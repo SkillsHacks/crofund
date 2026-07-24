@@ -1148,6 +1148,23 @@ public function getBrowseCampaigns($category = 'all', $sort = '', $page = 1, $pe
     $stmt = $this->db->prepare($sql);
     $stmt->execute($params);
     $campaigns = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+    require_once __DIR__ . '/TrustRiskService.php';
+    $trustRiskService = new TrustRiskService();
+
+    foreach ($campaigns as &$campaign) {
+        $campaign['owner_donation_blocked'] = false;
+
+        if (!empty($campaign['user_id'])) {
+            try {
+                $profile = $trustRiskService->getUserRiskProfile((int) $campaign['user_id']);
+                $campaign['owner_donation_blocked'] = !empty(($profile['restrictions'] ?? [])['receive_donations']);
+            } catch (Throwable $e) {
+                error_log('Unable to resolve browse campaign trust/risk state: ' . $e->getMessage());
+            }
+        }
+    }
+    unset($campaign);
     
     // Check if there are more campaigns (only if using pagination)
     $hasMore = false;

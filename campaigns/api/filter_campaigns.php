@@ -3,6 +3,7 @@ session_start();
 require_once __DIR__ . '/../../config/config.php';
 require_once __DIR__ . '/../../config/Campaign.php';
 require_once __DIR__ . '/../../config/Database.php'; // Directly include Database to get total count
+require_once __DIR__ . '/../../config/TrustRiskService.php';
 
 header('Content-Type: application/json');
 
@@ -102,9 +103,9 @@ try {
                   <button onclick="copyShareLink(' . $id . ', \'' . addslashes($title) . '\')" class="px-3 py-1.5 text-xs font-semibold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors whitespace-nowrap">
                     Share
                   </button>
-                  <a href="public-view.php?id=' . $id . '" class="px-4 py-1.5 text-xs font-semibold text-white rounded-xl bg-emerald-600 hover:bg-emerald-700 transition-colors whitespace-nowrap">
-                    Donate
-                  </a>
+                  ' . (!empty($camp['owner_donation_blocked'])
+                    ? '<span class="px-4 py-1.5 text-xs font-semibold rounded-xl border border-amber-200 bg-amber-50 text-amber-700 whitespace-nowrap cursor-not-allowed">Campaign under review</span>'
+                    : '<a href="public-view.php?id=' . $id . '" class="px-4 py-1.5 text-xs font-semibold text-white rounded-xl bg-emerald-600 hover:bg-emerald-700 transition-colors whitespace-nowrap">Donate</a>') . '
                 </div>
               </div>
             </div>
