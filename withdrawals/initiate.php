@@ -234,16 +234,10 @@ function renderWithdrawalInitiateContent(): void {
                         <?php if ($latestVerificationAttempt): ?>
                             <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
                                 <p class="font-semibold text-slate-900">Latest verification attempt</p>
-                                <p class="mt-1"><strong>Workflow:</strong> <?php echo htmlspecialchars($latestVerificationWorkflowLabel); ?></p>
-                                <p class="mt-1"><strong>Stored status:</strong> <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', (string) ($latestVerificationAttempt['status'] ?? 'unknown')))); ?></p>
-                                <p class="mt-1"><strong>Decision:</strong> <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', (string) ($latestVerificationAttempt['decision_status'] ?? 'manual_review')))); ?><?php if (isset($latestVerificationAttempt['decision_score'])): ?> (score <?php echo (int) $latestVerificationAttempt['decision_score']; ?>)<?php endif; ?></p>
+                                <p class="mt-1"><?php echo htmlspecialchars($latestVerificationWorkflowLabel); ?></p>
                                 <?php if (!empty($latestVerificationAttempt['failure_reason'])): ?>
                                     <p class="mt-1"><strong>Reason:</strong> <?php echo htmlspecialchars((string) $latestVerificationAttempt['failure_reason']); ?></p>
                                 <?php endif; ?>
-                                <?php if (!empty($latestVerificationAttempt['ocr_message'])): ?>
-                                    <p class="mt-1"><strong>OCR:</strong> <?php echo htmlspecialchars((string) $latestVerificationAttempt['ocr_message']); ?></p>
-                                <?php endif; ?>
-                                <p class="mt-1 text-slate-500">Submitted <?php echo htmlspecialchars((string) ($latestVerificationAttempt['created_at'] ?? '')); ?></p>
                             </div>
                         <?php endif; ?>
 
