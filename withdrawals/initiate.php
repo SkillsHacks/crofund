@@ -272,12 +272,7 @@ function renderWithdrawalInitiateContent(): void {
                                 Image selected successfully.
                             </div>
 
-                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-600">
-                                <p class="font-semibold text-slate-900">Verification note</p>
-                                <p class="mt-1">In this step, your ID image is uploaded securely to the server, checked for basic quality, and prepared for verification processing. Automatic browser-side approval has been disabled.</p>
-                                <p class="mt-2">Submitting an ID image does not automatically verify your account. Withdrawal access is enabled only after manual approval updates your account verification status.</p>
-                                <p class="mt-2">After submission, the latest verification attempt stays locked while it is awaiting review, so duplicate uploads are temporarily blocked.</p>
-                            </div>
+
 
                             <div class="flex justify-start">
                                 <button type="submit" <?php echo $hasPendingVerificationReview ? 'disabled' : ''; ?> class="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70">
