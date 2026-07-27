@@ -107,6 +107,27 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
                     Create
                 </a>
 
+                <div class="flex items-center gap-2 md:hidden">
+                    <a href="<?php echo BASE_URL; ?>/campaigns/create.php"
+                       class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-3 text-sm font-medium text-emerald-700 shadow-sm transition hover:bg-emerald-100 focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                        <svg class="h-4 w-4 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
+                        </svg>
+                        <span>Create</span>
+                    </a>
+                    <button type="button"
+                            class="inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-sm font-medium text-gray-700 shadow-sm transition hover:bg-gray-50 hover:text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                            aria-controls="mobile-menu"
+                            aria-expanded="false"
+                            aria-label="Open account menu"
+                            id="mobile-menu-button">
+                        <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                        </svg>
+                        <span>Menu</span>
+                    </button>
+                </div>
+
                 <div class="relative hidden md:block">
                     <button class="flex items-center space-x-2 text-gray-700 hover:text-emerald-600 focus:outline-none" id="user-menu-button">
                         <img src="<?php echo htmlspecialchars($avatarUrl); ?>" 
@@ -157,8 +178,10 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
             userMenu.classList.toggle('hidden');
         });
 
-        mobileMenuButton?.addEventListener('click', () => {
+        mobileMenuButton?.addEventListener('click', (e) => {
+            e.stopPropagation();
             mobileMenu.classList.toggle('hidden');
+            mobileMenuButton.setAttribute('aria-expanded', mobileMenu.classList.contains('hidden') ? 'false' : 'true');
         });
 
         document.addEventListener('click', (event) => {
@@ -167,6 +190,7 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
             }
             if (mobileMenu && !mobileMenuButton?.contains(event.target) && !mobileMenu.contains(event.target)) {
                 mobileMenu.classList.add('hidden');
+                mobileMenuButton?.setAttribute('aria-expanded', 'false');
             }
         });
     });

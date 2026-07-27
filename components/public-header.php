@@ -53,21 +53,26 @@
             <div class="flex items-center gap-2 md:hidden">
                 <button onclick="toggleHeaderSearch()"
                         type="button"
-                        class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50"
-                        title="Search Campaigns"
+                        class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600"
+                        title="Search campaigns"
+                        aria-label="Search campaigns"
+                        aria-controls="header-search-container"
+                        aria-expanded="false"
                         id="search-icon-btn">
-                    <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
                     </svg>
+                    <span>Search</span>
                 </button>
                 <button type="button"
-                        class="mobile-menu-button inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 bg-white text-slate-600 shadow-sm transition hover:text-emerald-600 hover:border-emerald-200 hover:bg-emerald-50"
+                        class="mobile-menu-button inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600"
                         aria-controls="mobile-menu"
-                        aria-expanded="false">
-                    <span class="sr-only">Open main menu</span>
-                    <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        aria-expanded="false"
+                        aria-label="Open main menu">
+                    <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
+                    <span>Menu</span>
                 </button>
             </div>
         </div>
@@ -87,8 +92,8 @@
                     <button onclick="performHeaderSearch('mobile')" type="button" class="text-sm font-semibold text-emerald-600 hover:text-emerald-700">
                         Go
                     </button>
-                    <button onclick="closeHeaderSearch()" type="button" class="text-slate-400 hover:text-slate-600">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <button onclick="closeHeaderSearch()" type="button" class="inline-flex items-center justify-center rounded-lg p-1 text-slate-400 hover:text-slate-600" aria-label="Close search">
+                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
                         </svg>
                     </button>
