@@ -111,6 +111,7 @@ document.addEventListener('DOMContentLoaded', function() {
         return;
     }
 
+    const sidebarLinks = sidebar.querySelectorAll('a[href]');
     const isDesktop = () => window.innerWidth >= 1024;
     const applyDesktopState = (collapsed) => {
         sidebar.dataset.collapsed = collapsed ? 'true' : 'false';
@@ -165,6 +166,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     overlay?.addEventListener('click', closeMobileSidebar);
+
+    sidebarLinks.forEach((link) => {
+        link.addEventListener('click', () => {
+            if (!isDesktop()) {
+                closeMobileSidebar();
+            }
+        });
+    });
 
     document.addEventListener('keydown', function(e) {
         if (e.key === 'Escape' && !isDesktop()) {
