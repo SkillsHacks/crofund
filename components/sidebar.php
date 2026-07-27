@@ -8,19 +8,20 @@ $sidebarTrustRiskUi = isset($trustRiskUi) && is_array($trustRiskUi)
     : getTrustRiskUiState($currentUser ?? null);
 ?>
 <button type="button"
-        class="fixed top-3 left-4 z-50 inline-flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-700 shadow-lg transition-all duration-200 hover:bg-gray-50 hover:text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500"
+        class="fixed top-3 left-4 z-50 inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-gray-700 shadow-lg transition-all duration-200 hover:bg-gray-50 hover:text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 lg:h-10 lg:w-10 lg:px-0"
         aria-controls="sidebar"
         aria-expanded="false"
         id="sidebar-toggle">
-    <svg class="h-5 w-5" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+    <svg class="h-5 w-5 flex-shrink-0" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
     </svg>
+    <span class="text-sm font-medium leading-none lg:hidden">Menu</span>
 </button>
 
 <div class="fixed inset-0 z-30 hidden bg-gray-900/40 lg:hidden sidebar-overlay"></div>
 
 <aside id="sidebar"
-       class="fixed inset-y-0 left-0 z-40 flex w-20 -translate-x-full flex-col border-r border-gray-200 bg-white pt-16 transition-all duration-300 ease-in-out lg:translate-x-0 lg:w-64"
+       class="fixed inset-y-0 left-0 z-40 flex w-72 max-w-[85vw] -translate-x-full flex-col border-r border-gray-200 bg-white pt-16 transition-all duration-300 ease-in-out lg:w-64 lg:max-w-none lg:translate-x-0"
        data-collapsed="false">
     <div class="flex h-full flex-col overflow-y-auto">
         <div class="flex-1 space-y-4 p-3 lg:p-4">
@@ -139,7 +140,10 @@ document.addEventListener('DOMContentLoaded', function() {
             applyDesktopState(collapsed);
         } else {
             closeMobileSidebar();
-            applyDesktopState(true);
+            sidebar.dataset.collapsed = 'false';
+            document.body.classList.remove('sidebar-collapsed');
+            sidebar.classList.remove('lg:w-20');
+            sidebar.classList.add('lg:w-64');
         }
     };
 
