@@ -35,7 +35,7 @@ define('DASHBOARD_ROUTES', [
     ],
     'create_campaign' => [
         'file' => __DIR__ . '/campaigns/create.php',
-        'path' => '/campaigns/create/'
+        'path' => '/campaigns/create.php'
     ],
     'my_campaigns' => [
         'file' => __DIR__ . '/campaigns/index.php',
