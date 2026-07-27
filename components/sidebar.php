@@ -21,7 +21,7 @@ $sidebarTrustRiskUi = isset($trustRiskUi) && is_array($trustRiskUi)
 <div class="fixed inset-0 z-30 hidden bg-gray-900/40 lg:hidden sidebar-overlay"></div>
 
 <aside id="sidebar"
-       class="fixed inset-y-0 left-0 z-40 flex w-72 max-w-[85vw] -translate-x-full flex-col border-r border-gray-200 bg-white pt-16 transition-all duration-300 ease-in-out lg:w-64 lg:max-w-none lg:translate-x-0"
+       class="fixed inset-y-0 left-0 z-40 flex w-full -translate-x-full flex-col border-r border-gray-200 bg-white pt-16 transition-all duration-300 ease-in-out lg:w-64 lg:max-w-none lg:translate-x-0"
        data-collapsed="false">
     <div class="flex h-full flex-col overflow-y-auto">
         <div class="flex-1 space-y-4 p-3 lg:p-4">
