@@ -1323,8 +1323,7 @@ public function getBrowseCampaigns($category = 'all', $sort = '', $page = 1, $pe
     }
 
 public function update($campaignId, $updateData) {
-        // Example PDO update logic, adjust table/fields as needed
-        $db = $this->getDb(); // Assume getDb() returns PDO instance
+        $db = $this->getDb();
 
         $fields = [];
         $params = [];
@@ -1340,10 +1339,7 @@ public function update($campaignId, $updateData) {
             $fields[] = 'goal_amount = :goal';
             $params[':goal'] = $updateData['goal'];
         }
-        if (isset($updateData['end_date'])) {
-            $fields[] = 'end_date = :end_date';
-            $params[':end_date'] = $updateData['end_date'];
-        }
+
         if (isset($updateData['description'])) {
             $fields[] = 'description = :description';
             $params[':description'] = $updateData['description'];

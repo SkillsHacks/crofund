@@ -36,7 +36,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && empty($error)) {
             'title' => $_POST['title'] ?? '',
             'category' => $_POST['category'] ?? '',
             'goal' => $_POST['goal'] ?? '',
-            'end_date' => $_POST['end_date'] ?? '',
             'description' => $_POST['description'] ?? '',
         ];
 
@@ -190,7 +189,7 @@ $categoryOptions = [
                                             </div>
                                             <div>
                                                 <h2 class="text-lg font-semibold text-slate-900">Funding details</h2>
-                                                <p class="text-sm text-slate-500">Adjust your target and timeline while keeping expectations realistic.</p>
+                                                <p class="text-sm text-slate-500">Adjust your target while keeping expectations realistic.</p>
                                             </div>
                                         </div>
                                     </div>
@@ -205,12 +204,7 @@ $categoryOptions = [
                                             </div>
                                         </div>
 
-                                        <div>
-                                            <label for="end_date" class="block text-sm font-semibold text-slate-700">End date</label>
-                                            <input type="date" id="end_date" name="end_date" required
-                                                   value="<?php echo htmlspecialchars((string) ($campaignData['end_date'] ?? '')); ?>"
-                                                   class="mt-2 block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
-                                        </div>
+
                                     </div>
                                 </div>
 
