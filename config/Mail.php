@@ -1,17 +1,14 @@
 <?php
-if (!class_exists('\Resend\Resend', false) && file_exists(__DIR__ . '/../vendor/autoload.php')) {
-    require_once __DIR__ . '/../vendor/autoload.php';
-}
 
 class Mail {
-    private $resend;
+    private $apiKey;
 
     public function __construct() {
         if (!defined('RESEND_API_KEY') || trim((string) RESEND_API_KEY) === '') {
             throw new RuntimeException('Resend is not configured. Please set the Resend API key.');
         }
 
-        $this->resend = \Resend\Resend::client(RESEND_API_KEY);
+        $this->apiKey = trim((string) RESEND_API_KEY);
     }
 
     private function throwUserSafeMailException(string $contextMessage, Throwable $e): void {
@@ -20,25 +17,53 @@ class Mail {
     }
 
     private function sendEmail(string $to, string $subject, string $html, string $text): bool {
-        try {
-            $payload = [
-                'from' => sprintf('%s <%s>', MAIL_FROM_NAME, MAIL_FROM),
-                'to' => [$to],
-                'subject' => $subject,
-                'html' => $html,
-                'text' => $text,
-            ];
+        $payload = [
+            'from' => sprintf('%s <%s>', MAIL_FROM_NAME, MAIL_FROM),
+            'to' => [$to],
+            'subject' => $subject,
+            'html' => $html,
+            'text' => $text,
+        ];
 
-            if (defined('MAIL_REPLY_TO') && trim((string) MAIL_REPLY_TO) !== '') {
-                $payload['reply_to'] = [sprintf('%s <%s>', MAIL_REPLY_TO_NAME, MAIL_REPLY_TO)];
-            }
-
-            $this->resend->emails->send($payload);
-            error_log('Email sent successfully to: ' . $to);
-            return true;
-        } catch (Throwable $e) {
-            throw $e;
+        if (defined('MAIL_REPLY_TO') && trim((string) MAIL_REPLY_TO) !== '') {
+            $payload['reply_to'] = [sprintf('%s <%s>', MAIL_REPLY_TO_NAME, MAIL_REPLY_TO)];
         }
+
+        $ch = curl_init('https://api.resend.com/emails');
+
+        if ($ch === false) {
+            throw new RuntimeException('Unable to initialize the email transport.');
+        }
+
+        curl_setopt_array($ch, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_HTTPHEADER => [
+                'Authorization: Bearer ' . $this->apiKey,
+                'Content-Type: application/json',
+                'Accept: application/json',
+            ],
+            CURLOPT_POSTFIELDS => json_encode($payload, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE),
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_CONNECTTIMEOUT => 15,
+        ]);
+
+        $response = curl_exec($ch);
+        $curlError = curl_error($ch);
+        $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($response === false) {
+            throw new RuntimeException('Email request failed: ' . $curlError);
+        }
+
+        if ($httpCode < 200 || $httpCode >= 300) {
+            error_log('Resend API error [' . $httpCode . ']: ' . $response);
+            throw new RuntimeException('Email service rejected the request.');
+        }
+
+        error_log('Email sent successfully to: ' . $to);
+        return true;
     }
 
     private function getEmailLogoUrl(): string {
