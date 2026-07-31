@@ -139,7 +139,7 @@ class Campaign {
             $ownerId = @fileowner($uploadDir);
             $groupId = @filegroup($uploadDir);
             error_log("[Campaign::handleImageUpload] Upload directory is not writable: " . $uploadDir . ", perms=" . $permissions . ", owner=" . ($ownerId === false ? 'unknown' : $ownerId) . ", group=" . ($groupId === false ? 'unknown' : $groupId));
-            throw new Exception("Campaign uploads directory is not writable for the web server process. Please make /opt/lampp/htdocs/crofund/uploads/campaigns writable by Apache (daemon).");
+            throw new Exception('Campaign image storage is temporarily unavailable. Please try again later.');
         }
 
         $safeBaseName = preg_replace('/[^A-Za-z0-9._-]/', '_', pathinfo($file['name'], PATHINFO_FILENAME));

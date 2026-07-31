@@ -302,9 +302,31 @@ function renderCreateCampaignContent(?string $error = null): void {
         };
 
         if (imageInput && dropZone && imagePreview && imagePreviewImg && uploadPlaceholder) {
-            imageInput.addEventListener('change', function(event) {
-                const file = event.target.files[0];
-                if (!file) return;
+            const resetImagePreview = () => {
+                imageInput.value = '';
+                imagePreviewImg.src = '';
+                imagePreview.classList.add('hidden');
+                uploadPlaceholder.classList.remove('hidden');
+            };
+
+            const handleSelectedImage = (file) => {
+                if (!file) {
+                    resetImagePreview();
+                    return;
+                }
+
+                if (!file.type || !file.type.startsWith('image/')) {
+                    resetImagePreview();
+                    setFieldError('campaign_image', 'Please choose a valid image file.');
+                    return;
+                }
+
+                const maxFileSize = 10 * 1024 * 1024;
+                if (file.size > maxFileSize) {
+                    resetImagePreview();
+                    setFieldError('campaign_image', 'Image size must be 10MB or less.');
+                    return;
+                }
 
                 const reader = new FileReader();
                 reader.onload = function(loadEvent) {
@@ -314,6 +336,14 @@ function renderCreateCampaignContent(?string $error = null): void {
                 };
                 reader.readAsDataURL(file);
                 setFieldError('campaign_image', '');
+            };
+
+            imageInput.addEventListener('click', function() {
+                this.value = '';
+            });
+
+            imageInput.addEventListener('change', function(event) {
+                handleSelectedImage(event.target.files[0] || null);
             });
 
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
@@ -337,12 +367,25 @@ function renderCreateCampaignContent(?string $error = null): void {
 
             dropZone.addEventListener('drop', function(e) {
                 const dt = e.dataTransfer;
-                const file = dt.files[0];
+                const files = dt ? dt.files : null;
+                const file = files && files.length ? files[0] : null;
 
-                if (file && file.type.startsWith('image/')) {
-                    imageInput.files = dt.files;
-                    imageInput.dispatchEvent(new Event('change'));
+                if (!file) {
+                    return;
                 }
+
+                if (!file.type || !file.type.startsWith('image/')) {
+                    setFieldError('campaign_image', 'Please choose a valid image file.');
+                    return;
+                }
+
+                try {
+                    imageInput.files = files;
+                } catch (assignmentError) {
+                    console.warn('[campaign-create] Unable to assign dropped file to input', assignmentError);
+                }
+
+                handleSelectedImage(file);
             }, false);
         }
 
