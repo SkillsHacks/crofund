@@ -321,6 +321,39 @@ function renderCreateCampaignContent(?string $error = null, array $fieldErrors =
         }
         form.dataset.initialized = 'true';
 
+        const PREVIEW_STORAGE_KEY = 'campaign-create-image-preview';
+
+        const saveImagePreviewState = (dataUrl) => {
+            try {
+                if (dataUrl) {
+                    sessionStorage.setItem(PREVIEW_STORAGE_KEY, dataUrl);
+                } else {
+                    sessionStorage.removeItem(PREVIEW_STORAGE_KEY);
+                }
+            } catch (storageError) {
+                console.warn('[campaign-create] Unable to save image preview state', storageError);
+            }
+        };
+
+        const restoreImagePreviewState = () => {
+            if (!imageInput || !imagePreview || !imagePreviewImg || !uploadPlaceholder) {
+                return;
+            }
+
+            try {
+                const storedPreview = sessionStorage.getItem(PREVIEW_STORAGE_KEY);
+                if (!storedPreview) {
+                    return;
+                }
+
+                imagePreviewImg.src = storedPreview;
+                imagePreview.classList.remove('hidden');
+                uploadPlaceholder.classList.add('hidden');
+            } catch (storageError) {
+                console.warn('[campaign-create] Unable to restore image preview state', storageError);
+            }
+        };
+
         const setFieldError = (fieldName, message) => {
             const field = form.querySelector(`[name="${fieldName}"]`);
             const errorNode = container.querySelector(`[data-field-error="${fieldName}"]`);
@@ -359,6 +392,7 @@ function renderCreateCampaignContent(?string $error = null, array $fieldErrors =
                 imagePreviewImg.src = '';
                 imagePreview.classList.add('hidden');
                 uploadPlaceholder.classList.remove('hidden');
+                saveImagePreviewState('');
             };
 
             const handleSelectedImage = (file) => {
@@ -382,9 +416,11 @@ function renderCreateCampaignContent(?string $error = null, array $fieldErrors =
 
                 const reader = new FileReader();
                 reader.onload = function(loadEvent) {
-                    imagePreviewImg.src = loadEvent.target.result;
+                    const dataUrl = loadEvent.target.result;
+                    imagePreviewImg.src = dataUrl;
                     imagePreview.classList.remove('hidden');
                     uploadPlaceholder.classList.add('hidden');
+                    saveImagePreviewState(dataUrl);
                 };
                 reader.readAsDataURL(file);
                 setFieldError('campaign_image', '');
@@ -416,6 +452,14 @@ function renderCreateCampaignContent(?string $error = null, array $fieldErrors =
                     dropZone.classList.remove('border-emerald-400', 'bg-emerald-50');
                 }, false);
             });
+
+            form.addEventListener('submit', function() {
+                if (imagePreviewImg && imagePreviewImg.src) {
+                    saveImagePreviewState(imagePreviewImg.src);
+                }
+            });
+
+            restoreImagePreviewState();
 
             dropZone.addEventListener('drop', function(e) {
                 const dt = e.dataTransfer;
