@@ -1,8 +1,6 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
-use Resend\Resend;
-
 class Mail {
     private $resend;
 
@@ -11,7 +9,7 @@ class Mail {
             throw new RuntimeException('Resend is not configured. Please set the Resend API key.');
         }
 
-        $this->resend = Resend::client(RESEND_API_KEY);
+        $this->resend = \Resend\Resend::client(RESEND_API_KEY);
     }
 
     private function throwUserSafeMailException(string $contextMessage, Throwable $e): void {
