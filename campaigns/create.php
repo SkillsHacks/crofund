@@ -21,13 +21,62 @@ if (!$user->isLoggedIn()) {
 
 $error = null;
 $success = null;
+$fieldErrors = [];
+$oldInput = [
+    'title' => '',
+    'category' => '',
+    'goal' => '',
+    'description' => '',
+];
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $oldInput = [
+        'title' => trim((string) ($_POST['title'] ?? '')),
+        'category' => trim((string) ($_POST['category'] ?? '')),
+        'goal' => trim((string) ($_POST['goal'] ?? '')),
+        'description' => trim((string) ($_POST['description'] ?? '')),
+    ];
+
+    if ($oldInput['title'] === '') {
+        $fieldErrors['title'] = 'Campaign title is required.';
+    }
+    if ($oldInput['category'] === '') {
+        $fieldErrors['category'] = 'Category is required.';
+    }
+    if ($oldInput['goal'] === '' || !is_numeric($oldInput['goal']) || (float) $oldInput['goal'] < 100) {
+        $fieldErrors['goal'] = 'Please enter a valid goal amount of at least $100.';
+    }
+    if ($oldInput['description'] === '') {
+        $fieldErrors['description'] = 'Campaign description is required.';
+    }
+    if (!isset($_FILES['campaign_image']) || ($_FILES['campaign_image']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_NO_FILE) {
+        $fieldErrors['campaign_image'] = 'Campaign image is required.';
+    }
+
+    if (empty($fieldErrors)) {
+        try {
+            $campaign = new Campaign();
+            $campaignId = $campaign->create($oldInput);
+            if (!$campaignId) {
+                throw new Exception('Campaign creation failed. Please try again.');
+            }
+            header('Location: ' . BASE_URL . '/campaigns/view.php?id=' . (int) $campaignId);
+            exit();
+        } catch (Throwable $e) {
+            $error = $e->getMessage();
+        }
+    } else {
+        $error = 'Please correct the fields below and try again.';
+    }
+}
+
 $isAjaxRequest = isset($_GET['ajax']) && $_GET['ajax'] === '1';
 
 if ($isAjaxRequest) {
     ob_start();
 }
 
-function renderCreateCampaignContent(?string $error = null): void {
+function renderCreateCampaignContent(?string $error = null, array $fieldErrors = [], array $oldInput = []): void {
 ?>
 <div class="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.65fr),360px]">
@@ -89,27 +138,28 @@ function renderCreateCampaignContent(?string $error = null): void {
                             <label for="title" class="block text-sm font-semibold text-slate-700">Campaign title</label>
                             <input type="text" id="title" name="title" required
                                    placeholder="e.g. Help rebuild a family home after the fire"
-                                   class="mt-2 block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
-                            <p class="mt-2 hidden text-sm text-red-600" data-field-error="title"></p>
+                                   value="<?php echo htmlspecialchars($oldInput['title'] ?? ''); ?>"
+                                   class="mt-2 block w-full rounded-2xl border <?php echo !empty($fieldErrors['title']) ? 'border-red-300' : 'border-slate-200'; ?> bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-<?php echo !empty($fieldErrors['title']) ? 'red-500 focus:ring-red-500/10' : 'emerald-500 focus:ring-emerald-500/10'; ?> focus:bg-white focus:outline-none">
+                            <p class="mt-2 text-sm text-red-600 <?php echo empty($fieldErrors['title']) ? 'hidden' : ''; ?>" data-field-error="title"><?php echo htmlspecialchars($fieldErrors['title'] ?? ''); ?></p>
                             <p class="mt-2 text-sm text-slate-500">Aim for a clear, specific title that builds trust quickly.</p>
                         </div>
 
                         <div>
                             <label for="category" class="block text-sm font-semibold text-slate-700">Category</label>
                             <select id="category" name="category" required
-                                    class="mt-2 block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
-                                <option value="">Select a category</option>
-                                <option value="education">Education</option>
-                                <option value="medical">Medical & Health</option>
-                                <option value="emergency">Emergency Relief</option>
-                                <option value="community">Community Project</option>
-                                <option value="creative">Creative Project</option>
-                                <option value="nonprofit">Nonprofit</option>
-                                <option value="business">Small Business</option>
-                                <option value="technology">Technology</option>
-                                <option value="environment">Environment</option>
+                                    class="mt-2 block w-full rounded-2xl border <?php echo !empty($fieldErrors['category']) ? 'border-red-300' : 'border-slate-200'; ?> bg-slate-50 px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-<?php echo !empty($fieldErrors['category']) ? 'red-500 focus:ring-red-500/10' : 'emerald-500 focus:ring-emerald-500/10'; ?> focus:bg-white focus:outline-none">
+                                <option value=""<?php echo ($oldInput['category'] ?? '') === '' ? ' selected' : ''; ?>>Select a category</option>
+                                <option value="education"<?php echo ($oldInput['category'] ?? '') === 'education' ? ' selected' : ''; ?>>Education</option>
+                                <option value="medical"<?php echo ($oldInput['category'] ?? '') === 'medical' ? ' selected' : ''; ?>>Medical & Health</option>
+                                <option value="emergency"<?php echo ($oldInput['category'] ?? '') === 'emergency' ? ' selected' : ''; ?>>Emergency Relief</option>
+                                <option value="community"<?php echo ($oldInput['category'] ?? '') === 'community' ? ' selected' : ''; ?>>Community Project</option>
+                                <option value="creative"<?php echo ($oldInput['category'] ?? '') === 'creative' ? ' selected' : ''; ?>>Creative Project</option>
+                                <option value="nonprofit"<?php echo ($oldInput['category'] ?? '') === 'nonprofit' ? ' selected' : ''; ?>>Nonprofit</option>
+                                <option value="business"<?php echo ($oldInput['category'] ?? '') === 'business' ? ' selected' : ''; ?>>Small Business</option>
+                                <option value="technology"<?php echo ($oldInput['category'] ?? '') === 'technology' ? ' selected' : ''; ?>>Technology</option>
+                                <option value="environment"<?php echo ($oldInput['category'] ?? '') === 'environment' ? ' selected' : ''; ?>>Environment</option>
                             </select>
-                            <p class="mt-2 hidden text-sm text-red-600" data-field-error="category"></p>
+                            <p class="mt-2 text-sm text-red-600 <?php echo empty($fieldErrors['category']) ? 'hidden' : ''; ?>" data-field-error="category"><?php echo htmlspecialchars($fieldErrors['category'] ?? ''); ?></p>
                         </div>
                     </div>
                 </div>
@@ -134,9 +184,10 @@ function renderCreateCampaignContent(?string $error = null): void {
                             <div class="relative mt-2">
                                 <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">$</span>
                                 <input type="number" id="goal" name="goal" min="100" required placeholder="5000"
-                                       class="block w-full rounded-2xl border border-slate-200 bg-slate-50 py-3 pl-8 pr-4 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
+                                       value="<?php echo htmlspecialchars($oldInput['goal'] ?? ''); ?>"
+                                       class="block w-full rounded-2xl border <?php echo !empty($fieldErrors['goal']) ? 'border-red-300' : 'border-slate-200'; ?> bg-slate-50 py-3 pl-8 pr-4 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-<?php echo !empty($fieldErrors['goal']) ? 'red-500 focus:ring-red-500/10' : 'emerald-500 focus:ring-emerald-500/10'; ?> focus:bg-white focus:outline-none">
                             </div>
-                            <p class="mt-2 hidden text-sm text-red-600" data-field-error="goal"></p>
+                            <p class="mt-2 text-sm text-red-600 <?php echo empty($fieldErrors['goal']) ? 'hidden' : ''; ?>" data-field-error="goal"><?php echo htmlspecialchars($fieldErrors['goal'] ?? ''); ?></p>
                             <p class="mt-2 text-sm text-slate-500">Minimum campaign goal is $100.</p>
                         </div>
                     </div>
@@ -162,8 +213,10 @@ function renderCreateCampaignContent(?string $error = null): void {
                             <label for="description" class="block text-sm font-semibold text-slate-700">Campaign story</label>
                             <textarea id="description" name="description" rows="8" required
                                       placeholder="Tell your story. Why are you raising funds? How will the money be used? What impact will it make?"
-                                      class="mt-2 block w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10"></textarea>
-                            <p class="mt-2 hidden text-sm text-red-600" data-field-error="description"></p>
+                                      class="mt-2 block w-full rounded-2xl border <?php echo !empty($fieldErrors['description']) ? 'border-red-300' : 'border-slate-200'; ?> bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-<?php echo !empty($fieldErrors['description']) ? 'red-500 focus:ring-red-500/10' : 'emerald-500 focus:ring-emerald-500/10'; ?> focus:bg-white focus:outline-none focus:ring-4">
+                                <?php echo htmlspecialchars($oldInput['description'] ?? ''); ?>
+                            </textarea>
+                            <p class="mt-2 text-sm text-red-600 <?php echo empty($fieldErrors['description']) ? 'hidden' : ''; ?>" data-field-error="description"><?php echo htmlspecialchars($fieldErrors['description'] ?? ''); ?></p>
                             <p class="mt-2 text-sm text-slate-500">Be honest, specific, and transparent about where the money will go.</p>
                         </div>
 
@@ -188,13 +241,12 @@ function renderCreateCampaignContent(?string $error = null): void {
                                         </label>
                                         <span class="text-sm text-slate-500">or drag and drop</span>
                                     </div>
-                                    <p class="mt-3 hidden text-sm text-red-600" data-field-error="campaign_image"></p>
+                                    <p class="mt-3 text-sm text-red-600 <?php echo empty($fieldErrors['campaign_image']) ? 'hidden' : ''; ?>" data-field-error="campaign_image"><?php echo htmlspecialchars($fieldErrors['campaign_image'] ?? ''); ?></p>
                                     <p class="mt-3 text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
                 <div class="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
                     <p class="max-w-2xl text-sm leading-6 text-slate-500">
@@ -388,70 +440,6 @@ function renderCreateCampaignContent(?string $error = null): void {
                 handleSelectedImage(file);
             }, false);
         }
-
-        form.addEventListener('submit', async function(event) {
-            event.preventDefault();
-            clearErrors();
-
-            const submitButton = form.querySelector('button[type="submit"]');
-            const originalButtonText = submitButton ? submitButton.innerHTML : null;
-            if (submitButton) {
-                submitButton.disabled = true;
-                submitButton.innerHTML = 'Creating...';
-            }
-
-            try {
-                const response = await fetch('<?php echo BASE_URL; ?>/api/dashboard/create_campaign.php', {
-                    method: 'POST',
-                    body: new FormData(form),
-                    credentials: 'same-origin',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Accept': 'application/json'
-                    }
-                });
-
-                const responseText = await response.text();
-                let result = null;
-
-                try {
-                    result = responseText ? JSON.parse(responseText) : null;
-                } catch (parseError) {
-                    console.error('[campaign-create] Non-JSON response:', responseText);
-                    const readableResponse = responseText && responseText.trim()
-                        ? responseText.trim().replace(/<[^>]*>/g, '').slice(0, 400)
-                        : 'The server returned an empty response.';
-                    throw new Error(readableResponse);
-                }
-
-                if (!result || !response.ok || !result.success) {
-                    if (result.errors && typeof result.errors === 'object') {
-                        Object.entries(result.errors).forEach(([fieldName, message]) => {
-                            setFieldError(fieldName, message);
-                        });
-                    }
-
-                    if (alertBox && alertMessage) {
-                        alertMessage.textContent = result.message || 'Unable to create the campaign.';
-                        alertBox.classList.remove('hidden');
-                    }
-                    return;
-                }
-
-                window.location.href = result.redirect_url;
-            } catch (error) {
-                console.error('[campaign-create] AJAX submit failed', error);
-                if (alertBox && alertMessage) {
-                    alertMessage.textContent = error instanceof Error && error.message ? error.message : 'A network error occurred. Please try again.';
-                    alertBox.classList.remove('hidden');
-                }
-            } finally {
-                if (submitButton && originalButtonText !== null) {
-                    submitButton.disabled = false;
-                    submitButton.innerHTML = originalButtonText;
-                }
-            }
-        });
     }
 
     initializeCampaignCreateForm();
@@ -499,13 +487,13 @@ if (!$isAjaxRequest) {
     <div class="flex min-h-screen pt-16">
         <?php include __DIR__ . '/../components/sidebar.php'; ?>
         <main class="app-main flex-1 min-w-0 bg-gray-50 lg:ml-64">
-            <?php renderCreateCampaignContent($error); ?>
+            <?php renderCreateCampaignContent($error, $fieldErrors, $oldInput); ?>
         </main>
     </div>
 </body>
 </html>
 <?php
 } else {
-    renderCreateCampaignContent($error);
+    renderCreateCampaignContent($error, $fieldErrors, $oldInput);
     echo ob_get_clean();
 }
