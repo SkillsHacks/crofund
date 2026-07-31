@@ -42,7 +42,7 @@ try {
     <title>Processing Payment - CroFunding</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://rsms.me/inter/inter.css" rel="stylesheet">
-    <link rel="icon" href="<?php echo BASE_URL; ?>/assets/images/Logo.png" type="image/x-icon">
+    <link rel="icon" href="<?php echo BASE_URL; ?>/assets/images/logo.svg" type="image/svg+xml">
 </head>
 <body class="bg-gray-100 font-sans">
     

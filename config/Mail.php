@@ -1,6 +1,8 @@
 <?php
 require_once __DIR__ . '/../vendor/autoload.php';
 
+use Resend\Resend;
+
 class Mail {
     private $resend;
 
@@ -39,6 +41,17 @@ class Mail {
         }
     }
 
+    private function getEmailLogoUrl(): string {
+        return rtrim(BASE_URL, '/') . '/assets/images/logo.svg';
+    }
+
+    private function getEmailBrandHeader(string $title): string {
+        return '<div style="text-align:center; margin-bottom:24px;">'
+            . '<img src="' . htmlspecialchars($this->getEmailLogoUrl(), ENT_QUOTES, 'UTF-8') . '" alt="' . htmlspecialchars(SITE_NAME, ENT_QUOTES, 'UTF-8') . ' logo" style="width:64px;height:64px;display:block;margin:0 auto 14px auto;">'
+            . '<h2 style="color:#111827; margin:0; font-size:24px; font-weight:700;">' . htmlspecialchars($title, ENT_QUOTES, 'UTF-8') . '</h2>'
+            . '</div>';
+    }
+
     public function sendVerificationEmail($to, $verificationLink, $name = null) {
         try {
             return $this->sendEmail(
@@ -64,6 +77,7 @@ class Mail {
 </head>
 <body style="margin:0;padding:24px;background-color:#ffffff;color:#111827;font-family:Arial,sans-serif;line-height:1.6;">
     <div style="max-width:560px;margin:0 auto;">
+        ' . $this->getEmailBrandHeader('Verify Your Email Address') . '
         <p style="margin:0 0 16px 0;">' . $greeting . '</p>
         <p style="margin:0 0 16px 0;">Use the link below to verify your CroFund email address:</p>
         <p style="margin:0 0 16px 0;word-break:break-word;">
@@ -115,6 +129,7 @@ class Mail {
 </head>
 <body style="margin:0;padding:24px;background-color:#ffffff;color:#111827;font-family:Arial,sans-serif;line-height:1.6;">
     <div style="max-width:560px;margin:0 auto;">
+        ' . $this->getEmailBrandHeader('Welcome to ' . SITE_NAME . '!') . '
         <p style="margin:0 0 16px 0;">' . $greeting . '</p>
         <p style="margin:0 0 16px 0;">Your CroFund account has been created successfully.</p>
         <p style="margin:0 0 16px 0;">You can now sign in and continue using your account.</p>
@@ -158,7 +173,7 @@ class Mail {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background-color: #ffffff;">
-        <h2 style="color: #111827; margin-top: 0;">New User Registration</h2>
+        ' . $this->getEmailBrandHeader('New User Registration') . '
         <p>A new user has registered on ' . SITE_NAME . ':</p>
         <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
             <p style="margin: 8px 0;"><strong>Full Name:</strong> ' . htmlspecialchars($userData['name']) . '</p>
@@ -253,6 +268,7 @@ class Mail {
 </head>
 <body style="margin:0;padding:24px;background-color:#ffffff;color:#111827;font-family:Arial,sans-serif;line-height:1.6;">
     <div style="max-width:560px;margin:0 auto;">
+        ' . $this->getEmailBrandHeader('Reset Your Password') . '
         <p style="margin:0 0 16px 0;">' . $greeting . '</p>
         <p style="margin:0 0 16px 0;">We received a request to reset your CroFund password.</p>
         <p style="margin:0 0 16px 0;word-break:break-word;">
@@ -289,6 +305,7 @@ class Mail {
 </head>
 <body style="margin:0;padding:24px;background-color:#ffffff;color:#111827;font-family:Arial,sans-serif;line-height:1.6;">
     <div style="max-width:560px;margin:0 auto;">
+        ' . $this->getEmailBrandHeader('Verification Code') . '
         <p style="margin:0 0 16px 0;">' . $greeting . '</p>
         <p style="margin:0 0 16px 0;">Your CroFund verification code is:</p>
         <p style="margin:0 0 16px 0;font-size:28px;font-weight:700;letter-spacing:0.2em;">' . htmlspecialchars($code) . '</p>

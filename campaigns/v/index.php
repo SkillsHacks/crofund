@@ -19,7 +19,7 @@ $campaigns = $userCampaigns->getAllByUser(1);
   <!-- Open Graph Meta Tags for Social Media Sharing -->
   <meta property="og:title" content="Browse Verified Fundraisers - CroFunding">
   <meta property="og:description" content="Discover verified and trusted fundraising campaigns. Support real causes with confidence on our secure platform.">
-  <meta property="og:image" content="<?php echo BASE_URL; ?>/assets/images/Logo.png">
+  <meta property="og:image" content="<?php echo BASE_URL; ?>/assets/images/logo.svg">
   <meta property="og:image:width" content="1200">
   <meta property="og:image:height" content="630">
   <meta property="og:url" content="<?php echo (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]$_SERVER[REQUEST_URI]"; ?>">
@@ -30,7 +30,7 @@ $campaigns = $userCampaigns->getAllByUser(1);
   <meta name="twitter:card" content="summary_large_image">
   <meta name="twitter:title" content="Browse Verified Fundraisers - CroFunding">
   <meta name="twitter:description" content="Discover verified and trusted fundraising campaigns. Support real causes with confidence on our secure platform.">
-  <meta name="twitter:image" content="<?php echo BASE_URL; ?>/assets/images/Logo.png">
+  <meta name="twitter:image" content="<?php echo BASE_URL; ?>/assets/images/logo.svg">
   
   <!-- Additional Meta Tags -->
   <meta name="description" content="Discover verified and trusted fundraising campaigns. Support real causes with confidence on our secure platform.">

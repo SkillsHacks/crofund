@@ -25,6 +25,16 @@ $sidebarTrustRiskUi = isset($trustRiskUi) && is_array($trustRiskUi)
        data-collapsed="false">
     <div class="flex h-full flex-col overflow-y-auto">
         <div class="flex-1 space-y-4 p-3 lg:p-4">
+            <div class="flex items-center gap-3 px-3 py-2 lg:px-4">
+                <div class="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-900/20">
+                    <img src="<?php echo BASE_URL; ?>/assets/images/logo.svg" alt="CroFunding logo" class="h-7 w-7">
+                </div>
+                <div class="min-w-0">
+                    <p class="sidebar-section-title text-xs font-semibold uppercase tracking-[0.24em] text-emerald-600/80">Crofund</p>
+                    <h2 class="sidebar-label truncate text-base font-bold text-gray-900">Dashboard</h2>
+                </div>
+            </div>
+
             <div class="space-y-1">
                 <a href="<?php echo BASE_URL; ?>/dashboard/" class="sidebar-link <?php echo $current_page === 'dashboard' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700'; ?> group flex items-center rounded-lg px-3 py-3 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-600" title="Dashboard">
                     <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">

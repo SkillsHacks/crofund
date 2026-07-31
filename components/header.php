@@ -32,9 +32,9 @@ if (!function_exists('getUserAvatar')) {
 $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
 ?>
 <!-- Favicon - still here but after PHP logic -->
-<link rel="icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
-<link rel="shortcut icon" type="image/png" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
-<link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>/assets/images/Logo.png">
+<link rel="icon" type="image/svg+xml" href="<?php echo BASE_URL; ?>/assets/images/logo.svg">
+<link rel="shortcut icon" type="image/svg+xml" href="<?php echo BASE_URL; ?>/assets/images/logo.svg">
+<link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>/assets/images/logo.svg">
 
 <style>
     body.sidebar-collapsed #sidebar .sidebar-label,
@@ -84,7 +84,10 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
     <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
             <div class="flex-1 flex items-center justify-start">
-                <a href="<?php echo BASE_URL; ?>/dashboard" id="app-brand-link" class="flex items-center flex-shrink-0 pl-12 pr-4 lg:pl-0">
+                <a href="<?php echo BASE_URL; ?>/dashboard" id="app-brand-link" class="flex items-center gap-3 flex-shrink-0 pl-12 pr-4 lg:pl-0">
+                    <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-900/20">
+                        <img src="<?php echo BASE_URL; ?>/assets/images/logo.svg" alt="CroFunding logo" class="h-6 w-6">
+                    </span>
                     <span class="hidden text-xl font-bold text-emerald-600 sm:inline md:text-2xl">CroFunding</span>
                 </a>
             </div>

@@ -6,7 +6,7 @@
             <div class="flex min-w-0 items-center gap-3" id="header-logo">
                 <a href="<?php echo BASE_URL; ?>" class="inline-flex items-center gap-3">
                     <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 ring-1 ring-emerald-100 shadow-sm">
-                        <img src="<?php echo BASE_URL; ?>/assets/images/Logo.png" alt="CroFunding logo" class="h-6 w-6">
+                        <img src="<?php echo BASE_URL; ?>/assets/images/logo.svg" alt="CroFunding logo" class="h-6 w-6">
                     </div>
                     <div class="min-w-0">
                         <span class="block truncate text-lg font-bold tracking-tight text-slate-900 sm:text-xl">CroFunding</span>
