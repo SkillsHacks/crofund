@@ -2,7 +2,6 @@
 require_once __DIR__ . '/config/config.php';
 require_once __DIR__ . '/config/User.php';
 require_once __DIR__ . '/config/Mail.php';
-require_once __DIR__ . '/vendor/autoload.php';
 
 $email = $_GET['email'] ?? '';
 $message = '';
