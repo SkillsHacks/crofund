@@ -164,9 +164,9 @@ try {
                 placeholder="Share why you're donating..."></textarea>
         </div>
 
-        <!-- Payment Method -->
+        <!-- Payment Method (hidden — first enabled gateway is auto-selected) -->
         <?php if (!empty($paymentGateways)): ?>
-        <div class="form-section">
+        <div class="form-section hidden">
             <div class="form-section-title mb-3">
                 <div class="w-8 h-8 bg-amber-100 rounded-xl flex items-center justify-center">
                     <i class="fas fa-credit-card text-amber-700 text-sm"></i>
