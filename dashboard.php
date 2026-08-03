@@ -31,7 +31,7 @@ if (!$currentUser || !isset($currentUser['name'])) {
 define('DASHBOARD_ROUTES', [
     'home' => [
         'file' => null,
-        'path' => '/dashboard/'
+        'path' => '/dashboard.php'
     ],
     'create_campaign' => [
         'file' => __DIR__ . '/campaigns/create.php',
@@ -70,7 +70,7 @@ define('DASHBOARD_ROUTES', [
 function dashboardRouteUrl(string $routeName): string {
     $routes = DASHBOARD_ROUTES;
     if (!isset($routes[$routeName])) {
-        return BASE_URL . '/dashboard/';
+        return BASE_URL . '/dashboard.php';
     }
 
     return BASE_URL . $routes[$routeName]['path'];
@@ -614,7 +614,7 @@ include 'components/header.php';
 
             if (pushState) {
                 const routeUrlMap = <?php echo json_encode(array_map(static fn ($route) => BASE_URL . $route['path'], DASHBOARD_ROUTES)); ?>;
-                window.history.pushState({ dashboardRoute: routeName }, '', routeUrlMap[routeName] || `${BASE_URL}/dashboard/`);
+                window.history.pushState({ dashboardRoute: routeName }, '', routeUrlMap[routeName] || `${BASE_URL}/dashboard.php`);
             }
         } catch (error) {
             console.error('Failed to load dashboard section:', error);
@@ -625,7 +625,7 @@ include 'components/header.php';
     function showDashboardHome(pushState = true) {
         setDashboardAjaxMode(false);
         if (pushState) {
-            window.history.pushState({ dashboardRoute: null }, '', `${BASE_URL}/dashboard/`);
+            window.history.pushState({ dashboardRoute: null }, '', `${BASE_URL}/dashboard.php`);
         }
     }
 

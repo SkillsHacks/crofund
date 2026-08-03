@@ -65,7 +65,7 @@ $error = null;
 $user = new User();
 
 if ($user->isLoggedIn()) {
-    header("Location: dashboard");
+    header("Location: " . BASE_URL . "/dashboard.php");
     exit();
 }
 

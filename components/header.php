@@ -84,7 +84,7 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
     <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8">
         <div class="flex justify-between items-center h-16">
             <div class="flex-1 flex items-center justify-start">
-                <a href="<?php echo BASE_URL; ?>/dashboard" id="app-brand-link" class="flex items-center gap-3 flex-shrink-0 pl-12 pr-4 lg:pl-0">
+                <a href="<?php echo BASE_URL; ?>/dashboard.php" id="app-brand-link" class="flex items-center gap-3 flex-shrink-0 pl-12 pr-4 lg:pl-0">
                     <span class="flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-900/20">
                         <img src="<?php echo BASE_URL; ?>/assets/images/logo.svg" alt="CroFunding logo" class="h-6 w-6">
                     </span>

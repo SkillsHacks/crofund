@@ -223,9 +223,20 @@ function renderCreateCampaignContent(?string $error = null, array $fieldErrors =
                         <div>
                             <label class="block text-sm font-semibold text-slate-700">Campaign image</label>
                             <div id="campaign-image-dropzone" class="mt-2 rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/80 p-6 text-center transition hover:border-emerald-400 hover:bg-emerald-50/40">
-                                <div id="image-preview" class="hidden mb-5">
+                                <input id="campaign_image" name="campaign_image" type="file" class="sr-only" accept="image/*" required>
+
+                                <div id="image-preview" class="hidden">
                                     <img src="" alt="Preview" class="mx-auto max-h-64 rounded-2xl object-cover shadow-sm">
+                                    <div class="mt-4 flex flex-col items-center justify-center gap-2 sm:flex-row">
+                                        <label for="campaign_image" class="inline-flex cursor-pointer items-center rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-within:outline-none focus-within:ring-4 focus-within:ring-emerald-500/20">
+                                            Change image
+                                        </label>
+                                        <button type="button" id="remove-campaign-image" class="inline-flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
+                                            Remove
+                                        </button>
+                                    </div>
                                 </div>
+
                                 <div id="upload-placeholder" class="flex flex-col items-center">
                                     <div class="flex h-14 w-14 items-center justify-center rounded-2xl bg-white text-slate-400 shadow-sm">
                                         <svg class="h-7 w-7" stroke="currentColor" fill="none" viewBox="0 0 48 48">
@@ -237,13 +248,13 @@ function renderCreateCampaignContent(?string $error = null, array $fieldErrors =
                                     <div class="mt-4 flex flex-col items-center gap-2 sm:flex-row">
                                         <label for="campaign_image" class="inline-flex cursor-pointer items-center rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-within:outline-none focus-within:ring-4 focus-within:ring-emerald-500/20">
                                             <span>Choose image</span>
-                                            <input id="campaign_image" name="campaign_image" type="file" class="sr-only" accept="image/*" required>
                                         </label>
                                         <span class="text-sm text-slate-500">or drag and drop</span>
                                     </div>
-                                    <p class="mt-3 text-sm text-red-600 <?php echo empty($fieldErrors['campaign_image']) ? 'hidden' : ''; ?>" data-field-error="campaign_image"><?php echo htmlspecialchars($fieldErrors['campaign_image'] ?? ''); ?></p>
-                                    <p class="mt-3 text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
                                 </div>
+
+                                <p class="mt-3 text-sm text-red-600 <?php echo empty($fieldErrors['campaign_image']) ? 'hidden' : ''; ?>" data-field-error="campaign_image"><?php echo htmlspecialchars($fieldErrors['campaign_image'] ?? ''); ?></p>
+                                <p class="mt-3 text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
                             </div>
                         </div>
                     </div>
@@ -433,6 +444,11 @@ function renderCreateCampaignContent(?string $error = null, array $fieldErrors =
             imageInput.addEventListener('change', function(event) {
                 handleSelectedImage(event.target.files[0] || null);
             });
+
+            const removeImageButton = form.querySelector('#remove-campaign-image');
+            if (removeImageButton) {
+                removeImageButton.addEventListener('click', resetImagePreview);
+            }
 
             ['dragenter', 'dragover', 'dragleave', 'drop'].forEach((eventName) => {
                 dropZone.addEventListener(eventName, function(e) {
