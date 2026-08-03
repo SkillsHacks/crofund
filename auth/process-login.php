@@ -59,14 +59,17 @@ try {
 
     error_log('Login failure: ' . $e->getMessage());
 
-    $safeMessage = 'Login failed. Please check your credentials.';
-    if ($e instanceof Error || stripos($e->getMessage(), 'authentication service') !== false || stripos($e->getMessage(), 'email') !== false || stripos($e->getMessage(), 'resend') !== false) {
-        $safeMessage = 'The authentication service is currently busy. Please try again in a moment.';
-    } elseif (trim($e->getMessage()) !== '') {
-        $safeMessage = $e->getMessage();
+    $userMessage = trim($e->getMessage());
+    $isInternalFailure = $e instanceof Error
+        || stripos($userMessage, 'authentication service') !== false
+        || stripos($userMessage, 'SQLSTATE') !== false
+        || stripos($userMessage, 'PDO') !== false;
+
+    if ($isInternalFailure || $userMessage === '') {
+        redirectToLoginWithError('The authentication service is currently busy. Please try again in a moment.');
     }
 
-    redirectToLoginWithError($safeMessage);
+    redirectToLoginWithError($userMessage);
 }
 
 return $user;
