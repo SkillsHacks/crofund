@@ -302,17 +302,17 @@ function renderCreateCampaignContent(?string $error = null, array $fieldErrors =
 
 <script>
     function initializeCampaignCreateForm() {
-        const container = document.querySelector('.w-full');
-        const imageInput = container ? container.querySelector('#campaign_image') : null;
-        const imagePreview = container ? container.querySelector('#image-preview') : null;
+        const form = document.querySelector('form[data-campaign-create-form="true"]');
+        const container = form ? form.closest('.w-full') : null;
+        const imageInput = form ? form.querySelector('#campaign_image') : null;
+        const imagePreview = form ? form.querySelector('#image-preview') : null;
         const imagePreviewImg = imagePreview ? imagePreview.querySelector('img') : null;
-        const uploadPlaceholder = container ? container.querySelector('#upload-placeholder') : null;
-        const dropZone = container ? container.querySelector('#campaign-image-dropzone') : null;
-        const form = container ? container.querySelector('form[data-campaign-create-form="true"]') : null;
+        const uploadPlaceholder = form ? form.querySelector('#upload-placeholder') : null;
+        const dropZone = form ? form.querySelector('#campaign-image-dropzone') : null;
         const alertBox = container ? container.querySelector('[data-form-alert]') : null;
         const alertMessage = container ? container.querySelector('[data-form-alert-message]') : null;
 
-        if (!container || !form) {
+        if (!form || !container) {
             return;
         }
 
