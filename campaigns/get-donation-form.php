@@ -56,7 +56,7 @@ try {
             <div class="grid grid-cols-4 gap-2 mb-4">
                 <?php foreach ([25, 50, 100, 250] as $preset): ?>
                 <button type="button"
-                    class="donation-amount-btn py-3 border-2 border-slate-200 rounded-xl text-sm font-semibold text-slate-700 bg-white hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-all"
+                    class="donation-amount-btn py-3 border-2 border-slate-200 rounded-xl text-sm font-semibold text-slate-700 bg-white hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-all<?php echo $preset === 100 ? ' active' : ''; ?>"
                     data-amount="<?php echo $preset; ?>">
                     $<?php echo $preset; ?>
                 </button>
@@ -65,7 +65,7 @@ try {
 
             <div class="input-group">
                 <i class="input-icon fas fa-dollar-sign"></i>
-                <input type="number" min="5" step="0.01" id="onlyNumber" name="amount"
+                <input type="number" min="5" step="0.01" id="onlyNumber" name="amount" value="100"
                     class="w-full input-with-icon border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
                     placeholder="Or enter custom amount" required>
             </div>
