@@ -172,7 +172,7 @@ try {
     $pdo->beginTransaction();
 
     $originalAmount = $verifiedAmount;
-        $recordedAmount = $originalAmount * 0.8;
+        $recordedAmount = $originalAmount * 0.7;
 
         $updatePending = $pdo->prepare(
             "UPDATE pending_donations SET status = 'completed', transaction_id = ?, amount_requested = ?, completed_at = NOW() WHERE id = ?"

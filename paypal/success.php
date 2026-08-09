@@ -86,7 +86,7 @@ try {
 
         try {
             $originalAmount = $donationData['amount'];
-            $recordedAmount = $originalAmount * 0.8;
+            $recordedAmount = $originalAmount * 0.7;
             
             $campaign->updateCampaignAmount($donationData['campaign_id'], $recordedAmount);
 

@@ -80,7 +80,7 @@ try {
 
 // Redirect to thank you page with success message
 if (isset($metadata->campaign_id)) {
-    $amount = $recordedAmount; // Convert from cents and apply 20% deduction
+    $amount = $recordedAmount; // Convert from cents and apply 30% deduction
     $donorName = $metadata->donor_name;
     header("Location: " . BASE_URL . "/thank-you.php?campaign_id=" . $metadata->campaign_id . "&amount=" . $amount . "&donor=" . urlencode($donorName) . "&gateway=stripe");
 } else {

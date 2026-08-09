@@ -97,7 +97,7 @@ try {
     $pdo->beginTransaction();
 
     $originalAmount = $mcGross;
-        $recordedAmount = $originalAmount * 0.8;
+        $recordedAmount = $originalAmount * 0.7;
 
         $pdo->prepare(
             "UPDATE pending_donations SET status = 'completed', transaction_id = ?, amount_requested = ?, completed_at = NOW() WHERE id = ?"

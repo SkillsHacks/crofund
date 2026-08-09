@@ -4,7 +4,6 @@ require_once __DIR__ . '/config/User.php';
 require_once __DIR__ . '/config/Mail.php';
 require_once __DIR__ . '/config/PhoneRestrictionUtils.php';
 require_once __DIR__ . '/config/PhoneValidationService.php';
-require_once __DIR__ . '/config/PhoneVerificationService.php';
 require_once __DIR__ . '/config/EmailValidationService.php';
 require_once __DIR__ . '/config/EmailVerificationService.php';
 require_once __DIR__ . '/config/location/LocationService.php';
@@ -41,7 +40,6 @@ $unsupportedDialCodes = $phoneRestrictions['unsupported_dial_codes'] ?? [];
 $unsupportedCountryMessage = $phoneRestrictions['unsupported_country_message'] ?? 'Our services are currently not available in the selected country.';
 $allowNonFixedVoip = (bool) ($phoneRestrictions['allow_nonfixedvoip'] ?? true);
 $phoneValidationService = new PhoneValidationService($phoneRules, $unsupportedDialCodes, $unsupportedCountryMessage, $allowNonFixedVoip);
-$phoneVerificationService = new PhoneVerificationService($phoneValidationService);
 $emailValidationService = new EmailValidationService($emailRestrictions);
 $emailVerificationService = new EmailVerificationService($emailValidationService);
 
@@ -54,11 +52,6 @@ if (!$is_ajax && !$is_post) {
     unset($_SESSION['verified_email']);
     unset($_SESSION['email_verification_risk']);
     unset($_SESSION['pending_verified_email']);
-    unset($_SESSION['phone_verified']);
-    unset($_SESSION['verified_phone']);
-    unset($_SESSION['phone_verification_risk']);
-    unset($_SESSION['pending_phone_country_code']);
-    unset($_SESSION['pending_verified_phone']);
 }
 
 $error = null;
@@ -194,20 +187,18 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'
             } elseif ($_POST['action'] === 'check_phone') {
                 $phone = trim($_POST['phone'] ?? '');
                 $countryCode = strtoupper(trim($_POST['country_code'] ?? ''));
-                $deviceId = trim($_POST['device_id'] ?? 'web-browser');
-                $validationResult = $phoneVerificationService->validatePhoneForVerification($phone, $countryCode, $deviceId, $_SERVER['REMOTE_ADDR']);
+                $validationResult = $phoneValidationService->validateForCountry($phone, $countryCode);
 
-                if (!$validationResult['success']) {
+                if (!$validationResult['valid']) {
                     echo json_encode([
                         'available' => false,
-                        'error' => $validationResult['error'],
-                        'validation' => $validationResult['validation'] ?? null,
-                        'risk' => $validationResult['risk'] ?? null,
+                        'error' => $validationResult['message'],
+                        'validation' => $validationResult,
                     ]);
                     exit;
                 }
 
-                $normalizedPhone = $validationResult['validation']['normalized_phone'];
+                $normalizedPhone = $validationResult['normalized_phone'];
                 
                 // Check if phone already exists
                 $db = Database::getInstance();
@@ -224,71 +215,7 @@ if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'
                 echo json_encode([
                     'available' => true,
                     'message' => 'Phone number is available',
-                    'validation' => $validationResult['validation'],
-                    'risk' => $validationResult['risk'],
-                ]);
-                exit;
-            } elseif ($_POST['action'] === 'send_phone_otp') {
-                $phone = trim($_POST['phone'] ?? '');
-                $countryCode = strtoupper(trim($_POST['country_code'] ?? ''));
-                $deviceId = trim($_POST['device_id'] ?? 'web-browser');
-                $validationResult = $phoneVerificationService->validatePhoneForVerification($phone, $countryCode, $deviceId, $_SERVER['REMOTE_ADDR']);
-
-                if (!$validationResult['success']) {
-                    throw new Exception($validationResult['error'] ?? 'We are unable to verify this number. Please try another number.');
-                }
-
-                $normalizedPhone = $validationResult['validation']['normalized_phone'];
-                $otpPermission = $phoneVerificationService->canRequestOtp($normalizedPhone, $deviceId, $_SERVER['REMOTE_ADDR']);
-
-                if (!$otpPermission['allowed']) {
-                    throw new Exception($otpPermission['message']);
-                }
-
-                $otpSendResult = $phoneVerificationService->sendOtp($normalizedPhone);
-                if (!$otpSendResult['success']) {
-                    throw new Exception($otpSendResult['error']);
-                }
-
-                $riskScore = (int) ($validationResult['risk']['score'] ?? 0);
-                $phoneVerificationService->logOtpRequest($normalizedPhone, $deviceId, $_SERVER['REMOTE_ADDR'], $riskScore);
-
-                $_SESSION['phone_verification_risk'] = $riskScore;
-                $_SESSION['pending_phone_country_code'] = $countryCode;
-                $_SESSION['pending_verified_phone'] = $normalizedPhone;
-
-                echo json_encode([
-                    'success' => true,
-                    'message' => $otpSendResult['message'],
-                    'phone' => $normalizedPhone,
-                ]);
-                exit;
-            } elseif ($_POST['action'] === 'verify_phone_otp') {
-                $phone = trim($_POST['phone'] ?? '');
-                $code = trim($_POST['otp'] ?? '');
-                $deviceId = trim($_POST['device_id'] ?? 'web-browser');
-
-                if ($phone === '' || $code === '') {
-                    throw new Exception('Please enter the verification code.');
-                }
-
-                if (!isset($_SESSION['pending_verified_phone']) || $_SESSION['pending_verified_phone'] !== $phone) {
-                    throw new Exception('Please request a new verification code and try again.');
-                }
-
-                $verifyResult = $phoneVerificationService->verifyOtp($phone, $code);
-                $phoneVerificationService->logOtpAttempt($phone, $deviceId, $_SERVER['REMOTE_ADDR'], $verifyResult['success']);
-
-                if (!$verifyResult['success']) {
-                    throw new Exception($verifyResult['error']);
-                }
-
-                $_SESSION['phone_verified'] = true;
-                $_SESSION['verified_phone'] = $phone;
-
-                echo json_encode([
-                    'success' => true,
-                    'message' => $verifyResult['message'],
+                    'validation' => $validationResult,
                 ]);
                 exit;
             }
@@ -351,34 +278,19 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         }
         
         $submittedPhone = trim($_POST['phone'] ?? '');
-        if ($submittedPhone === '' && !empty($_SESSION['verified_phone'])) {
-            $submittedPhone = trim((string) $_SESSION['verified_phone']);
-        }
-
         $phoneCountryCode = strtoupper(trim($_POST['country_code'] ?? ''));
-        if ($phoneCountryCode === '' && !empty($_SESSION['pending_phone_country_code'])) {
-            $phoneCountryCode = strtoupper(trim((string) $_SESSION['pending_phone_country_code']));
+
+        if ($submittedPhone === '') {
+            throw new Exception('Phone number is required');
         }
 
-        if (!isset($_SESSION['phone_verified']) || !$_SESSION['phone_verified']) {
-            throw new Exception('Please verify your phone number first');
+        $phoneValidationResult = $phoneValidationService->validateForCountry($submittedPhone, $phoneCountryCode);
+
+        if (!$phoneValidationResult['valid']) {
+            throw new Exception($phoneValidationResult['message']);
         }
 
-        if (!isset($_SESSION['verified_phone']) || $_SESSION['verified_phone'] === '') {
-            throw new Exception('Please verify your phone number first');
-        }
-
-        $deviceId = trim($_POST['device_id'] ?? 'web-browser');
-        $phoneValidationResult = $phoneVerificationService->validatePhoneForVerification($submittedPhone, $phoneCountryCode, $deviceId, $_SERVER['REMOTE_ADDR']);
-        $normalizedPhone = $phoneValidationResult['validation']['normalized_phone'] ?? $submittedPhone;
-
-        if ($normalizedPhone === '') {
-            throw new Exception('Please enter a valid phone number for the selected country.');
-        }
-
-        if ($_SESSION['verified_phone'] !== $normalizedPhone) {
-            throw new Exception('Phone mismatch. Please verify your phone number again');
-        }
+        $normalizedPhone = $phoneValidationResult['normalized_phone'];
         
         // Check phone uniqueness
         $db = Database::getInstance();
@@ -435,10 +347,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             'registration_number' => $_POST['registration_number'] ?? null,
             'organization_website' => $_POST['organization_website'] ?? null,
             'organization_contact' => $_POST['organization_contact'] ?? null,
-            'is_phone_verified' => true,
-            'phone_verified_at' => date('Y-m-d H:i:s'),
-            'phone_risk_score' => (int) ($_SESSION['phone_verification_risk'] ?? ($phoneValidationResult['risk']['score'] ?? 0)),
-            'phone_verification_status' => 'verified'
         ];
 
         $registrationData = $user->register($userData);
@@ -460,11 +368,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             unset($_SESSION['verified_email']);
             unset($_SESSION['email_verification_risk']);
             unset($_SESSION['pending_verified_email']);
-            unset($_SESSION['phone_verified']);
-            unset($_SESSION['verified_phone']);
-            unset($_SESSION['phone_verification_risk']);
-            unset($_SESSION['pending_phone_country_code']);
-            unset($_SESSION['pending_verified_phone']);
             
             $_SESSION['success'] = "Registration successful! You can now log in to your account.";
         } catch (Exception $e) {
@@ -476,11 +379,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             unset($_SESSION['verified_email']);
             unset($_SESSION['email_verification_risk']);
             unset($_SESSION['pending_verified_email']);
-            unset($_SESSION['phone_verified']);
-            unset($_SESSION['verified_phone']);
-            unset($_SESSION['phone_verification_risk']);
-            unset($_SESSION['pending_phone_country_code']);
-            unset($_SESSION['pending_verified_phone']);
             
             $_SESSION['success'] = "Registration successful! You can now log in to your account.";
         }
@@ -848,28 +746,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                                 <div id="phone-success" class="text-emerald-600 text-sm mt-1 hidden"></div>
                             </div>
 
-                            <div id="phone-otp-section" class="space-y-3">
-                                <div class="flex items-center justify-between gap-3">
-                                    <div id="phone-verification-badge" class="hidden inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 border border-emerald-200">
-                                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-                                        </svg>
-                                        <span>Phone verified and locked</span>
-                                    </div>
-                                </div>
-                                <div class="grid grid-cols-1 gap-2 sm:grid-cols-[auto,minmax(0,1fr),auto] sm:items-center">
-                                    <button type="button" id="send-phone-otp-btn" class="w-full sm:w-auto px-4 py-2.5 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium text-center whitespace-nowrap">
-                                        Verify Phone
-                                    </button>
-                                    <input type="text" id="phone-otp-input" maxlength="6" class="w-full min-w-0 px-3 py-2.5 border border-slate-200 rounded-lg bg-slate-50 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200 text-sm" placeholder="Enter SMS code">
-                                    <button type="button" id="verify-phone-otp-btn" class="w-full sm:w-auto px-4 py-2.5 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition-colors text-sm font-medium text-center whitespace-nowrap">
-                                        Confirm
-                                    </button>
-                                </div>
-                                <div id="phone-otp-error" class="text-red-600 text-sm mt-1 hidden"></div>
-                                <div id="phone-otp-success" class="text-emerald-600 text-sm mt-1 hidden"></div>
-                            </div>
-                            
                             <div>
                                 <label for="nin" class="block text-sm font-semibold text-slate-700 mb-2">National ID Number (NIN)</label>
                                 <div class="relative">
@@ -1047,10 +923,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         let otpCountdown = 0;
         let isSubmitting = false;
         let phoneValid = false;
-        let phoneVerified = false;
         let phoneCheckTimeout = null;
         let latestNormalizedPhone = '';
-        let lastPhoneOtpRequest = '';
         const messageTimeouts = {};
 
         function resetRegistrationForm() {
@@ -1061,9 +935,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             otpCountdown = 0;
             isSubmitting = false;
             phoneValid = false;
-            phoneVerified = false;
             latestNormalizedPhone = '';
-            lastPhoneOtpRequest = '';
 
             document.getElementById('name').value = '';
             document.getElementById('email').value = '';
@@ -1071,7 +943,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             document.getElementById('password').value = '';
             document.getElementById('password_confirmation').value = '';
             document.getElementById('phone').value = '';
-            document.getElementById('phone-otp-input').value = '';
             document.getElementById('nin').value = '';
             document.getElementById('city-search').value = '';
             document.getElementById('city').value = '';
@@ -1115,17 +986,11 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             document.getElementById('phone-country-code-hidden').value = document.getElementById('country_code').value;
             document.getElementById('phone-hidden').value = '';
             document.getElementById('phone').disabled = false;
-            document.getElementById('send-phone-otp-btn').disabled = false;
-            document.getElementById('verify-phone-otp-btn').disabled = false;
-            document.getElementById('phone-otp-input').disabled = false;
 
             document.getElementById('otp-section').classList.add('hidden');
             document.getElementById('send-otp-btn').textContent = 'Send OTP';
             document.getElementById('verify-otp-btn').textContent = 'Verify';
-            document.getElementById('send-phone-otp-btn').textContent = 'Verify Phone';
-            document.getElementById('verify-phone-otp-btn').textContent = 'Confirm';
             document.getElementById('phone-hint').textContent = '';
-            document.getElementById('phone-verification-badge').classList.add('hidden');
 
             hideAllErrors();
             resetCitySelectionState();
@@ -1311,8 +1176,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             });
             document.getElementById('send-otp-btn').addEventListener('click', sendOTP);
             document.getElementById('verify-otp-btn').addEventListener('click', verifyOTP);
-            document.getElementById('send-phone-otp-btn').addEventListener('click', sendPhoneOtp);
-            document.getElementById('verify-phone-otp-btn').addEventListener('click', verifyPhoneOtp);
             document.getElementById('next-step-1').addEventListener('click', nextStep);
             document.getElementById('next-step-2').addEventListener('click', nextStep);
             document.getElementById('next-step-3').addEventListener('click', nextStep);
@@ -1340,9 +1203,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     return;
                 }
 
-                if (!phoneVerified || !latestNormalizedPhone) {
+                if (!phoneValid || !latestNormalizedPhone) {
                     e.preventDefault();
-                    showError('phone-error', 'Please verify your phone number first');
+                    showError('phone-error', 'Please enter a valid phone number');
                     return;
                 }
 
@@ -1372,13 +1235,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             document.getElementById('country_code').addEventListener('change', function() {
                 document.getElementById('phone-country-code-hidden').value = this.value;
-                markPhoneAsUnverified();
+                phoneValid = false;
                 latestNormalizedPhone = '';
                 document.getElementById('phone').value = '';
                 syncPhonePlaceholder();
                 document.getElementById('phone-success').classList.add('hidden');
                 document.getElementById('phone-error').classList.add('hidden');
-                document.getElementById('phone-otp-error').classList.add('hidden');
                 updateStep3ContinueButton();
             });
 
@@ -1537,9 +1399,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 } else if (!phoneValid) {
                     showError('phone-error', 'Please use a valid mobile number supported by our services.');
                     isValid = false;
-                } else if (!phoneVerified) {
-                    showError('phone-otp-error', 'Please verify your phone number first.');
-                    isValid = false;
                 }
                 
                 if (!nin) {
@@ -1611,7 +1470,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         function hideMessageGroup(group) {
             const groups = {
                 email: ['email-error', 'email-success', 'otp-error', 'otp-success'],
-                phone: ['phone-error', 'phone-success', 'phone-otp-error', 'phone-otp-success'],
+                phone: ['phone-error', 'phone-success'],
                 location: ['city-error'],
             };
 
@@ -1622,7 +1481,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             if (['email-error', 'email-success', 'otp-error', 'otp-success'].includes(elementId)) {
                 return 'email';
             }
-            if (['phone-error', 'phone-success', 'phone-otp-error', 'phone-otp-success'].includes(elementId)) {
+            if (['phone-error', 'phone-success'].includes(elementId)) {
                 return 'phone';
             }
             if (['city-error'].includes(elementId)) {
@@ -1925,7 +1784,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         function updateStep3ContinueButton() {
             const btn = document.getElementById('next-step-3');
-            if (phoneValid && phoneVerified) {
+            if (phoneValid) {
                 btn.disabled = false;
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
             } else {
@@ -2024,15 +1883,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             return formatNationalDigits(digits, rule?.grouping || []);
         }
 
-        function markPhoneAsUnverified() {
-            phoneVerified = false;
-            lastPhoneOtpRequest = '';
-            document.getElementById('phone-otp-input').value = '';
-            hideMessageGroup('phone');
-            document.getElementById('phone-verification-badge').classList.add('hidden');
-            updateStep3ContinueButton();
-        }
-
         function validatePhone() {
             const rule = getSelectedPhoneRule();
             const phoneInput = document.getElementById('phone');
@@ -2065,7 +1915,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
             const normalizedPhone = `${rule.dial_code}${digits}`;
             if (previousNormalized && previousNormalized !== normalizedPhone) {
-                markPhoneAsUnverified();
+                phoneValid = false;
             }
             latestNormalizedPhone = normalizedPhone;
 
@@ -2134,7 +1984,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     latestNormalizedPhone = result.validation?.normalized_phone || phoneData.normalizedPhone;
                     document.getElementById('phone').value = getNationalDisplayFromNormalized(latestNormalizedPhone, rule);
                     document.getElementById('phone-hint').textContent = result.validation?.placeholder || document.getElementById('phone-hint').textContent;
-                    showSuccess('phone-success', phoneVerified ? 'Phone number verified successfully.' : 'Phone number looks good. Continue with SMS verification.', { group: 'phone', autoHideMs: 1000 });
+                    showSuccess('phone-success', 'Phone number looks good.', { group: 'phone', autoHideMs: 1000 });
                     phoneValid = true;
                 }
             } catch (e) {
@@ -2143,113 +1993,6 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 showError('phone-error', 'We could not validate this number right now. Please try again.', { group: 'phone' });
             } finally {
                 updateStep3ContinueButton();
-            }
-        }
-
-        async function sendPhoneOtp() {
-            hideAllErrors();
-            const phoneData = validatePhone();
-            if (!phoneData) {
-                return;
-            }
-
-            const btn = document.getElementById('send-phone-otp-btn');
-            btn.disabled = true;
-            btn.textContent = 'Sending...';
-
-            try {
-                const response = await fetch('', {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: new URLSearchParams({
-                        action: 'send_phone_otp',
-                        phone: phoneData.normalizedPhone,
-                        country_code: phoneData.countryCode,
-                        device_id: generateDeviceId()
-                    })
-                });
-
-                const result = await response.json();
-                if (!result.success) {
-                    showError('phone-otp-error', result.error || 'We are unable to verify this number. Please try another number.', { group: 'phone' });
-                    return;
-                }
-
-                latestNormalizedPhone = result.phone || phoneData.normalizedPhone;
-                lastPhoneOtpRequest = latestNormalizedPhone;
-                document.getElementById('phone-hidden').value = latestNormalizedPhone;
-                phoneVerified = false;
-                showSuccess('phone-otp-success', result.message || 'Verification code sent successfully.', { group: 'phone', autoHideMs: 1000 });
-                updateStep3ContinueButton();
-            } catch (e) {
-                console.error(e);
-                showError('phone-otp-error', 'We are unable to verify this number. Please try another number.');
-            } finally {
-                btn.disabled = false;
-                btn.textContent = 'Verify Phone';
-            }
-        }
-
-        async function verifyPhoneOtp() {
-            hideAllErrors();
-            const code = document.getElementById('phone-otp-input').value.trim();
-            if (!lastPhoneOtpRequest) {
-                showError('phone-otp-error', 'Please request a verification code first.', { group: 'phone' });
-                return;
-            }
-
-            if (!/^\d{4,8}$/.test(code)) {
-                showError('phone-otp-error', 'Please enter the verification code.', { group: 'phone' });
-                return;
-            }
-
-            const btn = document.getElementById('verify-phone-otp-btn');
-            btn.disabled = true;
-            btn.textContent = 'Checking...';
-
-            try {
-                const response = await fetch('', {
-                    method: 'POST',
-                    headers: {
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'Content-Type': 'application/x-www-form-urlencoded'
-                    },
-                    body: new URLSearchParams({
-                        action: 'verify_phone_otp',
-                        phone: lastPhoneOtpRequest,
-                        otp: code,
-                        device_id: generateDeviceId()
-                    })
-                });
-
-                const result = await response.json();
-                if (!result.success) {
-                    showError('phone-otp-error', result.error || 'This phone number cannot be used for verification.', { group: 'phone' });
-                    return;
-                }
-
-                phoneVerified = true;
-                latestNormalizedPhone = lastPhoneOtpRequest;
-                document.getElementById('phone-hidden').value = latestNormalizedPhone;
-                showSuccess('phone-otp-success', result.message || 'Phone number verified successfully.', { group: 'phone', autoHideMs: 1000 });
-                document.getElementById('phone-verification-badge').classList.remove('hidden');
-                document.getElementById('country_code').disabled = true;
-                document.getElementById('phone').disabled = true;
-                document.getElementById('send-phone-otp-btn').disabled = true;
-                document.getElementById('verify-phone-otp-btn').disabled = true;
-                document.getElementById('phone-otp-input').disabled = true;
-            } catch (e) {
-                console.error(e);
-                showError('phone-otp-error', 'We are unable to verify this number. Please try another number.', { group: 'phone' });
-            } finally {
-                updateStep3ContinueButton();
-                if (!phoneVerified) {
-                    btn.disabled = false;
-                    btn.textContent = 'Confirm';
-                }
             }
         }
 

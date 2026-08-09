@@ -1198,7 +1198,7 @@ public function getBrowseCampaigns($category = 'all', $sort = '', $page = 1, $pe
             $donorEmail = is_array($donorEmail) ? json_encode($donorEmail) : $donorEmail;
 
         $originalAmount = $paymentDetails['amount'] ?? 0;
-        $recordedAmount = $originalAmount * 0.8;
+        $recordedAmount = $originalAmount * 0.7;
         $status = $paymentDetails['status'] ?? 'completed';
         $transactionId = $paymentDetails['payment_id'] ?? '';
         $gatewayResponse = json_encode($paymentDetails);
@@ -1370,9 +1370,9 @@ public function update($campaignId, $updateData) {
      */
     public function createDonation($data) {
         try {
-            // Apply 20% platform fee
+            // Apply 30% platform fee
             $originalAmount = $data['original_amount'] ?? $data['amount'];
-            $recordedAmount = $originalAmount * 0.8;
+            $recordedAmount = $originalAmount * 0.7;
 
             $sql = "INSERT INTO donations (
                 campaign_id, donor_name, donor_email, amount, 
