@@ -445,7 +445,18 @@ class IdVerificationService
 
     private function runOcrOnProcessedCopy(string $processedPath): array
     {
-        $tesseractBinary = trim((string) @shell_exec('command -v tesseract 2>/dev/null'));
+        if (!$this->canUseShellExecution()) {
+            return [
+                'available' => false,
+                'status' => 'unavailable',
+                'message' => 'Server-side OCR is not available on this server because shell execution is disabled.',
+                'raw_text' => '',
+                'fields' => [],
+            ];
+        }
+
+        $tesseractBinaryOutput = shell_exec('command -v tesseract 2>/dev/null');
+        $tesseractBinary = is_string($tesseractBinaryOutput) ? trim($tesseractBinaryOutput) : '';
         if ($tesseractBinary === '') {
             return [
                 'available' => false,
@@ -459,7 +470,8 @@ class IdVerificationService
         $escapedBinary = escapeshellcmd($tesseractBinary);
         $escapedPath = escapeshellarg($processedPath);
         $command = $escapedBinary . ' ' . $escapedPath . ' stdout -l eng 2>/dev/null';
-        $rawText = trim((string) @shell_exec($command));
+        $rawTextOutput = shell_exec($command);
+        $rawText = is_string($rawTextOutput) ? trim($rawTextOutput) : '';
 
         if ($rawText === '') {
             return [
@@ -478,6 +490,21 @@ class IdVerificationService
             'raw_text' => $rawText,
             'fields' => $this->extractIdentityFields($rawText),
         ];
+    }
+
+    private function canUseShellExecution(): bool
+    {
+        if (!function_exists('shell_exec')) {
+            return false;
+        }
+
+        $disabledFunctions = (string) ini_get('disable_functions');
+        if ($disabledFunctions === '') {
+            return true;
+        }
+
+        $disabledList = array_map('trim', explode(',', $disabledFunctions));
+        return !in_array('shell_exec', $disabledList, true);
     }
 
     private function extractIdentityFields(string $text): array
