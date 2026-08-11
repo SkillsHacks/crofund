@@ -58,28 +58,47 @@ include '../components/header.php';
                         </div>
                     </section>
 
-                    <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <p class="text-sm font-medium text-slate-500">Received donations</p>
-                            <p class="mt-3 text-2xl font-bold text-slate-900">$<?php echo number_format((float) $summary['total_received'], 2); ?></p>
-                            <p class="mt-2 text-xs text-slate-500"><?php echo (int) $summary['donation_count']; ?> donation<?php echo (int) $summary['donation_count'] !== 1 ? 's' : ''; ?></p>
-                        </div>
-                        <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
-                            <p class="text-sm font-medium text-amber-700">Money on hold</p>
-                            <p class="mt-3 text-2xl font-bold text-amber-800">$<?php echo number_format((float) $summary['total_on_hold'], 2); ?></p>
-                            <p class="mt-2 text-xs text-amber-700">Funds on hold cannot be withdrawn until released by admin.</p>
-                        </div>
-                        <div class="rounded-2xl border border-emerald-200 bg-emerald-50 p-5 shadow-sm">
-                            <p class="text-sm font-medium text-emerald-700">Money in balance</p>
-                            <p class="mt-3 text-2xl font-bold text-emerald-800">$<?php echo number_format((float) $summary['total_available'], 2); ?></p>
-                            <p class="mt-2 text-xs text-emerald-700">Completed donations that are not currently on hold.</p>
-                        </div>
-                        <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <p class="text-sm font-medium text-slate-500">Available to withdraw</p>
-                            <p class="mt-3 text-2xl font-bold text-slate-900">$<?php echo number_format($availableToWithdraw, 2); ?></p>
-                            <p class="mt-2 text-xs text-slate-500">After subtracting completed and pending withdrawals.</p>
-                        </div>
-                    </div>
+                    <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                        <article class="relative overflow-hidden rounded-3xl border border-emerald-200 bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-700 p-5 text-white shadow-lg shadow-emerald-900/20">
+                            <div class="absolute right-0 top-0 h-24 w-24 -translate-y-6 translate-x-6 rounded-full bg-white/10"></div>
+                            <p class="text-sm font-medium text-emerald-50/85">Available balance</p>
+                            <p class="mt-3 text-3xl font-bold tracking-tight">$<?php echo number_format($availableToWithdraw, 2); ?></p>
+                            <p class="mt-2 text-xs text-emerald-50/80">Ready for withdrawal after subtracting completed and pending payouts.</p>
+                        </article>
+
+                        <article class="rounded-3xl border border-amber-200 bg-gradient-to-br from-amber-50 to-white p-5 shadow-sm">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-sm font-medium text-amber-700">Hold</p>
+                                    <p class="mt-3 text-3xl font-bold tracking-tight text-amber-900">$<?php echo number_format((float) $summary['total_on_hold'], 2); ?></p>
+                                </div>
+                                <span class="rounded-2xl bg-amber-100 px-3 py-1 text-xs font-semibold text-amber-700">Restricted</span>
+                            </div>
+                            <p class="mt-2 text-xs text-amber-700">Funds on hold cannot be withdrawn until an admin releases them.</p>
+                        </article>
+
+                        <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500">Total donations</p>
+                                    <p class="mt-3 text-3xl font-bold tracking-tight text-slate-900">$<?php echo number_format((float) $summary['total_received'], 2); ?></p>
+                                </div>
+                                <span class="rounded-2xl bg-slate-100 px-3 py-1 text-xs font-semibold text-slate-600"><?php echo (int) $summary['donation_count']; ?> total</span>
+                            </div>
+                            <p class="mt-2 text-xs text-slate-500">Completed donations received across all your campaigns.</p>
+                        </article>
+
+                        <article class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
+                            <div class="flex items-start justify-between gap-3">
+                                <div>
+                                    <p class="text-sm font-medium text-slate-500">Pending withdrawals</p>
+                                    <p class="mt-3 text-3xl font-bold tracking-tight text-slate-900">$<?php echo number_format($pendingWithdrawals, 2); ?></p>
+                                </div>
+                                <span class="rounded-2xl bg-yellow-100 px-3 py-1 text-xs font-semibold text-yellow-700">In review</span>
+                            </div>
+                            <p class="mt-2 text-xs text-slate-500">Requests already submitted and waiting to be processed.</p>
+                        </article>
+                    </section>
 
                     <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
                         <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
