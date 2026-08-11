@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_national_id'])
     }
 
     if ($hasPendingVerificationReview) {
-        $_SESSION['error_message'] = 'Your most recent ID submission is still pending review. Please wait for the review outcome before uploading another image.';
+        $_SESSION['error_message'] = 'Your most recent ID submission is still under review. Please wait for the review outcome before uploading another image.';
         header('Location: ' . BASE_URL . '/withdrawals/initiate.php');
         exit();
     }
@@ -98,7 +98,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_national_id'])
         $decisionSummary = ' Decision status: ' . ucfirst(str_replace('_', ' ', (string) ($decision['status'] ?? 'manual_review'))) . ' (score ' . (int) ($decision['score'] ?? 0) . '). ' . (string) ($decision['message'] ?? '');
 
         $_SESSION['success_message'] = sprintf(
-            'Your National ID image was uploaded successfully, passed initial quality checks (%dx%d), and a verification-ready processed copy was created. Stored file: %s.%s%s',
+            'Your National ID image was uploaded successfully and passed initial quality checks (%dx%d). It is now under review by the CroFund team before withdrawal access can be granted. Stored file: %s.%s%s',
             (int) ($verificationUpload['quality']['width'] ?? 0),
             (int) ($verificationUpload['quality']['height'] ?? 0),
             basename((string) ($verificationUpload['stored_path'] ?? '')),
@@ -218,8 +218,8 @@ function renderWithdrawalInitiateContent(): void {
             <?php elseif (!$hasExceededMaxAttempts): ?>
                 <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
                     <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
-                        <h2 class="text-lg font-semibold text-slate-900">Verify your National ID</h2>
-                        <p class="mt-1 text-sm text-slate-500">We need to confirm your identity before withdrawals can be processed.</p>
+                        <h2 class="text-lg font-semibold text-slate-900">Submit your National ID for review</h2>
+                        <p class="mt-1 text-sm text-slate-500">Upload your ID, let the quality checks run, and then our team will review it before withdrawals can be processed.</p>
                     </div>
                     <div class="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
                         <?php if ($verificationAttempts > 0): ?>
@@ -233,7 +233,7 @@ function renderWithdrawalInitiateContent(): void {
 
                         <?php if ($latestVerificationAttempt): ?>
                             <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
-                                <p class="font-semibold text-slate-900">Latest verification attempt</p>
+                                <p class="font-semibold text-slate-900">Latest ID review submission</p>
                                 <p class="mt-1"><?php echo htmlspecialchars($latestVerificationWorkflowLabel); ?></p>
                                 <?php if (!empty($latestVerificationAttempt['failure_reason'])): ?>
                                     <p class="mt-1"><strong>Reason:</strong> <?php echo htmlspecialchars((string) $latestVerificationAttempt['failure_reason']); ?></p>
@@ -243,7 +243,7 @@ function renderWithdrawalInitiateContent(): void {
 
                         <?php if ($hasPendingVerificationReview): ?>
                             <div class="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4 text-sm text-blue-800">
-                                Your latest ID submission is currently pending review. New uploads are temporarily disabled until that review is completed.
+                                Your latest ID submission passed upload checks and is currently under review. New uploads are temporarily disabled until that review is completed.
                             </div>
                         <?php endif; ?>
 
@@ -270,7 +270,7 @@ function renderWithdrawalInitiateContent(): void {
 
                             <div class="flex justify-start">
                                 <button type="submit" <?php echo $hasPendingVerificationReview ? 'disabled' : ''; ?> class="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70">
-                                    Upload for verification
+                                    Upload for review
                                 </button>
                             </div>
                         </form>

@@ -75,7 +75,7 @@ class IdVerificationService
         return match ($status) {
             self::STATUS_FAILED => 'Upload Failed',
             self::STATUS_UPLOADED => 'Uploaded',
-            self::STATUS_PENDING_REVIEW => 'Pending Review',
+            self::STATUS_PENDING_REVIEW => 'Under Review',
             self::STATUS_REJECTED => 'Rejected',
             self::STATUS_VERIFIED => 'Verified',
             default => ucwords(str_replace('_', ' ', $status !== '' ? $status : 'unknown')),
