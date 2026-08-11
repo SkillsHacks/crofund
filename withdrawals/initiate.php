@@ -37,6 +37,8 @@ $withdrawal = new Withdrawal();
 $idVerificationService = new IdVerificationService();
 
 $totalDonations = $campaign->getUserTotalDonations($_SESSION['user_id']);
+$heldDonations = $campaign->getUserHeldDonations($_SESSION['user_id']);
+$withdrawableDonations = $campaign->getUserWithdrawableDonations($_SESSION['user_id']);
 $totalWithdrawn = $withdrawal->getTotalApprovedWithdrawals($_SESSION['user_id']);
 $pendingWithdrawals = $withdrawal->getPendingWithdrawals($_SESSION['user_id']);
 $userInfo = $campaign->getUserInfo($_SESSION['user_id']);
@@ -45,7 +47,7 @@ $verificationAttempts = $campaign->getVerificationAttempts($_SESSION['user_id'])
 $hasExceededMaxAttempts = $campaign->hasExceededMaxAttempts($_SESSION['user_id'], 3);
 $remainingAttempts = 3 - $verificationAttempts;
 $hasAttemptedVerification = $campaign->hasUserAttemptedVerification($_SESSION['user_id']);
-$availableBalance = $totalDonations - $totalWithdrawn - $pendingWithdrawals;
+$availableBalance = $withdrawableDonations - $totalWithdrawn - $pendingWithdrawals;
 $pendingWithdrawalsList = $withdrawal->getPendingWithdrawalsList($_SESSION['user_id']);
 $latestVerificationAttempt = $idVerificationService->getLatestAttempt((int) $_SESSION['user_id']);
 $hasPendingVerificationReview = $idVerificationService->hasPendingReview((int) $_SESSION['user_id']);
@@ -103,7 +105,7 @@ if ($isAjaxRequest) {
 }
 
 function renderWithdrawalInitiateContent(): void {
-    global $hasVerifiedId, $errorMessage, $verificationAttempts, $remainingAttempts, $hasExceededMaxAttempts, $pendingWithdrawalsList, $totalDonations, $pendingWithdrawals, $availableBalance, $totalWithdrawn, $userInfo, $latestVerificationAttempt, $hasPendingVerificationReview, $latestVerificationWorkflowLabel;
+    global $hasVerifiedId, $errorMessage, $verificationAttempts, $remainingAttempts, $hasExceededMaxAttempts, $pendingWithdrawalsList, $totalDonations, $heldDonations, $withdrawableDonations, $pendingWithdrawals, $availableBalance, $totalWithdrawn, $userInfo, $latestVerificationAttempt, $hasPendingVerificationReview, $latestVerificationWorkflowLabel;
 ?>
 <div class="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr),360px]">
@@ -182,10 +184,14 @@ function renderWithdrawalInitiateContent(): void {
             <?php endif; ?>
 
             <?php if ($hasVerifiedId): ?>
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
                     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <p class="text-sm font-medium text-slate-500">Total donations</p>
                         <p class="mt-3 text-2xl font-bold text-slate-900">$<?php echo number_format($totalDonations, 2); ?></p>
+                    </div>
+                    <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
+                        <p class="text-sm font-medium text-amber-700">On hold</p>
+                        <p class="mt-3 text-2xl font-bold text-amber-800">$<?php echo number_format($heldDonations, 2); ?></p>
                     </div>
                     <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
                         <p class="text-sm font-medium text-slate-500">Pending withdrawals</p>

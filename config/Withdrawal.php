@@ -68,9 +68,10 @@ class Withdrawal {
         
         // Check available balance
         $campaign = new Campaign();
-        $totalDonations = $campaign->getUserTotalDonations($userId);
+        $withdrawableDonations = $campaign->getUserWithdrawableDonations($userId);
+        $totalWithdrawn = $this->getTotalApprovedWithdrawals($userId);
         $pendingWithdrawals = $this->getPendingWithdrawals($userId);
-        $availableBalance = $totalDonations - $pendingWithdrawals;
+        $availableBalance = $withdrawableDonations - $totalWithdrawn - $pendingWithdrawals;
         
         if ($amount > $availableBalance) {
             throw new Exception("Insufficient balance");

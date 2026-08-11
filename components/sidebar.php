@@ -63,6 +63,12 @@ $sidebarTrustRiskUi = isset($trustRiskUi) && is_array($trustRiskUi)
             <div class="space-y-1">
                 <h3 class="sidebar-section-title px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Finance</h3>
                 <?php renderSidebarNavItem([
+                    'label' => 'Donations',
+                    'href' => BASE_URL . '/donations/index.php',
+                    'action_key' => 'view_withdraw_logs',
+                    'icon_html' => '<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-3.314 0-6 1.79-6 4s2.686 4 6 4 6-1.79 6-4-2.686-4-6-4zm0 0V5m0 11v3m-7-7H3m18 0h-2"/></svg>',
+                ], $current_dir === 'donations' && $current_page === 'index' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
+                <?php renderSidebarNavItem([
                     'label' => 'Initiate Withdrawal',
                     'href' => BASE_URL . '/withdrawals/initiate.php',
                     'action_key' => 'withdraw_funds',

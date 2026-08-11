@@ -377,10 +377,85 @@ class Campaign {
             $query = "SELECT COALESCE(SUM(d.amount), 0) as total_donations
                      FROM donations d
                      JOIN campaigns c ON d.campaign_id = c.id
-                     WHERE c.user_id = ?";
+                     WHERE c.user_id = ? AND d.status = 'completed'";
             return $this->db->fetchOne($query, [$userId])['total_donations'] ?? 0;
         } catch (Exception $e) {
             throw new Exception("Failed to fetch user total donations: " . $e->getMessage());
+        }
+    }
+
+    public function getUserHeldDonations($userId) {
+        try {
+            $query = "SELECT COALESCE(SUM(d.amount), 0) as held_donations
+                     FROM donations d
+                     JOIN campaigns c ON d.campaign_id = c.id
+                     WHERE c.user_id = ? AND d.status = 'completed' AND COALESCE(d.is_on_hold, 0) = 1";
+            return (float) ($this->db->fetchOne($query, [$userId])['held_donations'] ?? 0);
+        } catch (Exception $e) {
+            throw new Exception("Failed to fetch held donations: " . $e->getMessage());
+        }
+    }
+
+    public function getUserWithdrawableDonations($userId) {
+        try {
+            $query = "SELECT COALESCE(SUM(d.amount), 0) as withdrawable_donations
+                     FROM donations d
+                     JOIN campaigns c ON d.campaign_id = c.id
+                     WHERE c.user_id = ? AND d.status = 'completed' AND COALESCE(d.is_on_hold, 0) = 0";
+            return (float) ($this->db->fetchOne($query, [$userId])['withdrawable_donations'] ?? 0);
+        } catch (Exception $e) {
+            throw new Exception("Failed to fetch withdrawable donations: " . $e->getMessage());
+        }
+    }
+
+    public function getUserDonationSummary($userId) {
+        try {
+            $query = "SELECT
+                        COUNT(d.id) as donation_count,
+                        COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as total_received,
+                        COALESCE(SUM(CASE WHEN d.status = 'completed' AND COALESCE(d.is_on_hold, 0) = 1 THEN d.amount ELSE 0 END), 0) as total_on_hold,
+                        COALESCE(SUM(CASE WHEN d.status = 'completed' AND COALESCE(d.is_on_hold, 0) = 0 THEN d.amount ELSE 0 END), 0) as total_available
+                      FROM donations d
+                      JOIN campaigns c ON d.campaign_id = c.id
+                      WHERE c.user_id = ?";
+
+            $summary = $this->db->fetchOne($query, [$userId]) ?: [];
+
+            return [
+                'donation_count' => (int) ($summary['donation_count'] ?? 0),
+                'total_received' => (float) ($summary['total_received'] ?? 0),
+                'total_on_hold' => (float) ($summary['total_on_hold'] ?? 0),
+                'total_available' => (float) ($summary['total_available'] ?? 0),
+            ];
+        } catch (Exception $e) {
+            throw new Exception("Failed to fetch donation summary: " . $e->getMessage());
+        }
+    }
+
+    public function getUserDonationRecords($userId) {
+        try {
+            $query = "SELECT
+                        d.id,
+                        d.amount,
+                        d.status,
+                        d.payment_gateway,
+                        d.donor_name,
+                        d.donor_email,
+                        d.transaction_id,
+                        d.created_at,
+                        COALESCE(d.is_on_hold, 0) as is_on_hold,
+                        d.hold_reason,
+                        d.hold_at,
+                        c.id as campaign_id,
+                        c.title as campaign_title
+                      FROM donations d
+                      JOIN campaigns c ON d.campaign_id = c.id
+                      WHERE c.user_id = ?
+                      ORDER BY d.created_at DESC, d.id DESC";
+
+            return $this->db->fetchAll($query, [$userId]) ?: [];
+        } catch (Exception $e) {
+            throw new Exception("Failed to fetch donation records: " . $e->getMessage());
         }
     }
 
