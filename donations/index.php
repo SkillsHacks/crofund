@@ -97,20 +97,19 @@ include '../components/header.php';
                     </section>
 
                     <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                        <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
-                            <h2 class="text-lg font-semibold text-slate-900">Donation activity</h2>
-                            <p class="mt-1 text-sm text-slate-500">A full history of donations received across your campaigns.</p>
+                        <div class="border-b border-slate-200 px-4 py-3 sm:px-5">
+                            <h2 class="text-base font-semibold text-slate-900">Donation activity</h2>
                         </div>
                         <div class="overflow-x-auto">
                             <table class="min-w-full divide-y divide-slate-200 text-sm">
                                 <thead class="bg-slate-50">
                                     <tr>
-                                        <th class="px-5 py-4 text-left font-semibold text-slate-500">Campaign</th>
-                                        <th class="px-5 py-4 text-left font-semibold text-slate-500">Donor</th>
-                                        <th class="px-5 py-4 text-left font-semibold text-slate-500">Amount</th>
-                                        <th class="px-5 py-4 text-left font-semibold text-slate-500">Payment</th>
-                                        <th class="px-5 py-4 text-left font-semibold text-slate-500">Status</th>
-                                        <th class="px-5 py-4 text-left font-semibold text-slate-500">Date</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Campaign</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Donor</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Amount</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Payment</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Status</th>
+                                        <th class="px-4 py-3 text-left text-xs font-semibold uppercase tracking-[0.14em] text-slate-500">Date</th>
                                     </tr>
                                 </thead>
                                 <tbody class="divide-y divide-slate-100 bg-white">
@@ -130,34 +129,34 @@ include '../components/header.php';
                                         $statusLabel = $isOnHold ? 'On Hold' : ucfirst($status);
                                         ?>
                                         <tr>
-                                            <td class="px-5 py-4 align-top">
+                                            <td class="px-4 py-3.5 align-top">
                                                 <div class="font-medium text-slate-900"><?php echo htmlspecialchars((string) ($donation['campaign_title'] ?? 'Campaign')); ?></div>
                                             </td>
-                                            <td class="px-5 py-4 align-top">
+                                            <td class="px-4 py-3.5 align-top">
                                                 <div class="font-medium text-slate-900"><?php echo htmlspecialchars((string) (($donation['donor_name'] ?? '') !== '' ? $donation['donor_name'] : 'Anonymous')); ?></div>
-                                                <div class="mt-1 text-xs text-slate-500"><?php echo htmlspecialchars((string) (($donation['donor_email'] ?? '') !== '' ? $donation['donor_email'] : 'No email provided')); ?></div>
+                                                <div class="mt-0.5 text-xs text-slate-500"><?php echo htmlspecialchars((string) (($donation['donor_email'] ?? '') !== '' ? $donation['donor_email'] : 'No email provided')); ?></div>
                                             </td>
-                                            <td class="px-5 py-4 align-top font-semibold text-slate-900">$<?php echo number_format((float) ($donation['amount'] ?? 0), 2); ?></td>
-                                            <td class="px-5 py-4 align-top text-slate-600">
+                                            <td class="px-4 py-3.5 align-top font-semibold text-slate-900">$<?php echo number_format((float) ($donation['amount'] ?? 0), 2); ?></td>
+                                            <td class="px-4 py-3.5 align-top text-slate-600">
                                                 <div><?php echo htmlspecialchars((string) ucfirst((string) ($donation['payment_gateway'] ?? 'Unknown'))); ?></div>
                                                 <?php if (!empty($donation['transaction_id'])): ?>
-                                                    <div class="mt-1 text-xs text-slate-500"><?php echo htmlspecialchars((string) $donation['transaction_id']); ?></div>
+                                                    <div class="mt-0.5 text-xs text-slate-500"><?php echo htmlspecialchars((string) $donation['transaction_id']); ?></div>
                                                 <?php endif; ?>
                                             </td>
-                                            <td class="px-5 py-4 align-top">
-                                                <span class="inline-flex rounded-full px-3 py-1 text-xs font-semibold <?php echo $statusClass; ?>"><?php echo htmlspecialchars($statusLabel); ?></span>
+                                            <td class="px-4 py-3.5 align-top">
+                                                <span class="inline-flex rounded-full px-2.5 py-1 text-[11px] font-semibold <?php echo $statusClass; ?>"><?php echo htmlspecialchars($statusLabel); ?></span>
                                                 <?php if ($isOnHold && !empty($donation['hold_reason'])): ?>
-                                                    <div class="mt-2 text-xs text-amber-700"><?php echo htmlspecialchars((string) $donation['hold_reason']); ?></div>
+                                                    <div class="mt-1.5 text-xs text-amber-700"><?php echo htmlspecialchars((string) $donation['hold_reason']); ?></div>
                                                 <?php endif; ?>
                                             </td>
-                                            <td class="px-5 py-4 align-top text-slate-500"><?php echo htmlspecialchars((string) ($donation['created_at'] ?? '—')); ?></td>
+                                            <td class="px-4 py-3.5 align-top text-slate-500"><?php echo htmlspecialchars((string) ($donation['created_at'] ?? '—')); ?></td>
                                         </tr>
                                     <?php endforeach; ?>
                                 </tbody>
                             </table>
                         </div>
                         <?php if (empty($donationRecords)): ?>
-                            <div class="px-6 py-12 text-center text-slate-500">No donations have been received yet.</div>
+                            <div class="px-5 py-10 text-center text-sm text-slate-500">No donations have been received yet.</div>
                         <?php endif; ?>
                     </div>
                 </div>
