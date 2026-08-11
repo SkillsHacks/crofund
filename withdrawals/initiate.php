@@ -89,22 +89,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_national_id'])
         $verificationUpload = $idVerificationService->storeUploadedNationalId($_FILES['national_id'] ?? [], (int) $_SESSION['user_id']);
         $campaign->markVerificationAttempted($_SESSION['user_id']);
 
-        $ocrStatus = (string) ($verificationUpload['ocr']['status'] ?? 'unavailable');
-        $ocrSummary = $ocrStatus === 'extracted'
-            ? ' OCR extracted candidate identity text from the processed copy.'
-            : ' OCR is not yet available or did not extract readable text.';
-
-        $decision = $verificationUpload['decision'] ?? ['status' => 'manual_review', 'message' => 'Manual review is required.', 'score' => 0];
-        $decisionSummary = ' Decision status: ' . ucfirst(str_replace('_', ' ', (string) ($decision['status'] ?? 'manual_review'))) . ' (score ' . (int) ($decision['score'] ?? 0) . '). ' . (string) ($decision['message'] ?? '');
-
-        $_SESSION['success_message'] = sprintf(
-            'Your National ID image was uploaded successfully and passed initial quality checks (%dx%d). It is now under review by the CroFund team before withdrawal access can be granted. Stored file: %s.%s%s',
-            (int) ($verificationUpload['quality']['width'] ?? 0),
-            (int) ($verificationUpload['quality']['height'] ?? 0),
-            basename((string) ($verificationUpload['stored_path'] ?? '')),
-            $ocrSummary,
-            $decisionSummary
-        );
+        $_SESSION['success_message'] = 'Your National ID has been uploaded successfully and is now under review. You will be notified once the verification process is complete.';
     } catch (Exception $e) {
         $_SESSION['error_message'] = $e->getMessage();
     }
