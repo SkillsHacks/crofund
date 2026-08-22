@@ -208,6 +208,7 @@ $ogImageUrl = !empty($details['image_path'])
     .modal-overlay{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(15,23,42,.55); backdrop-filter:blur(8px); }
     .modal-overlay.active{ display:flex; align-items:center; justify-content:center; padding:1rem; overflow-y:auto; }
     .modal-box{ background:#fff; border-radius:1.5rem; box-shadow:0 25px 50px -12px rgba(0,0,0,.28); max-width:560px; width:100%; max-height:92vh; overflow-y:auto; animation:slideUp .35s cubic-bezier(.16,1,.3,1); }
+    .modal-box, .modal-box *{ border-radius:0 !important; }
     @keyframes slideUp{ from{ opacity:0; transform:translateY(24px) scale(.97); } to{ opacity:1; transform:translateY(0) scale(1); } }
 
     /* Form styles (used inside ajax-loaded form) */
@@ -721,9 +722,6 @@ $ogImageUrl = !empty($details['image_path'])
     <!-- Modal header -->
     <div class="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10 rounded-t-2xl">
       <div class="flex items-center gap-3">
-        <div class="w-10 h-10 bg-gradient-to-br from-emerald-500 to-teal-600 rounded-xl flex items-center justify-center shadow">
-          <i class="fas fa-heart text-white text-sm"></i>
-        </div>
         <div>
           <h2 class="text-lg font-bold text-slate-900 leading-tight">Make a Donation</h2>
           <p class="text-xs text-slate-400">Secure &amp; encrypted payment</p>
@@ -731,359 +729,42 @@ $ogImageUrl = !empty($details['image_path'])
       </div>
       <button onclick="closeDonationModal()"
         class="w-9 h-9 flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-all rounded-full">
-        <i class="fas fa-times"></i>
+        Close
       </button>
     </div>
     <!-- Modal body -->
     <div class="px-6 py-6">
       <div id="donationFormLoader" class="text-center py-14">
         <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
-        <p class="mt-4 text-sm text-slate-500">Loading secure payment form…</p>
+        <p class="mt-4 text-sm text-slate-500">Loading secure payment form...</p>
       </div>
       <div id="donationFormContainer" class="hidden"></div>
     </div>
   </div>
 </div>
 
-<script>
-const URL_BASE       = '<?php echo BASE_URL; ?>';
-const campaignId     = <?php echo $details['id']; ?>;
-const donationMinimum = 5;
-
-// ── Animate progress bar on load ──
-document.addEventListener('DOMContentLoaded', function () {
-  const bar = document.getElementById('sidebarProgress');
-  if (bar) {
-    setTimeout(() => { bar.style.width = bar.dataset.target + '%'; }, 300);
-  }
-  checkForMessages();
-});
-
-// ── Donation Modal ──
-let paypalConfig       = null;
-let paypalButtonsLoaded   = false;
-let paypalButtonsInstance = null;
-
-function openDonationModal() {
-  const campaignUnderReview = <?php echo $campaignUnderReview ? 'true' : 'false'; ?>;
-  if (campaignUnderReview) {
-    return;
-  }
-
-  const modal         = document.getElementById('donationModal');
-  const formContainer = document.getElementById('donationFormContainer');
-  const formLoader    = document.getElementById('donationFormLoader');
-
-  modal.classList.add('active');
-  document.body.style.overflow = 'hidden';
-
-  if (paypalButtonsInstance) {
-    paypalButtonsInstance.close();
-    paypalButtonsInstance = null;
-    paypalButtonsLoaded   = false;
-  }
-
-  formContainer.classList.add('hidden');
-  formLoader.classList.remove('hidden');
-  formContainer.innerHTML = '';
-
-  $.ajax({
-    url: URL_BASE + '/campaigns/get-donation-form.php?id=' + campaignId,
-    type: 'GET',
-    dataType: 'json',
-    success: function (response) {
-      if (response.success) {
-        paypalConfig = { clientId: response.paypal_client_id, mode: response.paypal_mode };
-        formLoader.classList.add('hidden');
-        formContainer.innerHTML = response.html;
-        formContainer.classList.remove('hidden');
-        initializeDonationForm();
-      } else {
-        showError('Failed to load donation form. Please try again.');
-      }
-    },
-    error: function (xhr) {
-      formLoader.classList.add('hidden');
-      let msg = 'Failed to load donation form. Please try again.';
-      try { const r = JSON.parse(xhr.responseText); if (r.error) msg = r.error; } catch(e) {}
-      formContainer.innerHTML = '<div class="text-center py-8"><i class="fas fa-exclamation-triangle text-red-500 text-3xl mb-3"></i><p class="font-semibold text-red-700 text-sm">' + msg + '</p></div>';
-      formContainer.classList.remove('hidden');
-    }
-  });
-}
-
-function closeDonationModal() {
-  document.getElementById('donationModal').classList.remove('active');
-  document.body.style.overflow = '';
-  paypalButtonsLoaded = false;
-}
-
-document.addEventListener('click', function (e) {
-  const modal = document.getElementById('donationModal');
-  if (e.target === modal) closeDonationModal();
-});
-document.addEventListener('keydown', function (e) {
-  if (e.key === 'Escape') closeDonationModal();
-});
-
-// ── Form handlers ──
-function initializeDonationForm() {
-  $('.gateway-option').off('click').on('click', function () {
-    $('.gateway-option').removeClass('border-emerald-500 bg-emerald-50').addClass('border-slate-200 bg-white');
-    $('.gateway-option .w-3').removeClass('bg-emerald-500');
-    $('input[name="payment_gateway"]').prop('checked', false);
-
-    $(this).addClass('border-emerald-500 bg-emerald-50').removeClass('border-slate-200 bg-white');
-    $(this).find('.w-3').addClass('bg-emerald-500');
-    $(this).find('input[type="radio"]').prop('checked', true);
-
-    const gw = $(this).data('gateway');
-    if (gw === 'paypal') {
-      $('#buttonDonation').addClass('hidden');
-      $('#paypal-button-container').removeClass('hidden');
-      loadPayPalButtons();
-    } else {
-      $('#buttonDonation').removeClass('hidden');
-      $('#paypal-button-container').addClass('hidden');
-    }
-  });
-
-  // Trigger a click on the first gateway option so its state (radio + UI + PayPal buttons) initialises correctly
-  $('.gateway-option').first().trigger('click');
-
-  $('.donation-amount-btn').off('click').on('click', function () {
-    $('.donation-amount-btn').removeClass('active');
-    $(this).addClass('active');
-    $('#onlyNumber').val($(this).data('amount'));
-  });
-
-  $('#onlyNumber').off('input').on('input', function () {
-    $('.donation-amount-btn').removeClass('active');
-  });
-
-  $('#formDonation').off('submit').on('submit', function (e) {
-    e.preventDefault();
-    const amount = $('#onlyNumber').val();
-    const name   = $('#cardholder-name').val();
-    const email  = $('#cardholder-email').val();
-    const gw     = $('input[name="payment_gateway"]:checked').val();
-
-    if (!validateBasicFields(amount, name, email)) return false;
-
-    if (gw === 'stripe') {
-      $('#buttonDonation').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Processing…');
-      $.ajax({
-        url: URL_BASE + '/stripe/checkout-session.php',
-        type: 'POST',
-        data: {
-          campaign_id: campaignId, amount, full_name: name, email,
-          country: $('#country').val(), postal_code: $('#postal_code').val(),
-          comment: $('#comment').val(), anonymous: $('input[name="anonymous"]').val() || '0',
-          csrf_token: $('input[name="csrf_token"]').val()
-        },
-        dataType: 'json',
-        success: function (r) {
-          if (r.success && r.url) { window.location.href = r.url; }
-          else {
-            showError(r.error || 'Failed to create checkout session.');
-            $('#buttonDonation').prop('disabled', false).html('<i class="fas fa-heart mr-2"></i> Complete Donation');
-          }
-        },
-        error: function () {
-          showError('An error occurred. Please try again.');
-          $('#buttonDonation').prop('disabled', false).html('<i class="fas fa-heart mr-2"></i> Complete Donation');
-        }
-      });
-    } else if (gw === 'paypal_classic') {
-      // Classic PayPal Standard flow (personal account, HTML form POST to
-      // paypal.com). We create the pending_donations record server-side
-      // first, then hand off to an auto-submitting form -- see
-      // campaigns/paypal-classic-create.php and paypal-classic-submit.php.
-      $('#buttonDonation').prop('disabled', true).html('<i class="fas fa-spinner fa-spin mr-2"></i>Redirecting to PayPal…');
-      $.ajax({
-        url: URL_BASE + '/campaigns/paypal-classic-create.php',
-        type: 'POST',
-        data: {
-          campaign_id: campaignId, amount, full_name: name, email,
-          csrf_token: $('input[name="csrf_token"]').val()
-        },
-        dataType: 'json',
-        success: function (r) {
-          if (r.success && r.redirect) { window.location.href = r.redirect; }
-          else {
-            showError(r.error || 'Failed to start PayPal donation.');
-            $('#buttonDonation').prop('disabled', false).html('<i class="fas fa-heart mr-2"></i> Complete Donation');
-          }
-        },
-        error: function () {
-          showError('An error occurred. Please try again.');
-          $('#buttonDonation').prop('disabled', false).html('<i class="fas fa-heart mr-2"></i> Complete Donation');
-        }
-      });
-    }
-    return false;
-  });
-
-  $('#buttonDonation').removeClass('hidden');
-  $('#paypal-button-container').addClass('hidden');
-}
-
-// ── PayPal ──
-function renderPayPalButtons() {
-  paypalButtonsInstance = paypal.Buttons({
-    createOrder: function (data, actions) {
-      const amount = $('#onlyNumber').val();
-      const name   = $('#cardholder-name').val();
-      const email  = $('#cardholder-email').val();
-      if (!validateBasicFields(amount, name, email)) return Promise.reject('Validation failed');
-      return $.ajax({
-        url: URL_BASE + '/paypal/create-order.php', type: 'POST',
-        data: {
-          campaign_id: campaignId, amount, full_name: name, email,
-          country: $('#country').val(), postal_code: $('#postal_code').val(),
-          comment: $('#comment').val(), anonymous: $('input[name="anonymous"]').val() || '0',
-          csrf_token: $('input[name="csrf_token"]').val()
-        },
-        dataType: 'json'
-      }).then(function (r) {
-        if (r.success) return r.orderId;
-        throw new Error(r.error || 'Failed to create PayPal order');
-      });
-    },
-    onApprove: function (data, actions) {
-      // Capture happens server-side in success.php
-      window.location.href = URL_BASE + '/paypal/success.php?token=' + data.orderID;
-    },
-    onError: function (err) {
-      showError('An error occurred with PayPal. Please try again.');
-      console.error('PayPal error:', err);
-    }
-  });
-  paypalButtonsInstance.render('#paypal-button-container');
-  paypalButtonsLoaded = true;
-}
-
-function loadPayPalButtons() {
-  if (paypalButtonsLoaded) return;
-  if (!paypalConfig || !paypalConfig.clientId) {
-    showError('PayPal is not configured correctly.');
-    return;
-  }
-  if (window.paypal) { renderPayPalButtons(); return; }
-  const s = document.createElement('script');
-  s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(paypalConfig.clientId)}&currency=USD&intent=capture`;
-  s.onload = function () { if (window.paypal) renderPayPalButtons(); };
-  document.body.appendChild(s);
-}
-
-// ── Validation ──
-function validateBasicFields(amount, name, email) {
-  if (!amount || parseFloat(amount) < donationMinimum) {
-    showError('Please enter a valid donation amount (minimum $' + donationMinimum + ')');
-    return false;
-  }
-  if (!name || !name.trim()) { showError('Please enter your full name'); return false; }
-  if (!email || !/^\S+@\S+\.\S+$/.test(email)) { showError('Please enter a valid email address'); return false; }
-  return true;
-}
-
-function showError(msg) {
-  $('#showErrorsDonation').html('<li><i class="fas fa-times-circle mr-1.5"></i>' + msg + '</li>');
-  $('#errorDonation').removeClass('hidden');
-  $('#showDonationMessages').addClass('hidden');
-}
-
-// ── Campaign updates ──
-function showUpdateForm()  { document.getElementById('update-form').classList.remove('hidden'); }
-function hideUpdateForm()  {
-  document.getElementById('update-form').classList.add('hidden');
-  document.getElementById('campaign-update-form').reset();
-}
-function editUpdate(id)    { alert('Edit functionality coming soon!'); }
-
-// ── Share ──
-const campaignShareUrl = '<?php echo BASE_URL . "/campaigns/public-view.php?id=" . $details['id']; ?>';
-
-function copyShareLink() {
-  if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(campaignShareUrl).then(showCopySuccess).catch(() => fallbackCopy(campaignShareUrl));
-  } else {
-    fallbackCopy(campaignShareUrl);
-  }
-}
-
-function fallbackCopy(text) {
-  const el = document.createElement('textarea');
-  el.value = text;
-  el.style.cssText = 'position:fixed;top:0;left:0;opacity:0;';
-  document.body.appendChild(el);
-  el.focus(); el.select();
-  try { document.execCommand('copy'); showCopySuccess(); } catch(e) { showCopyError(); }
-  document.body.removeChild(el);
-}
-
-function showCopySuccess() {
-  const el = document.createElement('div');
-  el.className = 'fixed bottom-24 lg:bottom-6 right-4 lg:right-6 bg-slate-900 text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-xl z-[300] flex items-center gap-2 transition-all';
-  el.innerHTML = '<i class="fas fa-check text-emerald-400"></i> Link copied!';
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2800);
-}
-
-function showCopyError() {
-  const el = document.createElement('div');
-  el.className = 'fixed bottom-24 lg:bottom-6 right-4 lg:right-6 bg-red-600 text-white text-sm font-semibold px-5 py-3 rounded-xl shadow-xl z-[300]';
-  el.innerHTML = '<i class="fas fa-times mr-2"></i> Failed to copy';
-  document.body.appendChild(el);
-  setTimeout(() => el.remove(), 2800);
-}
-
-// ── Campaign update form submit ──
-document.addEventListener('DOMContentLoaded', function () {
-  const form = document.getElementById('campaign-update-form');
-  if (form) {
-    form.addEventListener('submit', function (e) {
-      e.preventDefault();
-      fetch('<?php echo BASE_URL; ?>/campaigns/add-update.php', { method:'POST', body: new FormData(this) })
-        .then(r => r.json())
-        .then(data => {
-          if (data.success) {
-            Swal.fire({ title:'Posted!', text:'Update posted successfully.', icon:'success', confirmButtonColor:'#059669' }).then(() => location.reload());
-          } else {
-            Swal.fire({ title:'Error', text: data.error || 'Failed to post update', icon:'error', confirmButtonColor:'#dc2626' });
-          }
-        })
-        .catch(() => Swal.fire({ title:'Error', text:'An error occurred.', icon:'error', confirmButtonColor:'#dc2626' }));
-    });
-  }
-});
-
-// ── Session flash messages ──
-function checkForMessages() {
-  <?php if (isset($_SESSION['success'])): ?>
-    Swal.fire({ title:'Success!', text:'<?php echo addslashes($_SESSION['success']); ?>', icon:'success', confirmButtonColor:'#059669' });
-    <?php unset($_SESSION['success']); ?>
-  <?php endif; ?>
-  <?php if (isset($_SESSION['error'])): ?>
-    Swal.fire({ title:'Error', text:'<?php echo addslashes($_SESSION['error']); ?>', icon:'error', confirmButtonColor:'#dc2626' });
-    <?php unset($_SESSION['error']); ?>
-  <?php endif; ?>
-  <?php if (isset($_SESSION['donation_success'])): ?>
-    Swal.fire({ title:'Thank You!', text:'<?php echo addslashes($_SESSION['donation_success']); ?>', icon:'success', confirmButtonColor:'#059669', timer:5000 });
-    <?php unset($_SESSION['donation_success']); ?>
-  <?php endif; ?>
-  <?php if (isset($_SESSION['donation_error'])): ?>
-    Swal.fire({ title:'Payment Issue', text:'<?php echo addslashes($_SESSION['donation_error']); ?>', icon:'error', confirmButtonColor:'#dc2626' });
-    <?php unset($_SESSION['donation_error']); ?>
-  <?php endif; ?>
-  const p = new URLSearchParams(window.location.search);
-  if (p.get('payment') === 'success') {
-    Swal.fire({ title:'Thank You!', text:'Your donation was processed successfully.', icon:'success', confirmButtonColor:'#059669' });
-    window.history.replaceState({}, document.title, window.location.pathname);
-  }
-}
-</script>
-
 <?php include __DIR__ . '/../components/public-footer.php'; ?>
 </body>
 </html>
+<script>
+  window.campaignConfig = {
+    urlBase: '<?php echo BASE_URL; ?>',
+    campaignId: <?php echo (int) $details['id']; ?>,
+    donationMinimum: 5,
+    campaignUnderReview: <?php echo $campaignUnderReview ? 'true' : 'false'; ?>,
+    shareUrl: '<?php echo BASE_URL . "/campaigns/public-view.php?id=" . (int) $details['id']; ?>',
+    messages: {
+      success: <?php echo isset($_SESSION['success']) ? json_encode($_SESSION['success']) : 'null'; ?>,
+      error: <?php echo isset($_SESSION['error']) ? json_encode($_SESSION['error']) : 'null'; ?>,
+      donationSuccess: <?php echo isset($_SESSION['donation_success']) ? json_encode($_SESSION['donation_success']) : 'null'; ?>,
+      donationError: <?php echo isset($_SESSION['donation_error']) ? json_encode($_SESSION['donation_error']) : 'null'; ?>
+    }
+  };
+  <?php
+    unset($_SESSION['success']);
+    unset($_SESSION['error']);
+    unset($_SESSION['donation_success']);
+    unset($_SESSION['donation_error']);
+  ?>
+</script>
+<script src="<?php echo BASE_URL; ?>/assets/js/campaign-donation.js"></script>
