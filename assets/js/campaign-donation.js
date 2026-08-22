@@ -199,7 +199,7 @@
             console.error('Failed to process payments');
           }
         });
-        showError('Please try again later.');
+        showError('This donation method is unavailable. Please use another method.');
         return false;
       }
 
