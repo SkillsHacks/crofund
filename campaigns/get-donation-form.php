@@ -77,13 +77,13 @@ try {
                 <h3 class="text-sm font-bold text-slate-900">Payment Method</h3>
             </div>
             <div class="space-y-2">
-                <?php foreach ($paymentGateways as $i => $gw): ?>
-                <label class="flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all gateway-option <?php echo $i === 0 ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 bg-white hover:border-emerald-300'; ?>"
+                <?php foreach ($paymentGateways as $gw): ?>
+                <label class="flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all gateway-option border-slate-200 bg-white hover:border-emerald-300"
                        data-gateway="<?php echo htmlspecialchars($gw['code']); ?>">
-                    <input type="radio" name="payment_gateway" value="<?php echo htmlspecialchars($gw['code']); ?>" class="sr-only" <?php echo $i === 0 ? 'checked' : ''; ?>>
+                    <input type="radio" name="payment_gateway" value="<?php echo htmlspecialchars($gw['code']); ?>" class="sr-only">
                     <div class="flex items-center gap-3 w-full">
-                        <div class="w-5 h-5 flex items-center justify-center border-2 rounded-full <?php echo $i === 0 ? 'border-emerald-500' : 'border-slate-300'; ?>">
-                            <div class="w-2.5 h-2.5 rounded-full <?php echo $i === 0 ? 'bg-emerald-500' : ''; ?>"></div>
+                        <div class="w-5 h-5 flex items-center justify-center border-2 rounded-full border-slate-300">
+                            <div class="w-2.5 h-2.5 rounded-full"></div>
                         </div>
                         <span class="text-sm font-semibold text-slate-900">
                             <?php echo $gw['code'] === 'stripe' ? 'Credit / Debit Card' : htmlspecialchars($gw['name']); ?>

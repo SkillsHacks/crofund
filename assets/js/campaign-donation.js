@@ -134,8 +134,15 @@
       }
     });
 
-    // Trigger a click on the first gateway option so its state (radio + UI + PayPal buttons) initialises correctly
-    $('.gateway-option').first().trigger('click');
+    // Require an explicit payment-method selection before showing any fields
+    $('.gateway-option').removeClass('border-emerald-500 bg-emerald-50').addClass('border-slate-200 bg-white');
+    $('.gateway-option .w-2\\.5').removeClass('bg-emerald-500');
+    $('input[name="payment_gateway"]').prop('checked', false);
+    $('.non-stripe-fields input, .non-stripe-fields select').prop('disabled', true);
+    $('.non-stripe-fields').addClass('hidden');
+    $('#card-fields').addClass('hidden');
+    $('#buttonDonation').addClass('hidden');
+    $('#paypal-button-container').addClass('hidden');
 
     $('.donation-amount-btn').off('click').on('click', function () {
       $('.donation-amount-btn').removeClass('active');
