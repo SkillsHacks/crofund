@@ -22,17 +22,56 @@ class Withdrawal {
         }
     }
 
+    private function normalizeWithdrawalDetails(array $details): string {
+        ksort($details);
+        return json_encode($details, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) ?: '{}';
+    }
+
+    public function hasRecentPendingWithdrawalMatch(int $userId, string $method, float $amount, array $details): bool {
+        $detailsJson = $this->normalizeWithdrawalDetails($details);
+        $stmt = $this->db->prepare(
+            "SELECT details FROM withdrawals
+             WHERE user_id = ?
+             AND method = ?
+             AND amount = ?
+             AND status = 'pending'
+             AND created_at >= NOW() - INTERVAL 10 MINUTE
+             ORDER BY created_at DESC"
+        );
+        $stmt->execute([$userId, $method, $amount]);
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (md5((string) $row['details']) === md5($detailsJson)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     public function createWithdrawal($user_id, $method, $amount, $details) {
         $trustRisk = new TrustRiskService();
         $trustRisk->enforceForAction((int) $user_id, 'withdraw_funds');
 
-        $stmt = $this->db->prepare("INSERT INTO withdrawals (user_id, method, amount, details, status, created_at) VALUES (?, ?, ?, ?, 'pending', NOW())");
-        return $stmt->execute([
-            $user_id,
-            $method,
-            $amount,
-            json_encode($details)
-        ]);
+        if ($this->hasRecentPendingWithdrawalMatch((int) $user_id, (string) $method, (float) $amount, $details)) {
+            return false;
+        }
+
+        try {
+            $this->db->beginTransaction();
+            $stmt = $this->db->prepare("INSERT INTO withdrawals (user_id, method, amount, details, status, created_at) VALUES (?, ?, ?, ?, 'pending', NOW())");
+            $result = $stmt->execute([
+                $user_id,
+                $method,
+                $amount,
+                $this->normalizeWithdrawalDetails($details)
+            ]);
+            $this->db->commit();
+            return $result;
+        } catch (PDOException $e) {
+            $this->db->rollBack();
+            throw $e;
+        }
     }
 
     public function getUserWithdrawalHistory($userId) {

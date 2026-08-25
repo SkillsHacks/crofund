@@ -334,6 +334,7 @@ function renderWithdrawalInitiateContent(): void {
                     <div class="px-5 py-5 sm:px-6 sm:py-6">
                         <form action="<?php echo BASE_URL; ?>/withdrawals/process_withdrawal.php" method="POST" class="space-y-6" onsubmit="return validateWithdrawalForm(event)">
                             <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
+                            <input type="hidden" name="withdrawal_request_id" value="<?php echo bin2hex(random_bytes(16)); ?>">
 
                             <div class="grid grid-cols-1 gap-3 sm:grid-cols-3">
                                 <label class="flex cursor-pointer items-center rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm font-medium text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50/60">
@@ -499,6 +500,20 @@ function validateWithdrawalForm(event) {
 
 function confirmDelete() {
     return confirm('Are you sure you want to cancel this withdrawal?');
+}
+
+const withdrawalForm = document.querySelector('form[action*="process_withdrawal.php"]');
+if (withdrawalForm) {
+    withdrawalForm.addEventListener('submit', function () {
+        const submitButton = withdrawalForm.querySelector('button[type="submit"]');
+        if (!submitButton || submitButton.disabled) {
+            return;
+        }
+
+        submitButton.disabled = true;
+        submitButton.classList.add('opacity-70', 'cursor-not-allowed');
+        submitButton.textContent = 'Processing...';
+    });
 }
 </script>
 <?php

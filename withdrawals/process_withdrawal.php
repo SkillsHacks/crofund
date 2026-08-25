@@ -57,8 +57,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // Filter out empty fields
     $details = array_filter($details, fn($v) => !empty($v));
 
-    // Create withdrawal entry
+    $recentRequestKey = md5($user_id . '|' . $method . '|' . $amount . '|' . json_encode($details, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE));
+    if (isset($_SESSION['recent_withdrawal_requests'][$recentRequestKey]) && (time() - $_SESSION['recent_withdrawal_requests'][$recentRequestKey]) < 30) {
+        $_SESSION['error_message'] = 'This withdrawal request is already being processed. Please wait a moment and try again.';
+        header("Location: initiate.php");
+        exit();
+    }
+    $_SESSION['recent_withdrawal_requests'][$recentRequestKey] = time();
+
     $withdrawal = new Withdrawal();
+    try {
+        $withdrawal->validateWithdrawal($user_id, $amount, $method);
+    } catch (Exception $e) {
+        $_SESSION['error_message'] = $e->getMessage();
+        header("Location: initiate.php");
+        exit();
+    }
+
+    // Create withdrawal entry
     $result = $withdrawal->createWithdrawal($user_id, $method, $amount, $details);
 
     if ($result) {
