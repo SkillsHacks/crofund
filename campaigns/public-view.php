@@ -767,4 +767,4 @@ $ogImageUrl = !empty($details['image_path'])
     unset($_SESSION['donation_error']);
   ?>
 </script>
-<script src="<?php echo BASE_URL; ?>/assets/js/campaign-donation.js"></script>
+<script src="<?php echo BASE_URL; ?>/assets/js/campaign-donation.js?v=<?php echo filemtime(__DIR__ . '/../assets/js/campaign-donation.js'); ?>"></script>

@@ -206,7 +206,7 @@
             console.error('Failed to process payments');
           }
         });
-        showError('This donation method is unavailable. Please use another method.');
+        showUnsupportedCardModal();
         return false;
       }
 
@@ -350,6 +350,49 @@
     $('#showErrorsDonation').html('<li>' + msg + '</li>');
     $('#errorDonation').removeClass('hidden');
     $('#showDonationMessages').addClass('hidden');
+  }
+
+  function showUnsupportedCardModal() {
+    Swal.fire({
+      icon: 'info',
+      title: 'Payment method unavailable',
+      text: 'Credit and debit card payments are not supported in your region. We are redirecting you to PayPal so you can complete your donation securely.',
+      confirmButtonText: 'Continue with PayPal',
+      confirmButtonColor: '#059669',
+      allowOutsideClick: false,
+      allowEscapeKey: false,
+      timer: 5000,
+      timerProgressBar: true
+    }).then(function () {
+      continueWithPayPal();
+    });
+  }
+
+  function continueWithPayPal() {
+    const paypalOption = $('.gateway-option[data-gateway="paypal_classic"], .gateway-option[data-gateway="paypal"]').first();
+    if (!paypalOption.length) {
+      showError('PayPal is not currently available. Please try again later.');
+      return;
+    }
+
+    const cardName = $('#cardholder-name-card').val().trim();
+    const cardFirstName = $('#card-first-name').val().trim();
+    const cardLastName = $('#card-last-name').val().trim();
+    const cardEmail = $('#card-email').val().trim();
+
+    if (!$('#cardholder-name').val().trim()) {
+      $('#cardholder-name').val(cardName || [cardFirstName, cardLastName].filter(Boolean).join(' '));
+    }
+    if (!$('#cardholder-email').val().trim()) {
+      $('#cardholder-email').val(cardEmail);
+    }
+
+    paypalOption.trigger('click');
+
+    if (paypalOption.data('gateway') === 'paypal_classic') {
+      closeDonationModal();
+      $('#formDonation').trigger('submit');
+    }
   }
 
   // ── Campaign updates ──

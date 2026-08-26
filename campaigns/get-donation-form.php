@@ -78,12 +78,22 @@ try {
             </div>
             <div class="space-y-2">
                 <?php foreach ($paymentGateways as $gw): ?>
+                <?php
+                    $gatewayCode = (string) $gw['code'];
+                    $gatewayIcon = $gatewayCode === 'stripe'
+                        ? 'fas fa-credit-card'
+                        : (in_array($gatewayCode, ['paypal', 'paypal_classic'], true) ? 'fab fa-paypal' : 'fas fa-wallet');
+                    $gatewayIconColor = $gatewayCode === 'stripe' ? 'text-indigo-600' : 'text-sky-600';
+                ?>
                 <label class="flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all gateway-option border-slate-200 bg-white hover:border-emerald-300"
                        data-gateway="<?php echo htmlspecialchars($gw['code']); ?>">
                     <input type="radio" name="payment_gateway" value="<?php echo htmlspecialchars($gw['code']); ?>" class="sr-only">
                     <div class="flex items-center gap-3 w-full">
                         <div class="w-5 h-5 flex items-center justify-center border-2 rounded-full border-slate-300">
                             <div class="w-2.5 h-2.5 rounded-full"></div>
+                        </div>
+                        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-slate-50 <?php echo $gatewayIconColor; ?>">
+                            <i class="<?php echo $gatewayIcon; ?> text-lg" aria-hidden="true"></i>
                         </div>
                         <span class="text-sm font-semibold text-slate-900">
                             <?php echo $gw['code'] === 'stripe' ? 'Credit / Debit Card' : htmlspecialchars($gw['name']); ?>
