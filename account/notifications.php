@@ -25,10 +25,6 @@ function renderNotificationsContent(array $currentUser, array $trustRiskUi): voi
         <div class="space-y-6">
             <section class="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 shadow-sm">
                 <div class="relative px-6 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
-                    <div class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                        <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
-                        Notifications
-                    </div>
                     <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Stay up to date</h1>
                     <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
                         Review important account, campaign, and payout alerts from one organized place.

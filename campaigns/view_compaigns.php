@@ -134,9 +134,6 @@ try {
         <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.22),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.14),_transparent_30%)]"></div>
         <div class="relative grid gap-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-end">
           <div class="max-w-3xl">
-            <span class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-emerald-100">
-              Discover active fundraisers
-            </span>
             <h1 class="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
               Browse campaigns making a real-world impact.
             </h1>

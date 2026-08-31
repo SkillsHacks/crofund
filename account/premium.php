@@ -138,7 +138,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
         }
 
         if (empty(RELWORX_API_KEY) || empty(RELWORX_ACCOUNT_NO)) {
-            throw new RuntimeException('Relworx mobile money credentials are not configured yet. Add relworx_api_key and relworx_account_no to the settings table before testing the payment flow.');
+            throw new RuntimeException('Mobile Money credentials are not configured yet. Add relworx_api_key and relworx_account_no to the settings table before testing the payment flow.');
         }
 
         $request = $premiumService->createUpgradeRequest((int) $_SESSION['user_id'], $planCode);
@@ -146,7 +146,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
         $msisdn = $normalizeRelworxMsisdn((string) ($currentUser['phone'] ?? ''));
 
         if ($msisdn === '' || $msisdn === '+') {
-            throw new RuntimeException('A valid phone number is required before initiating a Relworx payment request.');
+            throw new RuntimeException('A valid phone number is required before initiating a Mobile Money payment request.');
         }
 
         $mobileMoneyPayload = [
@@ -183,14 +183,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
         error_log('[RELWORX_DEBUG] http_code=' . (string) $httpCode . ' curl_error=' . ($curlError ?: 'none') . ' raw_response=' . (is_string($response) ? $response : json_encode($response)));
 
         if ($response === false || $curlError !== '') {
-            throw new RuntimeException('Relworx request failed: ' . ($curlError ?: 'Unknown network error.'));
+            throw new RuntimeException('Mobile Money request failed: ' . ($curlError ?: 'Unknown network error.'));
         }
 
         $httpStatus = (int) $httpCode;
         if ($httpStatus >= 400) {
-            $message = 'Relworx rejected the payment request. HTTP ' . $httpStatus . '. Response: ' . (string) $response;
+            $message = 'Mobile Money rejected the payment request. HTTP ' . $httpStatus . '. Response: ' . (string) $response;
             error_log('[RELWORX_DEBUG] ' . $message);
-            throw new RuntimeException('Relworx rejected the payment request. Please check the phone number and account configuration.');
+            throw new RuntimeException('Mobile Money rejected the payment request. Please check the phone number and account configuration.');
         }
 
         $decoded = json_decode($response, true);
@@ -204,7 +204,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
         $status = strtolower((string) ($statusResult['request_status'] ?? $statusResult['status'] ?? 'pending'));
 
         if (!in_array($status, ['success', 'completed'], true)) {
-            throw new RuntimeException('Relworx payment is not yet confirmed. Please wait a few moments and try again.');
+            throw new RuntimeException('Mobile Money payment is not yet confirmed. Please wait a few moments and try again.');
         }
 
         $premiumService->completeUpgrade((int) $_SESSION['user_id'], $request['transaction_id'], 'relworx', $paymentReference);
@@ -233,13 +233,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
                     <div class="space-y-6">
                         <section class="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 shadow-sm">
                             <div class="relative px-6 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
-                                <div class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                                    <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
-                                    Premium access
-                                </div>
                                 <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Upgrade to a premium fundraiser</h1>
                                 <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                                    Unlock premium fundraising tools, a stronger profile, and a cleaner supporter experience with Relworx mobile money checkout.
+                                    Unlock premium fundraising tools, a stronger profile, and a cleaner supporter experience with Mobile Money checkout.
                                 </p>
                             </div>
                         </section>
@@ -259,7 +255,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
                         <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
                             <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
                                 <h2 class="text-lg font-semibold text-slate-900">Choose your plan</h2>
-                                <p class="mt-1 text-sm text-slate-500">Premium access is billed through Relworx mobile money and activated immediately after approval.</p>
+                                <p class="mt-1 text-sm text-slate-500">Your upgrade is billed through Mobile Money and activated immediately after approval.</p>
                             </div>
 
                             <div class="grid grid-cols-1 gap-4 p-5 sm:p-6 lg:grid-cols-3">
@@ -301,7 +297,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
                                         <form method="POST" class="mt-6">
                                             <input type="hidden" name="premium_plan" value="<?php echo htmlspecialchars($selected); ?>">
                                             <button type="submit" data-premium-submit-button <?php echo $hasPremiumAccess ? 'disabled' : ''; ?> class="premium-submit-button w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300">
-                                                <span class="premium-submit-label"><?php echo $hasPremiumAccess ? 'Already active' : 'Upgrade via Relworx'; ?></span>
+                                                <span class="premium-submit-label"><?php echo $hasPremiumAccess ? 'Already active' : 'Upgrade to premium'; ?></span>
                                                 <span class="premium-submit-spinner hidden items-center justify-center gap-2">
                                                     <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
                                                         <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity="0.25"></circle>
@@ -323,7 +319,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
                             <div class="mt-5 space-y-4 text-sm text-slate-600">
                                 <div class="rounded-2xl bg-slate-50 p-4">
                                     <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Gateway</p>
-                                    <p class="mt-2 text-base font-semibold text-slate-900">Relworx Mobile Money</p>
+                                    <p class="mt-2 text-base font-semibold text-slate-900">Mobile Money</p>
                                 </div>
                                 <div class="rounded-2xl bg-slate-50 p-4">
                                     <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Phone</p>

@@ -31,6 +31,17 @@ if (!function_exists('getUserAvatar')) {
 
 $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
 ?>
+<div class="bg-gradient-to-r from-emerald-600 via-emerald-500 to-teal-500">
+    <div class="mx-auto max-w-full px-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-center gap-2 py-2 text-center text-xs font-semibold tracking-wide text-white sm:text-sm">
+            <span>Upgrade to a premium account for faster donations and withdrawals.</span>
+            <a href="<?php echo BASE_URL; ?>/account/premium.php" class="inline-flex items-center rounded-full border border-white/30 bg-white/10 px-2.5 py-1 font-semibold text-white transition hover:bg-white/20">
+                Upgrade now
+            </a>
+        </div>
+    </div>
+</div>
+
 <!-- Favicon - still here but after PHP logic -->
 <link rel="icon" type="image/svg+xml" href="<?php echo BASE_URL; ?>/assets/images/logo.svg">
 <link rel="shortcut icon" type="image/svg+xml" href="<?php echo BASE_URL; ?>/assets/images/logo.svg">

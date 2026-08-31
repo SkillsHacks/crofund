@@ -117,11 +117,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <div class="mx-auto grid min-h-[calc(100vh-11rem)] max-w-7xl items-center gap-8 lg:grid-cols-[minmax(0,1.05fr),minmax(420px,520px)] lg:gap-12">
             <section class="verify-glow relative overflow-hidden rounded-3xl border border-emerald-100 shadow-sm">
                 <div class="relative px-6 py-8 sm:px-8 sm:py-10 lg:px-10 lg:py-12">
-                    <div class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                        <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
-                        Two-factor security
-                    </div>
-
                     <h1 class="mt-5 max-w-xl text-4xl font-bold tracking-tight text-slate-900 sm:text-5xl">
                         One more step to secure your sign-in
                     </h1>

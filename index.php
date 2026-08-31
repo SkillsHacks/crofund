@@ -101,11 +101,6 @@ require_once __DIR__ . '/config/Database.php';
                 <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.22),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.14),_transparent_30%)]"></div>
                 <div class="relative grid gap-10 lg:grid-cols-[1.2fr_0.8fr] lg:items-center">
                     <div class="max-w-3xl">
-                        <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.28em] text-emerald-100">
-                            <span class="h-2 w-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                            Trusted fundraising made simple
-                        </div>
-
                         <h1 class="mt-6 text-4xl font-extrabold tracking-tight text-white sm:text-5xl lg:text-6xl">
                             Raise support for the moments that matter most.
                         </h1>
@@ -127,21 +122,21 @@ require_once __DIR__ . '/config/Database.php';
                         </div>
                     </div>
 
-                    <div class="grid gap-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-                        <div class="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
-                            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Secure giving</p>
-                            <p class="mt-2 text-2xl font-bold text-white">Protected</p>
-                            <p class="mt-1 text-sm text-slate-300">Built for trust and transparency</p>
+                    <div class="grid min-w-0 grid-cols-1 gap-5 lg:grid-cols-1 xl:grid-cols-3">
+                        <div class="min-w-0 rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur-sm">
+                            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Secure giving</p>
+                       
+                            <p class="mt-2 text-sm leading-6 text-slate-300">Built for trust and transparency</p>
                         </div>
-                        <div class="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
-                            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Active causes</p>
-                            <p class="mt-2 text-2xl font-bold text-white">Live</p>
-                            <p class="mt-1 text-sm text-slate-300">Support urgent and community needs</p>
+                        <div class="min-w-0 rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur-sm">
+                            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Active causes</p>
+                          
+                            <p class="mt-2 text-sm leading-6 text-slate-300">Support urgent and community needs</p>
                         </div>
-                        <div class="rounded-2xl border border-white/10 bg-white/10 p-5 backdrop-blur-sm">
-                            <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Fast setup</p>
-                            <p class="mt-2 text-2xl font-bold text-white">Minutes</p>
-                            <p class="mt-1 text-sm text-slate-300">Start and share quickly</p>
+                        <div class="min-w-0 rounded-2xl border border-white/10 bg-white/10 p-6 backdrop-blur-sm">
+                            <p class="text-xs font-semibold uppercase tracking-[0.18em] text-slate-300">Fast setup</p>
+                          
+                            <p class="mt-2 text-sm leading-6 text-slate-300">Start and share quickly</p>
                         </div>
                     </div>
                 </div>
@@ -197,7 +192,6 @@ require_once __DIR__ . '/config/Database.php';
     <section class="py-16 bg-slate-50">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="mb-10 text-center">
-                <span class="inline-flex items-center rounded-full border border-emerald-200 bg-emerald-50 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.24em] text-emerald-700">Platform snapshot</span>
                 <h2 class="mt-4 text-3xl font-bold tracking-tight text-slate-900">Built to earn trust at every step</h2>
                 <p class="mt-3 text-slate-600">A quick look at the activity happening across the platform right now.</p>
             </div>

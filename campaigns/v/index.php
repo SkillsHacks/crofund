@@ -106,13 +106,6 @@ $campaigns = $userCampaigns->getAllByUser(1);
         <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(250,204,21,0.18),_transparent_22%),radial-gradient(circle_at_bottom_right,_rgba(16,185,129,0.22),_transparent_34%)]"></div>
         <div class="relative grid gap-8 lg:grid-cols-[1.2fr_0.8fr] lg:items-end">
           <div class="max-w-3xl">
-            <div class="inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/10 px-4 py-1.5 text-xs font-semibold uppercase tracking-[0.28em] text-emerald-100">
-              <svg class="h-4 w-4 text-yellow-300" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="2" fill="#facc15"/>
-                <path d="M9 12l2 2l4-4" stroke="#16a34a" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
-              </svg>
-              Verified fundraisers
-            </div>
             <h1 class="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
               Support trusted campaigns with confidence.
             </h1>

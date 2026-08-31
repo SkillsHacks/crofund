@@ -40,10 +40,6 @@ function renderCampaignsIndexContent(array $userCampaigns, array $stats, string 
             <div class="relative px-6 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
                 <div class="flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                     <div class="max-w-2xl">
-                        <div class="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/80 px-3 py-1 text-xs font-semibold uppercase tracking-[0.18em] text-emerald-700">
-                            <span class="inline-block h-2 w-2 rounded-full bg-emerald-500"></span>
-                            Campaign management
-                        </div>
                         <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Manage your campaigns</h1>
                         <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
                             Review campaign performance, filter your fundraising activity, and jump into edits or updates from one organized space.
