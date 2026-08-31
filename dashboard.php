@@ -57,6 +57,10 @@ define('DASHBOARD_ROUTES', [
         'file' => __DIR__ . '/account/verification.php',
         'path' => '/verification/'
     ],
+    'premium' => [
+        'file' => __DIR__ . '/account/premium.php',
+        'path' => '/account/premium.php'
+    ],
     'withdrawals' => [
         'file' => __DIR__ . '/withdrawals/initiate.php',
         'path' => '/withdrawals/'

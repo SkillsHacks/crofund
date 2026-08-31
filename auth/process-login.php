@@ -31,7 +31,13 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 
 $email = $_POST['email'] ?? '';
 $password = $_POST['password'] ?? '';
-$redirect = $_POST['redirect'] ?? '/dashboard.php';
+$redirect = normalizeRedirectPath($_POST['redirect'] ?? '/dashboard.php');
+
+crofund_debug_log('process-login start', [
+    'post_redirect' => $_POST['redirect'] ?? null,
+    'normalized_redirect' => $redirect,
+    'session_redirect_after_login' => $_SESSION['redirect_after_login'] ?? null,
+]);
 
 try {
     $userObj = new User();
@@ -42,11 +48,15 @@ try {
     }
 
     if (isset($_SESSION['redirect_after_login'])) {
-        $redirect = $_SESSION['redirect_after_login'];
+        $redirect = normalizeRedirectPath($_SESSION['redirect_after_login']);
         unset($_SESSION['redirect_after_login']);
     }
 
     $_SESSION['2fa_redirect'] = $redirect;
+    crofund_debug_log('process-login before 2fa', [
+        'final_redirect' => $redirect,
+        'session_2fa_redirect' => $_SESSION['2fa_redirect'] ?? null,
+    ]);
 
     header('Location: ' . BASE_URL . '/verify-2fa.php');
     exit();

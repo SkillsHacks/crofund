@@ -9,6 +9,7 @@ if (session_status() === PHP_SESSION_NONE) {
 
 $userObj = new User();
 if (!$userObj->isLoggedIn()) {
+    $_SESSION['redirect_after_login'] = normalizeRedirectPath($_SERVER['REQUEST_URI']);
     $_SESSION['error'] = 'Please login to access this page.';
     header('Location: ' . BASE_URL . '/login.php');
     exit();

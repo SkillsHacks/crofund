@@ -9,6 +9,7 @@ require_once __DIR__ . '/../components/trust_risk_ui.php';
 
 $user = new User();
 if (!$user->isLoggedIn()) {
+    $_SESSION['redirect_after_login'] = normalizeRedirectPath($_SERVER['REQUEST_URI']);
     header('Location: ' . BASE_URL . '/login.php');
     exit();
 }

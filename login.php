@@ -3,7 +3,12 @@ session_start();
 require_once __DIR__ . '/config/config.php';
 
 $message = $_GET['message'] ?? '';
-$redirect = $_SESSION['redirect_after_login'] ?? '/dashboard.php';
+$redirect = normalizeRedirectPath($_SESSION['redirect_after_login'] ?? '/dashboard.php');
+crofund_debug_log('login page', [
+    'request_uri' => $_SERVER['REQUEST_URI'] ?? null,
+    'session_redirect_after_login' => $_SESSION['redirect_after_login'] ?? null,
+    'normalized_redirect' => $redirect,
+]);
 ?>
 <!DOCTYPE html>
 <html lang="en">

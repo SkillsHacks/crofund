@@ -41,7 +41,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['user_agent'] = $_SERVER['HTTP_USER_AGENT'];
             $_SESSION['ip_address'] = $_SERVER['REMOTE_ADDR'];
 
-            $redirect = $_SESSION['2fa_redirect'] ?? '/dashboard.php';
+            $redirect = normalizeRedirectPath($_SESSION['2fa_redirect'] ?? '/dashboard.php');
+            crofund_debug_log('verify-2fa before redirect', [
+                'session_2fa_redirect' => $_SESSION['2fa_redirect'] ?? null,
+                'normalized_redirect' => $redirect,
+                'base_url' => BASE_URL,
+            ]);
 
             unset($_SESSION['2fa_code'], $_SESSION['2fa_user_id'], $_SESSION['2fa_email'], $_SESSION['2fa_user_name'], $_SESSION['2fa_code_time'], $_SESSION['2fa_attempts'], $_SESSION['2fa_redirect']);
 

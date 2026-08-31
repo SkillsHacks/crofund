@@ -29,6 +29,13 @@ $oldInput = [
     'description' => '',
 ];
 
+$campaignLimits = new Campaign();
+if (!$campaignLimits->canCreateCampaign((int) ($_SESSION['user_id'] ?? 0))) {
+    $_SESSION['error'] = 'Free accounts can create only one campaign. Upgrade to premium to manage more than one campaign.';
+    header('Location: ' . BASE_URL . '/account/premium.php');
+    exit();
+}
+
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $oldInput = [
         'title' => trim((string) ($_POST['title'] ?? '')),

@@ -282,6 +282,12 @@ $ogImageUrl = !empty($details['image_path'])
           <i class="fas fa-shield-alt text-[9px]"></i>
           Verified Campaign
         </span>
+        <?php if (!empty($details['is_premium_owner'])): ?>
+        <span class="badge" style="background:#dbeafe;color:#1d4ed8;">
+          <i class="fas fa-certificate text-[9px]"></i>
+          Premium Verified
+        </span>
+        <?php endif; ?>
       </div>
       <h1 class="text-lg md:text-2xl lg:text-3xl font-bold text-slate-900 leading-snug mb-2">
         <?php echo htmlspecialchars($details['title']); ?>

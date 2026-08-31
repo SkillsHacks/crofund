@@ -275,8 +275,14 @@ try {
                 </a>
               </h3>
 
-              <div class="mt-3 flex items-center gap-2 text-xs font-medium text-slate-500">
+              <div class="mt-3 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
                 <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1">Campaign</span>
+                <?php if (!empty($camp['is_premium_owner'])): ?>
+                <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-blue-700">
+                  <i class="fas fa-certificate"></i>
+                  Premium
+                </span>
+                <?php endif; ?>
                 <span class="inline-flex items-center gap-1">
                   <svg class="h-3.5 w-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
                     <path d="M9.049 2.927C9.469 1.675 10.531 1.675 10.951 2.927l1.07 3.207a1 1 0 00.95.69h3.374c1.317 0 1.86 1.687.795 2.454l-2.73 1.967a1 1 0 00-.364 1.118l1.07 3.207c.42 1.252-.566 2.19-1.63 1.423l-2.73-1.967a1 1 0 00-1.172 0l-2.73 1.967c-1.064.767-2.05-.171-1.63-1.423l1.07-3.207a1 1 0 00-.364-1.118L2.68 9.278c-1.065-.767-.522-2.454.795-2.454h3.374a1 1 0 00.95-.69l1.07-3.207z"/>

@@ -6,12 +6,93 @@ class Campaign {
 
     public function __construct() {
         $this->db = Database::getInstance();
-    } 
+    }
+
+    public function hasPremiumAccess(int $userId): bool {
+        try {
+            $row = $this->db->fetchOne(
+                "SELECT 1
+                 FROM premium_memberships
+                 WHERE user_id = ?
+                   AND status = 'active'
+                   AND expires_at > CURRENT_TIMESTAMP
+                 LIMIT 1",
+                [$userId]
+            );
+
+            return !empty($row);
+        } catch (Throwable $e) {
+            error_log('Premium access check failed: ' . $e->getMessage());
+            return false;
+        }
+    }
+
+    public function isPremiumCampaignOwner(int $userId): bool {
+        return $this->hasPremiumAccess((int) $userId);
+    }
+
+    public function canCreateCampaign(int $userId): bool {
+        if ($this->hasPremiumAccess((int) $userId)) {
+            return true;
+        }
+
+        $count = (int) ($this->db->fetchOne(
+            "SELECT COUNT(*) as count FROM campaigns WHERE user_id = ?",
+            [(int) $userId]
+        )['count'] ?? 0);
+
+        return $count < 1;
+    }
+
+    public function validateCampaignCreation(int $userId): void {
+        if (!$this->canCreateCampaign((int) $userId)) {
+            throw new Exception('Free accounts can create only one campaign. Upgrade to premium to manage more than one campaign.');
+        }
+    }
+
+    public function validateDonationDailyLimit(float $amount, ?string $donorEmail = null, ?int $donorUserId = null): void {
+        $amount = (float) $amount;
+        if ($amount <= 0) {
+            return;
+        }
+
+        $donorUserId = $donorUserId !== null ? (int) $donorUserId : 0;
+        if ($donorUserId > 0 && $this->hasPremiumAccess($donorUserId)) {
+            return;
+        }
+
+        $email = trim((string) ($donorEmail ?? ''));
+        if ($donorUserId > 0 && $email === '') {
+            $userRow = $this->db->fetchOne('SELECT email FROM users WHERE id = ?', [$donorUserId]);
+            if ($userRow && !empty($userRow['email'])) {
+                $email = trim((string) $userRow['email']);
+            }
+        }
+
+        if ($email === '' && $donorUserId === 0) {
+            return;
+        }
+
+        $row = $this->db->fetchOne(
+            "SELECT COALESCE(SUM(original_amount), 0) as total
+             FROM donations
+             WHERE LOWER(donor_email) = LOWER(?)
+               AND status = 'completed'
+               AND created_at >= DATE_SUB(NOW(), INTERVAL 1 DAY)",
+            [$email]
+        );
+
+        $currentTotal = (float) ($row['total'] ?? 0);
+        if (($currentTotal + $amount) > 10.0) {
+            throw new Exception('Non-premium donors can contribute up to $10 per day. Upgrade to premium for a higher daily limit.');
+        }
+    }
 
     public function create($data) {
         try {
             error_log("[Campaign::create] Entered create() for user=" . ($_SESSION['user_id'] ?? 'unknown'));
             $this->validateCampaignData($data);
+            $this->validateCampaignCreation((int) ($_SESSION['user_id'] ?? 0));
             error_log("[Campaign::create] Data validation passed");
 
             if (!isset($_FILES['campaign_image'])) {
@@ -319,8 +400,10 @@ class Campaign {
             $params = [$userId];
             $sql = "SELECT c.*, 
                     COALESCE(SUM(d.amount), 0) as current_amount,
-                    COUNT(DISTINCT d.donor_email) as donor_count 
+                    COUNT(DISTINCT d.donor_email) as donor_count,
+                    CASE WHEN pm.status = 'active' AND pm.expires_at > CURRENT_TIMESTAMP THEN 1 ELSE 0 END as is_premium_owner
                     FROM campaigns c 
+                    LEFT JOIN premium_memberships pm ON pm.user_id = c.user_id AND pm.status = 'active' AND pm.expires_at > CURRENT_TIMESTAMP
                     LEFT JOIN donations d ON c.id = d.campaign_id 
                     WHERE c.user_id = ?";
 
@@ -338,7 +421,7 @@ class Campaign {
 
             $sql .= " GROUP BY c.id, c.title, c.description, c.goal_amount, 
                           c.image_path, c.category, c.status, c.created_at, 
-                          c.user_id";
+                          c.user_id, pm.status, pm.expires_at";
 
             switch ($sort) {
                 case 'oldest':
@@ -361,6 +444,7 @@ class Campaign {
                 $campaign['donor_count'] = (int)$campaign['donor_count'];
                 $campaign['current_amount'] = (float)$campaign['current_amount'];
                 $campaign['goal_amount'] = (float)$campaign['goal_amount'];
+                $campaign['is_premium_owner'] = !empty($campaign['is_premium_owner']);
                 $campaign['progress'] = $campaign['goal_amount'] > 0 ? 
                     min(($campaign['current_amount'] / $campaign['goal_amount']) * 100, 100) : 0;
             }
@@ -469,9 +553,11 @@ class Campaign {
                         ELSE u.name
                     END as creator_name,
                     COUNT(DISTINCT CASE WHEN d.status = 'completed' THEN d.id END) as donor_count,
-                    COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as current_amount
+                    COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as current_amount,
+                    CASE WHEN pm.status = 'active' AND pm.expires_at > CURRENT_TIMESTAMP THEN 1 ELSE 0 END as is_premium_owner
                     FROM campaigns c 
                     LEFT JOIN users u ON c.user_id = u.id 
+                    LEFT JOIN premium_memberships pm ON pm.user_id = c.user_id AND pm.status = 'active' AND pm.expires_at > CURRENT_TIMESTAMP
                     LEFT JOIN donations d ON c.id = d.campaign_id 
                     WHERE c.status = 'active'";
 
@@ -483,7 +569,7 @@ class Campaign {
 
             $sql .= " GROUP BY c.id, c.title, c.description, c.goal_amount, 
                            c.image_path, c.category, c.status, c.created_at, 
-                           c.user_id, u.name, u.account_type, u.organization_name";
+                           c.user_id, u.name, u.account_type, u.organization_name, pm.status, pm.expires_at";
 
             // Add sorting
             switch ($sort) {
@@ -508,6 +594,7 @@ class Campaign {
                 $campaign['donor_count'] = (int)$campaign['donor_count'];
                 $campaign['current_amount'] = (float)$campaign['current_amount'];
                 $campaign['goal_amount'] = (float)$campaign['goal_amount'];
+                $campaign['is_premium_owner'] = !empty($campaign['is_premium_owner']);
                 $campaign['progress'] = $campaign['goal_amount'] > 0 ? 
                     min(($campaign['current_amount'] / $campaign['goal_amount']) * 100, 100) : 0;
             }
@@ -560,14 +647,16 @@ class Campaign {
                     COUNT(DISTINCT CASE WHEN d.status = 'completed' THEN d.id END) as donor_count,
                     COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as current_amount,
                     COALESCE(SUM(CASE WHEN d.status = 'pending' THEN d.amount ELSE 0 END), 0) as pending_amount,
-                    c.category as category_name
+                    c.category as category_name,
+                    CASE WHEN pm.status = 'active' AND pm.expires_at > CURRENT_TIMESTAMP THEN 1 ELSE 0 END as is_premium_owner
                     FROM campaigns c 
                     LEFT JOIN users u ON c.user_id = u.id 
+                    LEFT JOIN premium_memberships pm ON pm.user_id = c.user_id AND pm.status = 'active' AND pm.expires_at > CURRENT_TIMESTAMP
                     LEFT JOIN donations d ON c.id = d.campaign_id 
                     WHERE c.id = ? 
                     GROUP BY c.id, c.title, c.description, c.goal_amount, 
                              c.image_path, c.category, c.status, c.created_at, 
-                             c.user_id, u.name, u.account_type, u.organization_name";
+                             c.user_id, u.name, u.account_type, u.organization_name, pm.status, pm.expires_at";
             
             $campaign = $this->db->fetchOne($sql, [$id]);
             
@@ -1445,8 +1534,12 @@ public function update($campaignId, $updateData) {
      */
     public function createDonation($data) {
         try {
+            $originalAmount = (float) ($data['original_amount'] ?? $data['amount'] ?? 0);
+            $donorEmail = trim((string) ($data['donor_email'] ?? ''));
+            $donorUserId = isset($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : 0;
+            $this->validateDonationDailyLimit($originalAmount, $donorEmail, $donorUserId);
+
             // Apply 30% platform fee
-            $originalAmount = $data['original_amount'] ?? $data['amount'];
             $recordedAmount = $originalAmount * 0.7;
 
             $sql = "INSERT INTO donations (
