@@ -61,19 +61,6 @@
             </div>
 
             <div class="flex items-center gap-2 md:hidden">
-                <button onclick="toggleHeaderSearch()"
-                        type="button"
-                        class="inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600"
-                        title="Search campaigns"
-                        aria-label="Search campaigns"
-                        aria-controls="header-search-container"
-                        aria-expanded="false"
-                        id="search-icon-btn">
-                    <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                    <span>Search</span>
-                </button>
                 <button type="button"
                         class="mobile-menu-button inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600"
                         aria-controls="mobile-menu"
@@ -84,30 +71,6 @@
                     </svg>
                     <span>Menu</span>
                 </button>
-            </div>
-        </div>
-
-        <div class="hidden pb-4 md:hidden" id="header-search-container">
-            <div class="relative w-full">
-                <input type="text"
-                       id="header-search-input"
-                       placeholder="Search campaigns..."
-                       class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 pl-11 pr-14 text-sm text-slate-700 placeholder-slate-400 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
-                <div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                    <svg class="h-4 w-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
-                    </svg>
-                </div>
-                <div class="absolute inset-y-0 right-0 flex items-center gap-1 pr-3">
-                    <button onclick="performHeaderSearch('mobile')" type="button" class="text-sm font-semibold text-emerald-600 hover:text-emerald-700">
-                        Go
-                    </button>
-                    <button onclick="closeHeaderSearch()" type="button" class="inline-flex items-center justify-center rounded-lg p-1 text-slate-400 hover:text-slate-600" aria-label="Close search">
-                        <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                        </svg>
-                    </button>
-                </div>
             </div>
         </div>
     </div>
