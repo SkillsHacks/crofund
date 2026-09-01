@@ -47,6 +47,8 @@ try {
 
 $notice = '';
 $error = '';
+$defaultPaymentPhone = trim((string) ($currentUser['phone'] ?? ''));
+$submittedPaymentPhone = trim((string) ($_POST['payment_phone'] ?? $defaultPaymentPhone));
 
 $normalizeRelworxMsisdn = static function (?string $rawPhone): string {
     $digits = preg_replace('/\D+/', '', (string) $rawPhone);
@@ -142,11 +144,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
         }
 
         $request = $premiumService->createUpgradeRequest((int) $_SESSION['user_id'], $planCode);
+        $expectedAmount = (float) $request['amount'];
+        if ($expectedAmount <= 0) {
+            throw new RuntimeException('The selected premium plan amount is invalid.');
+        }
+
         $reference = 'premium_' . $request['transaction_id'];
-        $msisdn = $normalizeRelworxMsisdn((string) ($currentUser['phone'] ?? ''));
+        $paymentPhone = trim((string) ($_POST['payment_phone'] ?? $defaultPaymentPhone));
+        $msisdn = $normalizeRelworxMsisdn($paymentPhone !== '' ? $paymentPhone : (string) ($currentUser['phone'] ?? ''));
 
         if ($msisdn === '' || $msisdn === '+') {
             throw new RuntimeException('A valid phone number is required before initiating a Mobile Money payment request.');
+        }
+
+        $digitsOnly = preg_replace('/\D+/', '', $msisdn);
+        if ($digitsOnly === '' || strlen($digitsOnly) < 10 || strlen($digitsOnly) > 15) {
+            throw new RuntimeException('The Mobile Money number is invalid or malformed. Please provide a valid Ugandan phone number.');
+        }
+
+        if (!preg_match('/^(?:\+?256|0)(?:7\d{8}|6\d{8}|5\d{8}|4\d{8}|3\d{8}|2\d{8})$/', $msisdn) && !preg_match('/^(?:\+?256|0)(?:7\d{8}|6\d{8}|5\d{8}|4\d{8}|3\d{8}|2\d{8})$/', $paymentPhone)) {
+            throw new RuntimeException('Only valid Ugandan Mobile Money numbers are supported for premium payment requests.');
         }
 
         $mobileMoneyPayload = [
@@ -154,7 +171,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
             'reference' => $reference,
             'msisdn' => $msisdn,
             'currency' => 'UGX',
-            'amount' => (float) $request['amount'],
+            'amount' => $expectedAmount,
             'description' => 'Premium upgrade for ' . ($currentUser['name'] ?? 'user') . ' (' . $request['plan_code'] . ')',
         ];
 
@@ -199,6 +216,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
             throw new RuntimeException($message);
         }
 
+        $returnedAmount = 0.0;
+        foreach (['amount', 'requested_amount', 'amount_paid', 'total_amount'] as $amountKey) {
+            if (array_key_exists($amountKey, $decoded) && is_numeric($decoded[$amountKey])) {
+                $returnedAmount = (float) $decoded[$amountKey];
+                break;
+            }
+        }
+
+        if ($returnedAmount > 0 && abs($returnedAmount - $expectedAmount) > 0.01) {
+            throw new RuntimeException('The payment amount does not match the selected premium plan.');
+        }
+
         $paymentReference = $decoded['internal_reference'] ?? $reference;
         $statusResult = $pollRelworxRequestStatus((string) $paymentReference, RELWORX_ACCOUNT_NO);
         $status = strtolower((string) ($statusResult['request_status'] ?? $statusResult['status'] ?? 'pending'));
@@ -224,110 +253,121 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
     <title>Premium Upgrade - CroFunding</title>
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
-<body class="bg-gray-50 min-h-screen">
-    <div class="flex min-h-screen pt-16">
+<body class="min-h-screen bg-[#F5F8F5] text-[#1F2A22]">
+    <?php include __DIR__ . '/../components/header.php'; ?>
+    <div class="flex min-h-screen pt-2 sm:pt-3 lg:pt-4">
         <?php include __DIR__ . '/../components/sidebar.php'; ?>
-        <main class="app-main flex-1 min-w-0 bg-gray-50 lg:ml-64">
-            <div class="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
+        <main class="app-main flex-1 min-w-0 bg-[#F5F8F5] lg:ml-64">
+            <div class="w-full px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
                 <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr),360px]">
                     <div class="space-y-6">
-                        <section class="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 shadow-sm">
+                        <section class="relative overflow-hidden rounded-3xl border border-[#D9E9DE] bg-[#EEF7F0] shadow-sm">
                             <div class="relative px-6 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
-                                <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Upgrade to a premium fundraiser</h1>
-                                <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
-                                    Unlock premium fundraising tools, a stronger profile, and a cleaner supporter experience with Mobile Money checkout.
+                              
+                                <h1 class="mt-1 text-3xl font-bold tracking-tight text-[#1E2B24] sm:text-4xl">Upgrade to a premium fundraiser</h1>
+                                <p class="mt-3 max-w-2xl text-sm leading-6 text-[#4C5D55] sm:text-base">
+                                    Unlock premium fundraising tools, faster withdrawals, custom payment gateways, quick customer care, and a stronger profile for a cleaner supporter experience with Mobile Money checkout.
                                 </p>
                             </div>
                         </section>
 
                         <?php if ($notice !== ''): ?>
-                            <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 text-emerald-800 shadow-sm">
+                            <div class="rounded-2xl border border-[#CDE5D7] bg-[#EEF8F1] px-4 py-4 text-[#1E5E3C] shadow-sm">
                                 <p class="text-sm font-medium"><?php echo htmlspecialchars($notice); ?></p>
                             </div>
                         <?php endif; ?>
 
                         <?php if ($error !== ''): ?>
-                            <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-red-700 shadow-sm">
+                            <div class="rounded-2xl border border-[#F2C7C7] bg-[#FFF3F3] px-4 py-4 text-[#8A2C2C] shadow-sm">
                                 <p class="text-sm font-medium"><?php echo htmlspecialchars($error); ?></p>
                             </div>
                         <?php endif; ?>
 
-                        <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                            <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
-                                <h2 class="text-lg font-semibold text-slate-900">Choose your plan</h2>
-                                <p class="mt-1 text-sm text-slate-500">Your upgrade is billed through Mobile Money and activated immediately after approval.</p>
+                        <div class="overflow-hidden rounded-3xl border border-[#DDEAE0] bg-white shadow-sm">
+                            <div class="border-b border-[#E5EEE7] bg-[#F8FBF9] px-4 py-3 sm:px-5 sm:py-4">
+                                <h2 class="text-base font-semibold text-[#1B2C25] sm:text-lg">Choose your plan</h2>
+                                <p class="mt-1 text-xs text-[#586A62] sm:text-sm">Your upgrade is billed through Mobile Money and activated immediately after approval.</p>
                             </div>
 
-                            <div class="grid grid-cols-1 gap-4 p-5 sm:p-6 lg:grid-cols-3">
-                                <?php foreach ($plans as $plan): ?>
-                                    <?php $selected = (string) ($plan['code'] ?? ''); ?>
-                                    <div class="rounded-2xl border <?php echo $hasPremiumAccess ? 'border-emerald-200 bg-emerald-50' : 'border-slate-200 bg-slate-50'; ?> p-5 shadow-sm">
-                                        <div class="flex items-center justify-between gap-3">
-                                            <div>
-                                                <p class="text-lg font-bold text-slate-900"><?php echo htmlspecialchars((string) $plan['title']); ?></p>
-                                                <p class="mt-1 text-xs uppercase tracking-[0.18em] text-slate-500"><?php echo htmlspecialchars((string) $plan['code']); ?></p>
+                            <div class="p-4 sm:p-5">
+                                <div class="mb-4 rounded-2xl border border-[#DDEAE0] bg-[#F3F8F5] px-3 py-3 sm:px-4">
+                                    <label for="premium-payment-number" class="mb-1 block text-[10px] font-semibold uppercase tracking-[0.18em] text-[#4E6559]">Mobile Money number</label>
+                                    <input id="premium-payment-number" type="tel" name="payment_phone" value="<?php echo htmlspecialchars((string) ($_POST['payment_phone'] ?? $defaultPaymentPhone)); ?>" placeholder="e.g. 0772 123 456" autocomplete="tel" class="block w-full rounded-xl border border-[#D1E1D8] bg-white px-3 py-2.5 text-sm text-[#1E2B24] shadow-sm transition focus:border-[#1F8A5D] focus:outline-none focus:ring-4 focus:ring-[#CFEAD9]">
+                                    <p class="mt-1 text-[11px] text-[#607166]">Use your account number or enter a different one for this payment.</p>
+                                </div>
+
+                                <div class="grid grid-cols-1 gap-3 md:grid-cols-3">
+                                    <?php foreach ($plans as $plan): ?>
+                                        <?php $selected = (string) ($plan['code'] ?? ''); ?>
+                                        <div class="flex min-h-full flex-col rounded-2xl border <?php echo $hasPremiumAccess ? 'border-[#BEE2C9] bg-[#EEF9F2]' : 'border-[#DDEAE0] bg-[#F8FBF9]'; ?> p-4 shadow-sm transition hover:border-[#B5DCC2] hover:shadow-md">
+                                            <div class="flex items-start justify-between gap-3">
+                                                <div>
+                                                    <p class="text-base font-bold text-[#1C2C25]"><?php echo htmlspecialchars((string) $plan['title']); ?></p>
+                                                    <p class="mt-1 text-[10px] uppercase tracking-[0.18em] text-[#5D6F67]"><?php echo htmlspecialchars((string) $plan['code']); ?></p>
+                                                </div>
+                                                <?php if ($hasPremiumAccess): ?>
+                                                    <span class="rounded-full bg-[#DDF3E7] px-2 py-1 text-[10px] font-semibold text-[#1E6C46]">Active</span>
+                                                <?php endif; ?>
                                             </div>
-                                            <?php if ($hasPremiumAccess): ?>
-                                                <span class="rounded-full bg-emerald-100 px-2.5 py-1 text-[11px] font-semibold text-emerald-700">Active</span>
-                                            <?php endif; ?>
-                                        </div>
 
-                                        <div class="mt-5 flex items-end gap-2">
-                                            <span class="text-3xl font-bold text-slate-900">UGX <?php echo number_format((float) $plan['price'], 0); ?></span>
-                                            <span class="mb-1 text-sm text-slate-500">/<?php echo (int) $plan['duration_days']; ?> days</span>
-                                        </div>
+                                            <div class="mt-4 flex items-end gap-2">
+                                                <span class="text-2xl font-bold leading-none text-[#1B2C25]">UGX <?php echo number_format((float) $plan['price'], 0); ?></span>
+                                                <span class="pb-0.5 text-[11px] text-[#677B72]">/<?php echo (int) $plan['duration_days']; ?> days</span>
+                                            </div>
 
-                                        <ul class="mt-4 space-y-2 text-sm text-slate-600">
-                                            <?php $features = json_decode((string) ($plan['features'] ?? '[]'), true); ?>
-                                            <?php if (is_array($features) && $features !== []): ?>
-                                                <?php foreach ($features as $feature): ?>
+                                            <ul class="mt-4 space-y-2 text-xs text-[#4C5D55]">
+                                                <?php $features = json_decode((string) ($plan['features'] ?? '[]'), true); ?>
+                                                <?php if (is_array($features) && $features !== []): ?>
+                                                    <?php foreach ($features as $feature): ?>
+                                                        <li class="flex items-start gap-2">
+                                                            <span class="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-[#1F8A5D]"></span>
+                                                            <span><?php echo htmlspecialchars((string) $feature); ?></span>
+                                                        </li>
+                                                    <?php endforeach; ?>
+                                                <?php else: ?>
                                                     <li class="flex items-start gap-2">
-                                                        <span class="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                                                        <span><?php echo htmlspecialchars((string) $feature); ?></span>
+                                                        <span class="mt-1.5 inline-block h-1.5 w-1.5 rounded-full bg-[#1F8A5D]"></span>
+                                                        <span>Premium fundraising tools and supporter visibility.</span>
                                                     </li>
-                                                <?php endforeach; ?>
-                                            <?php else: ?>
-                                                <li class="flex items-start gap-2">
-                                                    <span class="mt-1 inline-block h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-                                                    <span>Premium fundraising tools and supporter visibility.</span>
-                                                </li>
-                                            <?php endif; ?>
-                                        </ul>
+                                                <?php endif; ?>
+                                            </ul>
 
-                                        <form method="POST" class="mt-6">
-                                            <input type="hidden" name="premium_plan" value="<?php echo htmlspecialchars($selected); ?>">
-                                            <button type="submit" data-premium-submit-button <?php echo $hasPremiumAccess ? 'disabled' : ''; ?> class="premium-submit-button w-full rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white transition hover:bg-slate-800 disabled:cursor-not-allowed disabled:bg-slate-300">
-                                                <span class="premium-submit-label"><?php echo $hasPremiumAccess ? 'Already active' : 'Upgrade to premium'; ?></span>
-                                                <span class="premium-submit-spinner hidden items-center justify-center gap-2">
-                                                    <svg class="h-4 w-4 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                                                        <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity="0.25"></circle>
-                                                        <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm0 0a8 8 0 018 8v4c-6.627 0-12-5.373-12-12h4z" fill="currentColor"></path>
-                                                    </svg>
-                                                    Processing...
-                                                </span>
-                                            </button>
-                                        </form>
-                                    </div>
-                                <?php endforeach; ?>
+                                            <form method="POST" class="mt-4">
+                                                <input type="hidden" name="premium_plan" value="<?php echo htmlspecialchars($selected); ?>">
+                                                <input type="hidden" name="payment_phone" value="<?php echo htmlspecialchars((string) ($_POST['payment_phone'] ?? $defaultPaymentPhone)); ?>">
+                                                <button type="submit" data-premium-submit-button <?php echo $hasPremiumAccess ? 'disabled' : ''; ?> class="premium-submit-button w-full rounded-xl bg-[#1F8A5D] px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-[#18724D] disabled:cursor-not-allowed disabled:bg-[#B9C9C1]">
+                                                    <span class="premium-submit-label"><?php echo $hasPremiumAccess ? 'Already active' : 'Upgrade'; ?></span>
+                                                    <span class="premium-submit-spinner hidden items-center justify-center gap-2">
+                                                        <svg class="h-3.5 w-3.5 animate-spin" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                                                            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="3" opacity="0.25"></circle>
+                                                            <path d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm0 0a8 8 0 018 8v4c-6.627 0-12-5.373-12-12h4z" fill="currentColor"></path>
+                                                        </svg>
+                                                        Processing...
+                                                    </span>
+                                                </button>
+                                            </form>
+                                        </div>
+                                    <?php endforeach; ?>
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <aside class="space-y-6">
-                        <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <h2 class="text-lg font-semibold text-slate-900">Payment details</h2>
-                            <div class="mt-5 space-y-4 text-sm text-slate-600">
-                                <div class="rounded-2xl bg-slate-50 p-4">
-                                    <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Gateway</p>
-                                    <p class="mt-2 text-base font-semibold text-slate-900">Mobile Money</p>
+                        <div class="rounded-2xl border border-[#DDEAE0] bg-white p-4 shadow-sm sm:p-5">
+                            <h2 class="text-base font-semibold text-[#1B2C25] sm:text-lg">Payment details</h2>
+                            <div class="mt-4 space-y-3 text-sm text-[#4C5D55]">
+                                <div class="rounded-xl bg-[#F3F8F5] p-3">
+                                    <p class="text-[10px] uppercase tracking-[0.18em] text-[#5B6D65]">Gateway</p>
+                                    <p class="mt-1.5 text-sm font-semibold text-[#1B2C25]">Mobile Money</p>
                                 </div>
-                                <div class="rounded-2xl bg-slate-50 p-4">
-                                    <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Phone</p>
-                                    <p class="mt-2 text-base font-semibold text-slate-900"><?php echo htmlspecialchars((string) ($currentUser['phone'] ?? 'Not provided')); ?></p>
+                                <div class="rounded-xl bg-[#F3F8F5] p-3">
+                                    <p class="text-[10px] uppercase tracking-[0.18em] text-[#5B6D65]">Phone</p>
+                                    <p class="mt-1.5 text-sm font-semibold text-[#1B2C25]"><?php echo htmlspecialchars((string) ($_POST['payment_phone'] ?? $defaultPaymentPhone ?: ($currentUser['phone'] ?? 'Not provided'))); ?></p>
                                 </div>
-                                <div class="rounded-2xl bg-slate-50 p-4">
-                                    <p class="text-xs uppercase tracking-[0.18em] text-slate-500">Status</p>
-                                    <p class="mt-2 text-base font-semibold text-slate-900"><?php echo $hasPremiumAccess ? 'Premium active' : 'Not upgraded yet'; ?></p>
+                                <div class="rounded-xl bg-[#F3F8F5] p-3">
+                                    <p class="text-[10px] uppercase tracking-[0.18em] text-[#5B6D65]">Status</p>
+                                    <p class="mt-1.5 text-sm font-semibold text-[#1B2C25]"><?php echo $hasPremiumAccess ? 'Premium active' : 'Not upgraded yet'; ?></p>
                                 </div>
                             </div>
                         </div>
