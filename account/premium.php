@@ -332,7 +332,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
                                                 <?php endif; ?>
                                             </ul>
 
-                                            <form method="POST" class="mt-4">
+                                            <form method="POST" data-premium-upgrade-form class="mt-4">
                                                 <input type="hidden" name="premium_plan" value="<?php echo htmlspecialchars($selected); ?>">
                                                 <input type="hidden" name="payment_phone" value="<?php echo htmlspecialchars((string) ($_POST['payment_phone'] ?? $defaultPaymentPhone)); ?>">
                                                 <button type="submit" data-premium-submit-button <?php echo $hasPremiumAccess ? 'disabled' : ''; ?> class="premium-submit-button w-full rounded-xl bg-[#1F8A5D] px-3 py-2.5 text-xs font-semibold text-white transition hover:bg-[#18724D] disabled:cursor-not-allowed disabled:bg-[#B9C9C1]">
@@ -378,15 +378,34 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
     </div>
     <script>
         document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('[data-premium-submit-button]').forEach(function (button) {
-                button.addEventListener('click', function () {
+            const paymentInput = document.getElementById('premium-payment-number');
+
+            if (paymentInput) {
+                paymentInput.addEventListener('input', function () {
+                    document.querySelectorAll('form[data-premium-upgrade-form] input[name="payment_phone"]').forEach(function (hiddenInput) {
+                        hiddenInput.value = paymentInput.value;
+                    });
+                });
+            }
+
+            document.querySelectorAll('form[data-premium-upgrade-form]').forEach(function (form) {
+                form.addEventListener('submit', function () {
+                    const button = form.querySelector('[data-premium-submit-button]');
+                    if (!button || button.disabled) return;
+
+                    const hiddenPhone = form.querySelector('input[name="payment_phone"]');
+                    if (hiddenPhone && paymentInput) {
+                        hiddenPhone.value = paymentInput.value;
+                    }
+
                     const label = button.querySelector('.premium-submit-label');
                     const spinner = button.querySelector('.premium-submit-spinner');
-                    if (!label || !spinner) return;
+                    if (label && spinner) {
+                        label.classList.add('hidden');
+                        spinner.classList.remove('hidden');
+                        spinner.classList.add('inline-flex');
+                    }
 
-                    label.classList.add('hidden');
-                    spinner.classList.remove('hidden');
-                    spinner.classList.add('inline-flex');
                     button.disabled = true;
                     button.classList.add('opacity-90', 'cursor-not-allowed');
                 });
