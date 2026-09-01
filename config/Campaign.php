@@ -456,6 +456,16 @@ class Campaign {
         }
     }
 
+    private function donationTableHasHoldColumn(): bool {
+        try {
+            $stmt = $this->db->getConnection()->prepare("SHOW COLUMNS FROM donations LIKE 'is_on_hold'");
+            $stmt->execute();
+            return $stmt->fetch(PDO::FETCH_ASSOC) !== false;
+        } catch (Exception $e) {
+            return false;
+        }
+    }
+
     public function getUserTotalDonations($userId) {
         try {
             $query = "SELECT COALESCE(SUM(d.amount), 0) as total_donations
@@ -470,30 +480,39 @@ class Campaign {
 
     public function getUserHeldDonations($userId) {
         try {
+            if (!$this->donationTableHasHoldColumn()) {
+                return 0.0;
+            }
+
             $query = "SELECT COALESCE(SUM(d.amount), 0) as held_donations
                      FROM donations d
                      JOIN campaigns c ON d.campaign_id = c.id
                      WHERE c.user_id = ? AND d.status = 'completed' AND COALESCE(d.is_on_hold, 0) = 1";
             return (float) ($this->db->fetchOne($query, [$userId])['held_donations'] ?? 0);
         } catch (Exception $e) {
-            throw new Exception("Failed to fetch held donations: " . $e->getMessage());
+            return 0.0;
         }
     }
 
     public function getUserWithdrawableDonations($userId) {
         try {
+            if (!$this->donationTableHasHoldColumn()) {
+                return (float) ($this->getUserTotalDonations($userId));
+            }
+
             $query = "SELECT COALESCE(SUM(d.amount), 0) as withdrawable_donations
                      FROM donations d
                      JOIN campaigns c ON d.campaign_id = c.id
                      WHERE c.user_id = ? AND d.status = 'completed' AND COALESCE(d.is_on_hold, 0) = 0";
             return (float) ($this->db->fetchOne($query, [$userId])['withdrawable_donations'] ?? 0);
         } catch (Exception $e) {
-            throw new Exception("Failed to fetch withdrawable donations: " . $e->getMessage());
+            return (float) ($this->getUserTotalDonations($userId));
         }
     }
 
     public function getUserDonationSummary($userId) {
         try {
+            $hasHoldColumn = $this->donationTableHasHoldColumn();
             $query = "SELECT
                         COUNT(d.id) as donation_count,
                         COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as total_received,
@@ -502,6 +521,17 @@ class Campaign {
                       FROM donations d
                       JOIN campaigns c ON d.campaign_id = c.id
                       WHERE c.user_id = ?";
+
+            if (!$hasHoldColumn) {
+                $query = "SELECT
+                            COUNT(d.id) as donation_count,
+                            COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as total_received,
+                            0 as total_on_hold,
+                            COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as total_available
+                          FROM donations d
+                          JOIN campaigns c ON d.campaign_id = c.id
+                          WHERE c.user_id = ?";
+            }
 
             $summary = $this->db->fetchOne($query, [$userId]) ?: [];
 

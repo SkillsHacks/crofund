@@ -69,4 +69,9 @@ if (!$service->hasPremiumAccess(42)) {
     throw new RuntimeException('User should have premium access after completion.');
 }
 
+$followUpPurchase = $service->createUpgradeRequest(43, 'starter');
+if (!$service->completeUpgradeByReference($followUpPurchase['transaction_id'], 'relworx', $followUpPurchase['transaction_id'])) {
+    throw new RuntimeException('Premium upgrade by reference was not completed.');
+}
+
 echo "PremiumAccountService tests passed.\n";

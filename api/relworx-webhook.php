@@ -86,10 +86,12 @@ try {
     }
 
     if (in_array($status, ['failed', 'rejected', 'cancelled'], true)) {
-        $db->prepare("UPDATE premium_payments SET status = 'failed', paid_at = CURRENT_TIMESTAMP WHERE payment_reference = :reference OR transaction_id = :reference OR payment_reference = :customer_reference OR transaction_id = :customer_reference LIMIT 1")
+        $db->prepare("UPDATE premium_payments SET status = 'failed', paid_at = CURRENT_TIMESTAMP WHERE (payment_reference = :reference_a OR transaction_id = :reference_b OR payment_reference = :customer_reference_a OR transaction_id = :customer_reference_b) LIMIT 1")
             ->execute([
-                ':reference' => $internalReference,
-                ':customer_reference' => $paymentReference,
+                ':reference_a' => $internalReference,
+                ':reference_b' => $internalReference,
+                ':customer_reference_a' => $paymentReference,
+                ':customer_reference_b' => $paymentReference,
             ]);
 
         http_response_code(200);

@@ -135,23 +135,27 @@ class PremiumAccountService
 
     public function completeUpgradeByReference(string $reference, string $gateway, ?string $sourceReference = null): bool
     {
+        $sourceReference = $sourceReference ?? $reference;
+
         $stmt = $this->pdo->prepare(
             "SELECT pp.*, p.duration_days, p.code, p.title
              FROM premium_payments pp
              INNER JOIN premium_plans p ON p.id = pp.plan_id
              WHERE pp.status = 'pending'
                AND (
-                   pp.payment_reference = :reference
-                   OR pp.transaction_id = :reference
-                   OR pp.payment_reference = :source_reference
-                   OR pp.transaction_id = :source_reference
+                   pp.payment_reference = :reference_a
+                   OR pp.transaction_id = :reference_b
+                   OR pp.payment_reference = :source_reference_a
+                   OR pp.transaction_id = :source_reference_b
                )
              ORDER BY pp.created_at DESC
              LIMIT 1"
         );
         $stmt->execute([
-            ':reference' => $reference,
-            ':source_reference' => $sourceReference ?? $reference,
+            ':reference_a' => $reference,
+            ':reference_b' => $reference,
+            ':source_reference_a' => $sourceReference,
+            ':source_reference_b' => $sourceReference,
         ]);
 
         $payment = $stmt->fetch(PDO::FETCH_ASSOC);
