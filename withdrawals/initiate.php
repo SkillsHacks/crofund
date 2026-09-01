@@ -107,14 +107,14 @@ if ($isAjaxRequest) {
 function renderWithdrawalInitiateContent(): void {
     global $hasVerifiedId, $errorMessage, $verificationAttempts, $remainingAttempts, $hasExceededMaxAttempts, $pendingWithdrawalsList, $totalDonations, $heldDonations, $withdrawableDonations, $pendingWithdrawals, $availableBalance, $totalWithdrawn, $userInfo, $latestVerificationAttempt, $hasPendingVerificationReview, $latestVerificationWorkflowLabel;
 ?>
-<div class="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr),360px]">
+<div class="w-full px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr),300px]">
         <div class="space-y-6">
-            <section class="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 shadow-sm">
+            <section class="relative overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 shadow-sm">
                 <div class="absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-white/50 to-transparent lg:block"></div>
-                <div class="relative px-6 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
-                    <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Move funds with confidence</h1>
-                    <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+                <div class="relative px-4 py-5 sm:px-5 sm:py-6 lg:px-6 lg:py-7">
+                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Move funds with confidence</h1>
+                    <p class="mt-2 max-w-2xl text-xs leading-5 text-slate-600 sm:text-sm">
                         Review your available balance, confirm your verification status, and choose the withdrawal method that works best for you.
                     </p>
                 </div>

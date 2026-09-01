@@ -228,11 +228,11 @@ include 'components/header.php';
     <meta name="google-adsense-account" content="ca-pub-9839651797371714">
 </head>
 <body class="bg-gray-50">
-    <div class="flex h-screen pt-16">
+    <div class="flex min-h-screen pt-2 sm:pt-3 lg:pt-4">
         <?php include 'components/sidebar.php'; ?>
 
         <main class="app-main flex-1 min-w-0 overflow-auto bg-gray-50 lg:ml-64">
-            <div id="dashboard-default-view" class="p-4 sm:p-6 lg:p-8 space-y-6 sm:space-y-8 <?php echo $currentDashboardRoute['is_home'] ? '' : 'hidden'; ?>">
+            <div id="dashboard-default-view" class="p-4 sm:p-5 lg:p-6 space-y-6 sm:space-y-7 <?php echo $currentDashboardRoute['is_home'] ? '' : 'hidden'; ?>">
                 <?php renderTrustRiskBanner($trustRiskUi); ?>
                 <section class="dashboard-glow relative overflow-hidden rounded-3xl border border-emerald-100 shadow-sm">
                     <div class="absolute inset-y-0 right-0 hidden lg:block w-1/3 bg-gradient-to-l from-white/40 to-transparent"></div>

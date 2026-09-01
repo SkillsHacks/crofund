@@ -130,6 +130,41 @@ class PremiumAccountService
             return false;
         }
 
+        return $this->finalizeUpgradePayment((int) $payment['id'], (int) $payment['user_id'], $payment['code'], $payment['title'], (int) $payment['duration_days'], $gateway, $reference);
+    }
+
+    public function completeUpgradeByReference(string $reference, string $gateway, ?string $sourceReference = null): bool
+    {
+        $stmt = $this->pdo->prepare(
+            "SELECT pp.*, p.duration_days, p.code, p.title
+             FROM premium_payments pp
+             INNER JOIN premium_plans p ON p.id = pp.plan_id
+             WHERE pp.status = 'pending'
+               AND (
+                   pp.payment_reference = :reference
+                   OR pp.transaction_id = :reference
+                   OR pp.payment_reference = :source_reference
+                   OR pp.transaction_id = :source_reference
+               )
+             ORDER BY pp.created_at DESC
+             LIMIT 1"
+        );
+        $stmt->execute([
+            ':reference' => $reference,
+            ':source_reference' => $sourceReference ?? $reference,
+        ]);
+
+        $payment = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if ($payment === false) {
+            return false;
+        }
+
+        return $this->finalizeUpgradePayment((int) $payment['id'], (int) $payment['user_id'], $payment['code'], $payment['title'], (int) $payment['duration_days'], $gateway, $reference);
+    }
+
+    private function finalizeUpgradePayment(int $paymentId, int $userId, string $planCode, string $planTitle, int $durationDays, string $gateway, ?string $reference = null): bool
+    {
         $this->pdo->beginTransaction();
 
         try {
@@ -137,17 +172,23 @@ class PremiumAccountService
                 "UPDATE premium_payments
                  SET status = 'paid',
                      gateway = :gateway,
-                     payment_reference = :reference,
+                     payment_reference = COALESCE(:reference, payment_reference),
                      paid_at = CURRENT_TIMESTAMP
-                 WHERE id = :payment_id"
+                 WHERE id = :payment_id
+                   AND status = 'pending'"
             );
             $updateStmt->execute([
                 ':gateway' => $gateway,
                 ':reference' => $reference,
-                ':payment_id' => (int) $payment['id'],
+                ':payment_id' => $paymentId,
             ]);
 
-            $expiresAt = date('Y-m-d H:i:s', strtotime('+' . (int) $payment['duration_days'] . ' days'));
+            if ($updateStmt->rowCount() < 1) {
+                $this->pdo->rollBack();
+                return false;
+            }
+
+            $expiresAt = date('Y-m-d H:i:s', strtotime('+' . $durationDays . ' days'));
 
             $existingMembership = $this->pdo->prepare(
                 "SELECT id
@@ -171,8 +212,8 @@ class PremiumAccountService
                 );
                 $membershipStmt->execute([
                     ':user_id' => $userId,
-                    ':plan_code' => $payment['code'],
-                    ':plan_title' => $payment['title'],
+                    ':plan_code' => $planCode,
+                    ':plan_title' => $planTitle,
                     ':expires_at' => $expiresAt,
                 ]);
             } else {
@@ -197,8 +238,8 @@ class PremiumAccountService
                 );
                 $membershipStmt->execute([
                     ':user_id' => $userId,
-                    ':plan_code' => $payment['code'],
-                    ':plan_title' => $payment['title'],
+                    ':plan_code' => $planCode,
+                    ':plan_title' => $planTitle,
                     ':expires_at' => $expiresAt,
                 ]);
             }

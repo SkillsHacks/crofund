@@ -20,24 +20,24 @@ $isAjaxRequest = isset($_GET['ajax']) && $_GET['ajax'] === '1';
 
 function renderNotificationsContent(array $currentUser, array $trustRiskUi): void {
 ?>
-<div class="w-full px-4 py-6 sm:px-6 lg:px-8 lg:py-8">
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr),360px]">
+<div class="w-full px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
+    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr),300px]">
         <div class="space-y-6">
-            <section class="relative overflow-hidden rounded-3xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 shadow-sm">
-                <div class="relative px-6 py-7 sm:px-8 sm:py-8 lg:px-10 lg:py-10">
-                    <h1 class="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl">Stay up to date</h1>
-                    <p class="mt-3 max-w-2xl text-sm leading-6 text-slate-600 sm:text-base">
+            <section class="relative overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 shadow-sm">
+                <div class="relative px-4 py-5 sm:px-5 sm:py-6 lg:px-6 lg:py-7">
+                    <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Stay up to date</h1>
+                    <p class="mt-2 max-w-2xl text-xs leading-5 text-slate-600 sm:text-sm">
                         Review important account, campaign, and payout alerts from one organized place.
                     </p>
                 </div>
             </section>
 
-            <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
-                    <h2 class="text-lg font-semibold text-slate-900">Notification inbox</h2>
-                    <p class="mt-1 text-sm text-slate-500">Important account, moderation, and operational notices appear here.</p>
+            <section class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+                <div class="border-b border-slate-200 px-4 py-3 sm:px-5">
+                    <h2 class="text-base font-semibold text-slate-900">Notification inbox</h2>
+                    <p class="mt-1 text-xs text-slate-500">Important account, moderation, and operational notices appear here.</p>
                 </div>
-                <div class="px-5 py-5 sm:px-6 sm:py-6 space-y-4">
+                <div class="space-y-4 px-4 py-4 sm:px-5 sm:py-5">
                     <?php if (!empty($trustRiskUi['show_banner'])): ?>
                         <article class="rounded-2xl border px-4 py-4 <?php echo htmlspecialchars((string) $trustRiskUi['banner_class']); ?>">
                             <div class="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -127,7 +127,7 @@ if (!$isAjaxRequest) {
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <div class="flex min-h-screen pt-16">
+    <div class="flex min-h-screen pt-2 sm:pt-3 lg:pt-4">
         <?php include __DIR__ . '/../components/sidebar.php'; ?>
         <main class="app-main flex-1 min-w-0 bg-gray-50 lg:ml-64">
             <?php renderNotificationsContent($currentUser, $trustRiskUi); ?>

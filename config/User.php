@@ -10,6 +10,20 @@ class User {
 
     public function __construct() {
         $this->db = Database::getInstance();
+        $this->ensurePaypalEmailColumn();
+    }
+
+    private function ensurePaypalEmailColumn(): void {
+        try {
+            $column = $this->db->fetchOne("SHOW COLUMNS FROM users LIKE 'paypal_email'");
+            if ($column) {
+                return;
+            }
+
+            $this->db->query("ALTER TABLE users ADD COLUMN paypal_email VARCHAR(255) NULL AFTER phone");
+        } catch (Exception $e) {
+            error_log('User::ensurePaypalEmailColumn failed: ' . $e->getMessage());
+        }
     }
 
     private function checkLoginAttempts($email) {
@@ -224,7 +238,9 @@ class User {
             return null;
         }
 
-        $sql = "SELECT id, name, email, phone, country, city, newsletter, status, avatar, 
+        $this->ensurePaypalEmailColumn();
+
+        $sql = "SELECT id, name, email, phone, paypal_email, country, city, newsletter, status, avatar, 
                 created_at, updated_at, email_verified, is_verified, verification_token, risk_status, risk_status_reason, risk_review_expires_at, is_admin
                 FROM users 
                 WHERE id = ?";
@@ -254,6 +270,24 @@ class User {
             error_log("Blocked update data: " . json_encode($data));
             throw new Exception("Profile details such as name, email, and phone cannot be changed from settings.");
         }
+    }
+
+    public function savePaypalEmail(int $userId, string $paypalEmail): void {
+        $this->ensurePaypalEmailColumn();
+
+        $trimmed = trim($paypalEmail);
+        if ($trimmed === '') {
+            throw new InvalidArgumentException('Please enter your PayPal email address.');
+        }
+
+        if (!filter_var($trimmed, FILTER_VALIDATE_EMAIL)) {
+            throw new InvalidArgumentException('Please enter a valid PayPal email address.');
+        }
+
+        $this->db->query(
+            "UPDATE users SET paypal_email = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            [$trimmed, $userId]
+        );
     }
 
     public function changePassword($userId, $currentPassword, $newPassword) {
