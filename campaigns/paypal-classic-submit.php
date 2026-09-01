@@ -31,9 +31,11 @@ if (!$pending || $pending['status'] !== 'pending' || $pending['campaign_status']
     exit('This donation link is invalid or has already been used.');
 }
 
-$paypalBusinessEmail = getSetting('paypal_business_email');
+$paypalBusinessEmail = getDonationReceiverPaypalEmail((int) $pending['campaign_id']);
+error_log('paypal-classic-submit.php: donation campaign_id=' . (int) $pending['campaign_id'] . ' selected receiver=' . $paypalBusinessEmail);
+
 if (!$paypalBusinessEmail) {
-    error_log('paypal-classic-submit.php: paypal_business_email setting is not configured.');
+    error_log('paypal-classic-submit.php: no valid PayPal receiver configured for campaign ' . (int) $pending['campaign_id']);
     http_response_code(500);
     exit('PayPal donations are temporarily unavailable. Please try another payment method.');
 }
