@@ -63,7 +63,7 @@ if ($isAjaxRequest) {
     ob_start();
 }
 
-function renderAccountSettingsContent(array $currentUser, string $successMessage, string $errorMessage): void {
+function renderAccountSettingsContent(array $currentUser, bool $hasPremiumAccess, string $successMessage, string $errorMessage): void {
 ?>
 <div class="w-full px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr),300px]">
@@ -239,13 +239,13 @@ if (!$isAjaxRequest) {
     <div class="flex min-h-screen pt-2 sm:pt-3 lg:pt-4">
         <?php include __DIR__ . '/../components/sidebar.php'; ?>
         <main class="app-main flex-1 min-w-0 bg-gray-50 lg:ml-64">
-            <?php renderAccountSettingsContent($currentUser, $successMessage, $errorMessage); ?>
+            <?php renderAccountSettingsContent($currentUser, $hasPremiumAccess, $successMessage, $errorMessage); ?>
         </main>
     </div>
 </body>
 </html>
 <?php
 } else {
-    renderAccountSettingsContent($currentUser, $successMessage, $errorMessage);
+    renderAccountSettingsContent($currentUser, $hasPremiumAccess, $successMessage, $errorMessage);
     echo ob_get_clean();
 }
