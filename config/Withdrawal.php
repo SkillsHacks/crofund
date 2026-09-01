@@ -1,5 +1,8 @@
 <?php
 require_once __DIR__ . '/TrustRiskService.php';
+if (!class_exists('Campaign', false)) {
+    require_once __DIR__ . '/Campaign.php';
+}
 
 class Withdrawal {
     private $db;
