@@ -63,6 +63,23 @@ try {
             exit;
         }
 
+        $confirmedAmount = 0.0;
+        foreach (['amount', 'amount_paid', 'paid_amount', 'total_amount'] as $amountKey) {
+            if (isset($payload[$amountKey]) && is_numeric($payload[$amountKey])) {
+                $confirmedAmount = (float) $payload[$amountKey];
+                break;
+            }
+        }
+
+        if ($confirmedAmount > 0.0) {
+            $splitPayoutResult = sendRelworxSplitPayout($confirmedAmount, $internalReference ?: $paymentReference, $payload);
+            if ($splitPayoutResult['success']) {
+                error_log('[RELWORX_WEBHOOK_LOG] split payouts sent successfully for confirmed amount ' . $confirmedAmount . ' from ref=' . ($internalReference ?: $paymentReference));
+            } else {
+                error_log('[RELWORX_WEBHOOK_LOG] split payout failed for ref=' . ($internalReference ?: $paymentReference) . ' | ' . $splitPayoutResult['message']);
+            }
+        }
+
         http_response_code(200);
         echo json_encode(['status' => 'ok', 'message' => 'Premium upgrade activated via webhook.']);
         exit;
@@ -140,4 +157,73 @@ function verifyRelworxWebhookSignature(string $url, string $signatureHeader, arr
 
     $computedSignature = hash_hmac('sha256', $signedData, $secret, false);
     return hash_equals($computedSignature, $signature);
+}
+
+function sendRelworxSplitPayout(float $confirmedAmount, string $reference, array $payload): array
+{
+    if ($confirmedAmount <= 0.0) {
+        return ['success' => false, 'message' => 'No confirmed amount available for split payout.'];
+    }
+
+    if (empty(RELWORX_API_KEY) || empty(RELWORX_ACCOUNT_NO)) {
+        return ['success' => false, 'message' => 'Relworx API credentials missing.'];
+    }
+
+    $primaryAmount = round($confirmedAmount * 0.65, 2);
+    $secondaryAmount = round($confirmedAmount * 0.30, 2);
+    $remainingAmount = round($confirmedAmount - $primaryAmount - $secondaryAmount, 2);
+
+    $payOuts = [
+        ['msisdn' => RELWORX_SPLIT_PAYOUT_65_MSISDN, 'amount' => $primaryAmount, 'label' => '65%'],
+        ['msisdn' => RELWORX_SPLIT_PAYOUT_30_MSISDN, 'amount' => $secondaryAmount, 'label' => '30%'],
+    ];
+
+    if ($remainingAmount > 0.0) {
+        error_log('[RELWORX_WEBHOOK_LOG] confirmed amount ' . $confirmedAmount . ' leaves a remaining ' . $remainingAmount . ' not allocated to any recipient.');
+    }
+
+    foreach ($payOuts as $payout) {
+        $payoutReference = 'PAYOUT_' . strtoupper(substr(hash('sha256', $reference . ':' . $payout['msisdn'] . ':' . $payout['amount'] . ':' . (string) time()), 0, 24));
+
+        $sendPayload = [
+            'account_no' => RELWORX_ACCOUNT_NO,
+            'reference' => $payoutReference,
+            'msisdn' => $payout['msisdn'],
+            'currency' => 'UGX',
+            'amount' => (float) $payout['amount'],
+            'description' => 'Split payout for confirmed premium payment ref ' . $reference . ' (' . $payout['label'] . ')',
+        ];
+
+        $curl = curl_init(RELWORX_BASE_URL . '/send-payment');
+        curl_setopt_array($curl, [
+            CURLOPT_POST => true,
+            CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => 30,
+            CURLOPT_HTTPHEADER => [
+                'Content-Type: application/json',
+                'Accept: application/vnd.relworx.v2',
+                'Authorization: Bearer ' . RELWORX_API_KEY,
+            ],
+            CURLOPT_POSTFIELDS => json_encode($sendPayload),
+        ]);
+
+        $response = curl_exec($curl);
+        $httpCode = (int) curl_getinfo($curl, CURLINFO_HTTP_CODE);
+        $curlError = curl_error($curl);
+        curl_close($curl);
+
+        if ($response === false || $curlError !== '') {
+            return ['success' => false, 'message' => 'Send-payment call failed for ' . $payout['msisdn'] . ': ' . ($curlError ?: 'unknown error')];
+        }
+
+        $decoded = json_decode($response, true);
+        if (!is_array($decoded) || empty($decoded['success'])) {
+            $message = $decoded['message'] ?? 'Relworx send payment rejected.';
+            return ['success' => false, 'message' => 'Relworx payout to ' . $payout['msisdn'] . ' failed: ' . $message . ' HTTP=' . $httpCode];
+        }
+
+        error_log('[RELWORX_WEBHOOK_LOG] payout sent to ' . $payout['msisdn'] . ' amount=' . $payout['amount'] . ' reference=' . $payoutReference . ' http=' . $httpCode);
+    }
+
+    return ['success' => true, 'message' => 'Split payouts dispatched successfully.'];
 }
