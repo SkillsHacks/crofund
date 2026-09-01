@@ -266,7 +266,7 @@ $ogImageUrl = !empty($details['image_path'])
   <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
     <div class="flex-1 min-w-0">
       <div class="flex flex-nowrap items-center gap-1.5 mb-3 overflow-x-auto">
-        <span class="badge <?php
+        <span class="badge hidden sm:inline-flex <?php
           if ($details['status']==='active') echo 'status-active';
           elseif ($details['status']==='completed') echo 'status-completed';
           else echo 'status-other';
@@ -274,7 +274,7 @@ $ogImageUrl = !empty($details['image_path'])
           <span class="w-1.5 h-1.5 rounded-full bg-current inline-block"></span>
           <?php echo ucfirst($details['status']); ?>
         </span>
-        <span class="badge" style="background:#f0fdf4;color:#166534;">
+        <span class="badge hidden sm:inline-flex" style="background:#f0fdf4;color:#166534;">
           <i class="fas fa-tag text-[9px]"></i>
           <?php echo htmlspecialchars(ucfirst($details['category'])); ?>
         </span>
