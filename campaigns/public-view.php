@@ -579,7 +579,7 @@ $ogImageUrl = !empty($details['image_path'])
     </div><!-- /left column -->
 
     <!-- ════ RIGHT COLUMN (sticky sidebar) ════ -->
-    <div class="lg:col-span-1 order-1 lg:order-2">
+    <div class="hidden lg:block lg:col-span-1 order-1 lg:order-2">
       <div class="sticky-sidebar space-y-5">
 
         <!-- Donation widget -->
