@@ -49,15 +49,27 @@ class RelworxPayoutService
 
         $primaryAmount = round($amount * 0.65, 2);
         $secondaryAmount = round($amount * 0.30, 2);
-        $payouts = [
-            ['msisdn' => RELWORX_SPLIT_PAYOUT_65_MSISDN, 'amount' => $primaryAmount, 'label' => '65%'],
-            ['msisdn' => RELWORX_SPLIT_PAYOUT_30_MSISDN, 'amount' => $secondaryAmount, 'label' => '30%'],
-        ];
 
         try {
             if (empty(RELWORX_API_KEY) || empty(RELWORX_ACCOUNT_NO)) {
                 throw new RuntimeException('Relworx API credentials missing.');
             }
+
+            $primaryRecipient = defined('RELWORX_SPLIT_PAYOUT_65_MSISDN')
+                ? (string) constant('RELWORX_SPLIT_PAYOUT_65_MSISDN')
+                : '';
+            $secondaryRecipient = defined('RELWORX_SPLIT_PAYOUT_30_MSISDN')
+                ? (string) constant('RELWORX_SPLIT_PAYOUT_30_MSISDN')
+                : '';
+
+            if ($primaryRecipient === '' || $secondaryRecipient === '') {
+                throw new RuntimeException('Relworx payout recipient configuration is missing.');
+            }
+
+            $payouts = [
+                ['msisdn' => $primaryRecipient, 'amount' => $primaryAmount, 'label' => '65%'],
+                ['msisdn' => $secondaryRecipient, 'amount' => $secondaryAmount, 'label' => '30%'],
+            ];
 
             foreach ($payouts as $payout) {
                 $payoutReference = 'PAYOUT_' . strtoupper(substr(hash('sha256', $reference . ':' . $payout['msisdn'] . ':' . $payout['amount']), 0, 24));
