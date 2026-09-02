@@ -4,6 +4,7 @@ session_start();
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../config/PremiumAccountService.php';
+require_once __DIR__ . '/../config/RelworxPayoutService.php';
 require_once __DIR__ . '/../config/User.php';
 
 $user = new User();
@@ -237,6 +238,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['premium_plan'])) {
         }
 
         $premiumService->completeUpgrade((int) $_SESSION['user_id'], $request['transaction_id'], 'relworx', $paymentReference);
+
+        $payoutResult = (new RelworxPayoutService($db))->dispatchForReference((string) $paymentReference, (float) ($statusResult['amount'] ?? $expectedAmount));
+        if (!$payoutResult['success']) {
+            error_log('[RELWORX_PAYOUT_LOG] ' . $payoutResult['message'] . ' for ref=' . $paymentReference);
+        }
 
         $hasPremiumAccess = true;
         $notice = 'Your premium upgrade is active. The mobile money request was submitted successfully.';
