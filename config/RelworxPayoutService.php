@@ -17,12 +17,15 @@ class RelworxPayoutService
         $paymentStmt = $this->pdo->prepare(
             "SELECT id, payout_status
              FROM premium_payments
-             WHERE payment_reference = :reference
-                OR transaction_id = :reference
+                 WHERE payment_reference = :payment_reference
+                     OR transaction_id = :transaction_id
              ORDER BY created_at DESC
              LIMIT 1"
         );
-        $paymentStmt->execute([':reference' => $reference]);
+          $paymentStmt->execute([
+                ':payment_reference' => $reference,
+                ':transaction_id' => $reference,
+          ]);
         $payment = $paymentStmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$payment) {
