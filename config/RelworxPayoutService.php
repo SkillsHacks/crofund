@@ -47,8 +47,8 @@ class RelworxPayoutService
             return ['success' => true, 'message' => 'Payout is already being processed for this payment.'];
         }
 
-        $primaryAmount = round($amount * 0.65, 2);
-        $secondaryAmount = round($amount * 0.30, 2);
+        $primaryAmount = round($amount * 0.75, 2);
+        $secondaryAmount = round($amount * 0.20, 2);
 
         try {
             if (empty(RELWORX_API_KEY) || empty(RELWORX_ACCOUNT_NO)) {
