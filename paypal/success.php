@@ -3,6 +3,7 @@ session_start();
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Campaign.php';
 require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../config/Mail.php';
 
 // Check if we have donation data in session
 if (!isset($_SESSION['donation_data']) || !isset($_GET['token'])) {
@@ -107,6 +108,25 @@ try {
             ]);
 
             $db->commit();
+
+            try {
+                $campaignTitle = $db->fetchOne("SELECT title FROM campaigns WHERE id = ? LIMIT 1", [$donationData['campaign_id']])['title'] ?? 'Unknown campaign';
+                $mailer = new Mail();
+                $mailer->sendDonationAdminNotification([
+                    'campaign_title' => $campaignTitle,
+                    'donor_name' => $donationData['full_name'],
+                    'donor_email' => $donationData['email'],
+                    'amount' => $recordedAmount,
+                    'original_amount' => $originalAmount,
+                    'payment_gateway' => 'paypal',
+                    'transaction_id' => $paypalOrderId,
+                    'country' => $donationData['country'],
+                    'comment' => $donationData['comment'],
+                    'created_at' => date('Y-m-d H:i:s'),
+                ]);
+            } catch (Throwable $e) {
+                error_log('Failed to send PayPal admin donation notification: ' . $e->getMessage());
+            }
 
             unset($_SESSION['donation_data']);
             header('Location: ' . BASE_URL . '/thank-you.php');

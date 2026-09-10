@@ -2,6 +2,7 @@
 session_start();
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Campaign.php';
+require_once __DIR__ . '/../config/Mail.php';
 
 /**
  * PDT (Payment Data Transfer) landing page for the classic PayPal Standard flow.
@@ -197,6 +198,28 @@ try {
         $campaign->updateCampaignAmount($pending['campaign_id'], $recordedAmount);
 
     $pdo->commit();
+
+    try {
+        $campaignTitleStmt = $pdo->prepare("SELECT title FROM campaigns WHERE id = ? LIMIT 1");
+        $campaignTitleStmt->execute([$pending['campaign_id']]);
+        $campaignTitle = $campaignTitleStmt->fetchColumn() ?: 'Unknown campaign';
+
+        $mailer = new Mail();
+        $mailer->sendDonationAdminNotification([
+            'campaign_title' => $campaignTitle,
+            'donor_name' => $pending['donor_name'],
+            'donor_email' => $pending['donor_email'],
+            'amount' => $recordedAmount,
+            'original_amount' => $originalAmount,
+            'payment_gateway' => 'paypal_standard',
+            'transaction_id' => $tx,
+            'country' => null,
+            'comment' => null,
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+    } catch (Throwable $e) {
+        error_log('Failed to send classic PayPal admin donation notification: ' . $e->getMessage());
+    }
 } catch (Exception $e) {
     $pdo->rollBack();
     error_log('Failed to record verified PayPal donation tx=' . $tx . ': ' . $e->getMessage());

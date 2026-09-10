@@ -1,6 +1,7 @@
 <?php
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Campaign.php';
+require_once __DIR__ . '/../config/Mail.php';
 
 /**
  * IPN (Instant Payment Notification) listener for the classic PayPal Standard
@@ -119,6 +120,28 @@ try {
         (new Campaign())->updateCampaignAmount($pending['campaign_id'], $recordedAmount);
 
     $pdo->commit();
+
+    try {
+        $campaignTitle = $pdo->prepare("SELECT title FROM campaigns WHERE id = ? LIMIT 1");
+        $campaignTitle->execute([$pending['campaign_id']]);
+        $campaignTitle = $campaignTitle->fetchColumn() ?: 'Unknown campaign';
+
+        $mailer = new Mail();
+        $mailer->sendDonationAdminNotification([
+            'campaign_title' => $campaignTitle,
+            'donor_name' => $pending['donor_name'],
+            'donor_email' => $pending['donor_email'],
+            'amount' => $recordedAmount,
+            'original_amount' => $originalAmount,
+            'payment_gateway' => 'paypal_standard',
+            'transaction_id' => $txnId,
+            'country' => null,
+            'comment' => null,
+            'created_at' => date('Y-m-d H:i:s'),
+        ]);
+    } catch (Throwable $e) {
+        error_log('Failed to send PayPal IPN admin donation notification: ' . $e->getMessage());
+    }
 } catch (Exception $e) {
     $pdo->rollBack();
     error_log('IPN failed to record donation txn=' . $txnId . ': ' . $e->getMessage());

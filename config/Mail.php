@@ -188,6 +188,82 @@ class Mail {
         }
     }
 
+    public function sendDonationAdminNotification(array $donationData): bool {
+        try {
+            $adminEmail = 'support@crofund.org';
+
+            return $this->sendEmail(
+                $adminEmail,
+                'New donation received - ' . SITE_NAME,
+                $this->getDonationAdminNotificationEmailTemplate($donationData),
+                $this->getDonationAdminNotificationPlainText($donationData)
+            );
+        } catch (Throwable $e) {
+            $this->throwUserSafeMailException('Donation admin notification could not be sent', $e);
+        }
+    }
+
+    private function getDonationAdminNotificationEmailTemplate(array $donationData): string {
+        $campaignTitle = htmlspecialchars($donationData['campaign_title'] ?? 'Unknown campaign', ENT_QUOTES, 'UTF-8');
+        $donorName = htmlspecialchars($donationData['donor_name'] ?? 'Anonymous donor', ENT_QUOTES, 'UTF-8');
+        $donorEmail = htmlspecialchars($donationData['donor_email'] ?? 'Not provided', ENT_QUOTES, 'UTF-8');
+        $donationAmount = htmlspecialchars((string) ($donationData['original_amount'] ?? $donationData['amount'] ?? '0.00'), ENT_QUOTES, 'UTF-8');
+        $paymentGateway = htmlspecialchars(strtoupper((string) ($donationData['payment_gateway'] ?? 'paypal')), ENT_QUOTES, 'UTF-8');
+        $transactionId = htmlspecialchars((string) ($donationData['transaction_id'] ?? 'Not available'), ENT_QUOTES, 'UTF-8');
+        $country = htmlspecialchars((string) ($donationData['country'] ?? 'Not provided'), ENT_QUOTES, 'UTF-8');
+        $comment = htmlspecialchars((string) ($donationData['comment'] ?? 'No comment'), ENT_QUOTES, 'UTF-8');
+        $createdAt = htmlspecialchars((string) ($donationData['created_at'] ?? date('Y-m-d H:i:s')), ENT_QUOTES, 'UTF-8');
+
+        return '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New donation received</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
+    <div style="background-color: #ffffff;">
+        ' . $this->getEmailBrandHeader('New Donation Received') . '
+        <p>A new donation has been received on ' . SITE_NAME . ':</p>
+        <div style="background-color: #f9fafb; padding: 20px; border-radius: 8px; margin: 20px 0;">
+            <p style="margin: 8px 0;"><strong>Campaign:</strong> ' . $campaignTitle . '</p>
+            <p style="margin: 8px 0;"><strong>Donor Name:</strong> ' . $donorName . '</p>
+            <p style="margin: 8px 0;"><strong>Donor Email:</strong> ' . $donorEmail . '</p>
+            <p style="margin: 8px 0;"><strong>Amount:</strong> $' . $donationAmount . '</p>
+            <p style="margin: 8px 0;"><strong>Gateway:</strong> ' . $paymentGateway . '</p>
+            <p style="margin: 8px 0;"><strong>Transaction ID:</strong> ' . $transactionId . '</p>
+            <p style="margin: 8px 0;"><strong>Country:</strong> ' . $country . '</p>
+            <p style="margin: 8px 0;"><strong>Comment:</strong> ' . $comment . '</p>
+            <p style="margin: 8px 0;"><strong>Received At:</strong> ' . $createdAt . '</p>
+        </div>
+    </div>
+</body>
+</html>';
+    }
+
+    private function getDonationAdminNotificationPlainText(array $donationData): string {
+        $campaignTitle = $donationData['campaign_title'] ?? 'Unknown campaign';
+        $donorName = $donationData['donor_name'] ?? 'Anonymous donor';
+        $donorEmail = $donationData['donor_email'] ?? 'Not provided';
+        $amount = (string) ($donationData['original_amount'] ?? $donationData['amount'] ?? '0.00');
+        $gateway = strtoupper((string) ($donationData['payment_gateway'] ?? 'paypal'));
+        $transactionId = (string) ($donationData['transaction_id'] ?? 'Not available');
+        $country = (string) ($donationData['country'] ?? 'Not provided');
+        $comment = (string) ($donationData['comment'] ?? 'No comment');
+        $createdAt = (string) ($donationData['created_at'] ?? date('Y-m-d H:i:s'));
+
+        return "New donation received on " . SITE_NAME . "\n\n" .
+               "Campaign: " . $campaignTitle . "\n" .
+               "Donor Name: " . $donorName . "\n" .
+               "Donor Email: " . $donorEmail . "\n" .
+               "Amount: $" . $amount . "\n" .
+               "Gateway: " . $gateway . "\n" .
+               "Transaction ID: " . $transactionId . "\n" .
+               "Country: " . $country . "\n" .
+               "Comment: " . $comment . "\n" .
+               "Received At: " . $createdAt;
+    }
+
     private function getAdminNotificationEmailTemplate($userData) {
         return '<!DOCTYPE html>
 <html lang="en">
