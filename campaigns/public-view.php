@@ -206,17 +206,37 @@ $ogImageUrl = !empty($details['image_path'])
 
     /* ── Donation modal ── */
     .modal-overlay{ display:none; position:fixed; inset:0; z-index:1000; background:rgba(15,23,42,.55); backdrop-filter:blur(8px); }
-    .modal-overlay.active{ display:flex; align-items:center; justify-content:center; padding:1rem; overflow-y:auto; }
-    .modal-box{ background:#fff; border-radius:1.5rem; box-shadow:0 25px 50px -12px rgba(0,0,0,.28); max-width:560px; width:100%; max-height:92vh; overflow-y:auto; animation:slideUp .35s cubic-bezier(.16,1,.3,1); }
-    .modal-box, .modal-box *{ border-radius:0 !important; }
+    .modal-overlay.active{ display:flex; align-items:center; justify-content:center; padding:0.75rem; overflow-y:auto; }
+    .modal-box{ background:#fff; border-radius:1.25rem; box-shadow:0 25px 50px -12px rgba(0,0,0,.28); max-width:430px; width:100%; max-height:88vh; overflow-y:auto; scrollbar-width:none; -ms-overflow-style:none; animation:slideUp .35s cubic-bezier(.16,1,.3,1); }
+    .modal-box::-webkit-scrollbar{ display:none; }
+    .modal-box *{ border-radius:inherit; }
     @keyframes slideUp{ from{ opacity:0; transform:translateY(24px) scale(.97); } to{ opacity:1; transform:translateY(0) scale(1); } }
 
     /* Form styles (used inside ajax-loaded form) */
-    .form-section{ margin-bottom:1.4rem; }
-    .form-section-title{ display:flex; align-items:center; gap:.5rem; margin-bottom:.75rem; }
+    .form-section{ margin-bottom:1rem; }
+    .form-section-title{ display:flex; align-items:center; gap:.5rem; margin-bottom:.6rem; }
     .input-group{ position:relative; }
     .input-icon{ position:absolute; left:.875rem; top:50%; transform:translateY(-50%); color:#94a3b8; font-size:.85rem; }
     .input-with-icon{ padding-left:2.4rem !important; }
+    .donation-field,
+    .donation-select,
+    .donation-textarea,
+    .donation-amount-btn,
+    .gateway-option,
+    .gateway-option .w-2\\.5,
+    .gateway-option .flex.h-9.w-9,
+    .gateway-option .flex.items-center.gap-3.w-full,
+    .form-section,
+    .form-section > *{
+      border-radius: 1rem;
+    }
+    .donation-field,
+    .donation-select,
+    .donation-textarea{
+      min-height: 2.75rem;
+      box-shadow: inset 0 1px 2px rgba(15,23,42,0.02);
+    }
+    .donation-textarea{ min-height: 5.5rem; }
     .donation-amount-btn.active{ border-color:#059669 !important; background:#059669 !important; color:#fff !important; }
     .gateway-option{ transition:all .18s; cursor:pointer; }
 

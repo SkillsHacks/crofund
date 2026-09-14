@@ -53,7 +53,7 @@ try {
             <div class="grid grid-cols-4 gap-2 mb-4">
                 <?php foreach ([25, 50, 100, 250] as $preset): ?>
                 <button type="button"
-                    class="donation-amount-btn py-3 border-2 border-slate-200 rounded-xl text-sm font-semibold text-slate-700 bg-white hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-all<?php echo $preset === 100 ? ' active' : ''; ?>"
+                    class="donation-amount-btn py-2.5 border-2 border-slate-200 rounded-2xl text-sm font-semibold text-slate-700 bg-white hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-all<?php echo $preset === 100 ? ' active' : ''; ?>"
                     data-amount="<?php echo $preset; ?>">
                     $<?php echo $preset; ?>
                 </button>
@@ -62,7 +62,7 @@ try {
 
             <div class="input-group">
                 <input type="number" min="5" step="0.01" id="onlyNumber" name="amount" value="100"
-                    class="w-full input-with-icon border-2 border-slate-200 rounded-xl px-4 py-3 text-sm font-medium text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
+                    class="donation-field w-full input-with-icon border-2 border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm font-medium text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
                     placeholder="Or enter custom amount" required>
             </div>
             <p class="text-xs text-slate-500 mt-2">
@@ -85,7 +85,7 @@ try {
                         : (in_array($gatewayCode, ['paypal', 'paypal_classic'], true) ? 'fab fa-paypal' : 'fas fa-wallet');
                     $gatewayIconColor = $gatewayCode === 'stripe' ? 'text-indigo-600' : 'text-sky-600';
                 ?>
-                <label class="flex items-center p-4 border-2 rounded-xl cursor-pointer transition-all gateway-option border-slate-200 bg-white hover:border-emerald-300"
+                <label class="flex items-center p-3.5 border-2 rounded-2xl cursor-pointer transition-all gateway-option border-slate-200 bg-white hover:border-emerald-300"
                        data-gateway="<?php echo htmlspecialchars($gw['code']); ?>">
                     <input type="radio" name="payment_gateway" value="<?php echo htmlspecialchars($gw['code']); ?>" class="sr-only">
                     <div class="flex items-center gap-3 w-full">
@@ -119,12 +119,12 @@ try {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="input-group">
                     <input type="text" id="cardholder-name" name="full_name"
-                        class="w-full input-with-icon border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
+                        class="donation-field w-full input-with-icon border-2 border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
                         placeholder="Full Name" required>
                 </div>
                 <div class="input-group">
                     <input type="email" id="cardholder-email" name="email"
-                        class="w-full input-with-icon border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
+                        class="donation-field w-full input-with-icon border-2 border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
                         placeholder="Email Address" required>
                 </div>
             </div>
@@ -138,7 +138,7 @@ try {
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="input-group">
                     <select id="country" name="country"
-                        class="w-full input-with-icon border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all appearance-none" required>
+                        class="donation-field donation-select w-full input-with-icon border-2 border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all appearance-none" required>
                         <option value="">Select Country</option>
                         <option value="US">United States</option>
                         <option value="CA">Canada</option>
@@ -167,7 +167,7 @@ try {
                 </div>
                 <div class="input-group">
                     <input type="text" id="postal_code" name="postal_code"
-                        class="w-full input-with-icon border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
+                        class="donation-field w-full input-with-icon border-2 border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
                         placeholder="Postal Code">
                 </div>
             </div>
@@ -183,63 +183,29 @@ try {
                 <h3 class="text-sm font-bold text-slate-900">Leave a Message <span class="font-normal text-slate-400">(Optional)</span></h3>
             </div>
             <textarea id="comment" name="comment" rows="3"
-                class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
+                class="donation-field donation-textarea w-full border-2 border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all resize-none"
                 placeholder="Share why you're donating..."></textarea>
         </div>
 
         <!-- Credit or debit card details -->
         <div id="card-fields" class="form-section hidden">
             <div class="mb-3">
-                <h3 class="text-sm font-bold text-slate-900">Credit or debit card</h3>
+                <h3 class="text-sm font-bold text-slate-900">Billing Info</h3>
             </div>
             <div class="space-y-3">
                 <input type="email" id="card-email"
-                    class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
+                    class="donation-field w-full border-2 border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
                     placeholder="Email Address" autocomplete="email">
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <input type="text" id="card-first-name"
-                        class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
+                        class="donation-field w-full border-2 border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
                         placeholder="First name" autocomplete="given-name">
                     <input type="text" id="card-last-name"
-                        class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
+                        class="donation-field w-full border-2 border-slate-200 rounded-2xl px-3.5 py-2.5 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
                         placeholder="Last name" autocomplete="family-name">
                 </div>
-                <label class="flex items-center gap-2 text-sm text-slate-600">
-                    <input type="checkbox" id="use-billing-name" class="h-4 w-4 accent-emerald-600">
-                    Use as billing name
-                </label>
-                <div>
-                    <label class="block text-xs font-semibold text-slate-600 mb-1">Card number</label>
-                    <input type="text" id="card-number" inputmode="numeric" autocomplete="cc-number"
-                        class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
-                        placeholder="Card number">
-                </div>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">MM/YY</label>
-                        <input type="text" id="card-expiry" inputmode="numeric" autocomplete="cc-exp"
-                            class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
-                            placeholder="MM/YY">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-semibold text-slate-600 mb-1">CVV</label>
-                        <input type="password" id="card-cvv" inputmode="numeric" autocomplete="cc-csc"
-                            class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
-                            placeholder="CVV">
-                    </div>
-                </div>
-                    <input type="text" id="cardholder-name-card"
-                    class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all"
-                    placeholder="Name on card" autocomplete="cc-name">
-                <select id="card-country"
-                    class="w-full border-2 border-slate-200 rounded-xl px-4 py-3 text-sm text-slate-900 bg-slate-50 focus:bg-white focus:ring-4 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none transition-all">
-                    <option value="UG" selected>Uganda</option>
-                    <option value="US">United States</option>
-                    <option value="GB">United Kingdom</option>
-                    <option value="CA">Canada</option>
-                    <option value="KE">Kenya</option>
-                    <option value="Other">Other</option>
-                </select>
+                <input type="hidden" id="cardholder-name-card" value="">
+                <input type="hidden" id="card-country" value="UG">
             </div>
         </div>
 

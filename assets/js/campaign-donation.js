@@ -182,6 +182,15 @@
       const gw = $('input[name="payment_gateway"]:checked').val();
 
       if (gw === 'stripe') {
+        const cardNumberField = document.getElementById('card-number');
+        const cardExpiryField = document.getElementById('card-expiry');
+        const cardCvvField = document.getElementById('card-cvv');
+
+        if (!cardNumberField || !cardExpiryField || !cardCvvField) {
+          showUnsupportedCardModal();
+          return false;
+        }
+
         if (!validateCardFields()) {
           return false;
         }
@@ -251,9 +260,18 @@
   }
 
   function validateCardFields() {
-    const number = $('#card-number').val().replace(/\D/g, '');
-    const expiry = $('#card-expiry').val().replace(/\D/g, '');
-    const cvv    = $('#card-cvv').val().replace(/\D/g, '');
+    const cardNumberField = document.getElementById('card-number');
+    const cardExpiryField = document.getElementById('card-expiry');
+    const cardCvvField = document.getElementById('card-cvv');
+
+    if (!cardNumberField || !cardExpiryField || !cardCvvField) {
+      showUnsupportedCardModal();
+      return false;
+    }
+
+    const number = (cardNumberField.value || '').replace(/\D/g, '');
+    const expiry = (cardExpiryField.value || '').replace(/\D/g, '');
+    const cvv    = (cardCvvField.value || '').replace(/\D/g, '');
     const month  = parseInt(expiry.slice(0, 2), 10);
     const year   = parseInt(expiry.slice(2, 4), 10);
 
