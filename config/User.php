@@ -290,6 +290,15 @@ class User {
         );
     }
 
+    public function clearPaypalEmail(int $userId): void {
+        $this->ensurePaypalEmailColumn();
+
+        $this->db->query(
+            "UPDATE users SET paypal_email = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
+            [$userId]
+        );
+    }
+
     public function changePassword($userId, $currentPassword, $newPassword) {
         try {
             // Verify current password

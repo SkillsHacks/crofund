@@ -48,6 +48,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $currentUser = $user->getCurrentUser();
             $successMessage = 'Your PayPal payout email has been saved.';
         }
+
+        if (isset($_POST['remove_paypal_email'])) {
+            if (!$hasPremiumAccess) {
+                throw new RuntimeException('Only premium members can manage a PayPal payout address.');
+            }
+
+            $user->clearPaypalEmail((int) $_SESSION['user_id']);
+            $currentUser = $user->getCurrentUser();
+            $successMessage = 'Your PayPal payout email has been removed.';
+        }
     } catch (Exception $e) {
         error_log('Account settings error for user ' . $_SESSION['user_id'] . ': ' . $e->getMessage());
         error_log('Stack trace: ' . $e->getTraceAsString());
@@ -153,7 +163,12 @@ function renderAccountSettingsContent(array $currentUser, bool $hasPremiumAccess
                                 <input type="email" name="paypal_email" value="<?php echo htmlspecialchars((string) ($currentUser['paypal_email'] ?? '')); ?>" placeholder="name@example.com" required
                                        class="mt-1.5 block w-full rounded-xl border border-emerald-200 bg-white px-3 py-2.5 text-sm text-slate-900 shadow-sm transition focus:border-emerald-500 focus:outline-none focus:ring-4 focus:ring-emerald-500/10">
                             </div>
-                            <div class="flex justify-end">
+                            <div class="flex flex-wrap justify-end gap-2">
+                                <?php if (!empty($currentUser['paypal_email'])): ?>
+                                    <button type="submit" name="remove_paypal_email" formnovalidate class="inline-flex items-center justify-center rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 shadow-sm transition hover:-translate-y-0.5 hover:border-red-300 hover:bg-red-50 focus:outline-none focus:ring-4 focus:ring-red-500/20">
+                                        Remove PayPal address
+                                    </button>
+                                <?php endif; ?>
                                 <button type="submit" name="save_paypal_email" class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/20">
                                     Save PayPal address
                                 </button>
