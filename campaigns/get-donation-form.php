@@ -37,6 +37,17 @@ try {
 
     $paymentGateways = getEnabledPaymentGateways();
 
+    // PayPal Classic is the default method, so the selector is hidden. It stays
+    // visible when PayPal Classic is disabled, otherwise a donor could be
+    // charged through another gateway without ever being shown the choice.
+    $hidePaymentMethod = false;
+    foreach ($paymentGateways as $gw) {
+        if ((string) $gw['code'] === 'paypal_classic') {
+            $hidePaymentMethod = true;
+            break;
+        }
+    }
+
     // Build form HTML in a nested buffer
     ob_start();
     ?>
@@ -72,7 +83,7 @@ try {
 
         <!-- Payment Method -->
         <?php if (!empty($paymentGateways)): ?>
-        <div class="form-section">
+        <div class="form-section<?php echo $hidePaymentMethod ? ' hidden' : ''; ?>">
             <div class="form-section-title mb-3">
                 <h3 class="text-sm font-bold text-slate-900">Payment Method</h3>
             </div>

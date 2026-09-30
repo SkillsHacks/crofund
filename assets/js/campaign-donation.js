@@ -103,38 +103,7 @@
   });
 
   // ── Form handlers ──
-  function initializeDonationForm() {
-    $('.gateway-option').off('click').on('click', function () {
-      $('.gateway-option').removeClass('border-emerald-500 bg-emerald-50').addClass('border-slate-200 bg-white');
-      $('.gateway-option .w-2\\.5').removeClass('bg-emerald-500');
-      $('input[name="payment_gateway"]').prop('checked', false);
-
-      $(this).addClass('border-emerald-500 bg-emerald-50').removeClass('border-slate-200 bg-white');
-      $(this).find('.w-2\\.5').addClass('bg-emerald-500');
-      $(this).find('input[type="radio"]').prop('checked', true);
-
-      const gw = $(this).data('gateway');
-      $('.non-stripe-fields input, .non-stripe-fields select').prop('disabled', gw === 'stripe');
-      if (gw === 'paypal') {
-        $('.non-stripe-fields').removeClass('hidden');
-        $('#card-fields').addClass('hidden');
-        $('#buttonDonation').addClass('hidden');
-        $('#paypal-button-container').removeClass('hidden');
-        loadPayPalButtons();
-      } else if (gw === 'stripe') {
-        $('.non-stripe-fields').addClass('hidden');
-        $('#card-fields').removeClass('hidden');
-        $('#buttonDonation').removeClass('hidden');
-        $('#paypal-button-container').addClass('hidden');
-      } else {
-        $('.non-stripe-fields').removeClass('hidden');
-        $('#card-fields').addClass('hidden');
-        $('#buttonDonation').removeClass('hidden');
-        $('#paypal-button-container').addClass('hidden');
-      }
-    });
-
-    // Require an explicit payment-method selection before showing any fields
+  function clearGatewaySelection() {
     $('.gateway-option').removeClass('border-emerald-500 bg-emerald-50').addClass('border-slate-200 bg-white');
     $('.gateway-option .w-2\\.5').removeClass('bg-emerald-500');
     $('input[name="payment_gateway"]').prop('checked', false);
@@ -143,6 +112,58 @@
     $('#card-fields').addClass('hidden');
     $('#buttonDonation').addClass('hidden');
     $('#paypal-button-container').addClass('hidden');
+  }
+
+  function selectGateway($option) {
+    if (!$option || !$option.length) return;
+
+    $('.gateway-option').removeClass('border-emerald-500 bg-emerald-50').addClass('border-slate-200 bg-white');
+    $('.gateway-option .w-2\\.5').removeClass('bg-emerald-500');
+    $('input[name="payment_gateway"]').prop('checked', false);
+
+    $option.addClass('border-emerald-500 bg-emerald-50').removeClass('border-slate-200 bg-white');
+    $option.find('.w-2\\.5').addClass('bg-emerald-500');
+    $option.find('input[type="radio"]').prop('checked', true);
+
+    const gw = $option.data('gateway');
+    $('.non-stripe-fields input, .non-stripe-fields select').prop('disabled', gw === 'stripe');
+    if (gw === 'paypal') {
+      $('.non-stripe-fields').removeClass('hidden');
+      $('#card-fields').addClass('hidden');
+      $('#buttonDonation').addClass('hidden');
+      $('#paypal-button-container').removeClass('hidden');
+      loadPayPalButtons();
+    } else if (gw === 'stripe') {
+      $('.non-stripe-fields').addClass('hidden');
+      $('#card-fields').removeClass('hidden');
+      $('#buttonDonation').removeClass('hidden');
+      $('#paypal-button-container').addClass('hidden');
+    } else {
+      $('.non-stripe-fields').removeClass('hidden');
+      $('#card-fields').addClass('hidden');
+      $('#buttonDonation').removeClass('hidden');
+      $('#paypal-button-container').addClass('hidden');
+    }
+  }
+
+  function initializeDonationForm() {
+    $('.gateway-option').off('click').on('click', function () {
+      selectGateway($(this));
+    });
+
+    // Keep PayPal Classic pre-selected so donors can pay without an extra click
+    const defaultGateway = $('.gateway-option[data-gateway="paypal_classic"]').first();
+    if (defaultGateway.length) {
+      selectGateway(defaultGateway);
+    } else {
+      const firstGateway = $('.gateway-option').first();
+      if (firstGateway.length) {
+        selectGateway(firstGateway);
+      } else {
+        clearGatewaySelection();
+        $('#buttonDonation').removeClass('hidden');
+      }
+    }
 
     $('.donation-amount-btn').off('click').on('click', function () {
       $('.donation-amount-btn').removeClass('active');
@@ -254,9 +275,6 @@
       }
       return false;
     });
-
-    $('#buttonDonation').removeClass('hidden');
-    $('#paypal-button-container').addClass('hidden');
   }
 
   function validateCardFields() {
