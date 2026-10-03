@@ -30,17 +30,19 @@ TrustRiskGuard::enforceOrAbort((int) $_SESSION['user_id'], 'withdraw_funds');
 $db = Database::getInstance()->getConnection();
 $premiumService = new PremiumAccountService($db);
 $hasPremiumAccess = $premiumService->hasPremiumAccess((int) $_SESSION['user_id']);
-if (!$hasPremiumAccess) {
-    if (!isset($_SESSION['error_message'])) {
-        $_SESSION['error_message'] = 'You need an active premium membership to make withdrawals. Upgrade to premium to continue.';
-    }
-}
 
 if (empty($_SESSION['csrf_token'])) {
     $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
 }
 
 $errorMessage = '';
+$sessionErrorMessage = $_SESSION['error_message'] ?? '';
+unset($_SESSION['error_message']);
+
+if ($sessionErrorMessage !== '' && $errorMessage === '') {
+    $errorMessage = $sessionErrorMessage;
+}
+
 $isAjaxRequest = isset($_GET['ajax']) && $_GET['ajax'] === '1';
 
 $campaign = new Campaign();
@@ -138,12 +140,12 @@ function renderWithdrawalInitiateContent(): void {
             </section>
 
             <?php if ($hasVerifiedId): ?>
-                <div class="rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-4 shadow-sm">
+                <div class="rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-3 shadow-sm">
                     <div class="flex items-start gap-3">
-                        <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 9v2m0 4v2m0-6V9m0 6h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        <p class="text-sm text-yellow-800">
+                        <p class="text-xs text-yellow-800">
                             <strong>A 15% fee</strong> is deducted from each withdrawal request. <strong>Minimum withdrawal amount is $<?php echo number_format(MIN_WITHDRAWAL_AMOUNT, 2); ?></strong> and <strong>maximum withdrawal amount is $<?php echo number_format(MAX_WITHDRAWAL_AMOUNT, 2); ?></strong>.
                         </p>
                     </div>
@@ -151,49 +153,37 @@ function renderWithdrawalInitiateContent(): void {
             <?php endif; ?>
 
             <?php if ($errorMessage): ?>
-                <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 shadow-sm">
+                <div class="rounded-xl border border-red-200 bg-red-50 px-3 py-3 shadow-sm">
                     <div class="flex items-start gap-3">
-                        <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        <p class="text-sm font-medium text-red-700"><?php echo htmlspecialchars($errorMessage); ?></p>
+                        <p class="text-xs font-medium text-red-700"><?php echo $errorMessage; ?></p>
                     </div>
                 </div>
             <?php endif; ?>
 
             <?php if (isset($_GET['success']) && $_GET['success'] == 1): ?>
-                <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 shadow-sm">
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 shadow-sm">
                     <div class="flex items-start gap-3">
-                        <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
-                        <p class="text-sm font-medium text-emerald-800">Withdrawal initiated successfully!</p>
+                        <p class="text-xs font-medium text-emerald-800">Withdrawal initiated successfully!</p>
                     </div>
                 </div>
             <?php endif; ?>
 
             <?php if (isset($_SESSION['success_message'])): ?>
-                <div class="rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-4 shadow-sm">
+                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 shadow-sm">
                     <div class="flex items-start gap-3">
-                        <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
                         </svg>
-                        <p class="text-sm font-medium text-emerald-800"><?php echo htmlspecialchars($_SESSION['success_message']); ?></p>
+                        <p class="text-xs font-medium text-emerald-800"><?php echo htmlspecialchars($_SESSION['success_message']); ?></p>
                     </div>
                 </div>
                 <?php unset($_SESSION['success_message']); ?>
-            <?php endif; ?>
-
-            <?php if (isset($_SESSION['error_message'])): ?>
-                <div class="rounded-2xl border border-red-200 bg-red-50 px-4 py-4 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <p class="text-sm font-medium text-red-700"><?php echo htmlspecialchars($_SESSION['error_message']); ?></p>
-                    </div>
-                </div>
-                <?php unset($_SESSION['error_message']); ?>
             <?php endif; ?>
 
             <?php if ($hasVerifiedId): ?>
