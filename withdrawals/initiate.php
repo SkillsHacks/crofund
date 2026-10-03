@@ -139,12 +139,6 @@ function renderWithdrawalInitiateContent(): void {
                 </div>
             </section>
 
-            <?php if ($hasVerifiedId): ?>
-                <p class="text-xs text-slate-600">
-                    <strong>A 15% fee</strong> is deducted from each withdrawal request. <strong>Minimum withdrawal amount is $<?php echo number_format(MIN_WITHDRAWAL_AMOUNT, 2); ?></strong> and <strong>maximum withdrawal amount is $<?php echo number_format(MAX_WITHDRAWAL_AMOUNT, 2); ?></strong>.
-                </p>
-            <?php endif; ?>
-
             <?php if ($errorMessage): ?>
                 <p class="text-xs font-medium text-red-600"><?php echo $errorMessage; ?></p>
             <?php endif; ?>

@@ -215,20 +215,11 @@ class User {
             return false;
         }
 
-     
-        if ($_SESSION['user_agent'] !== $_SERVER['HTTP_USER_AGENT'] ||
-            $_SESSION['ip_address'] !== $_SERVER['REMOTE_ADDR']) {
+        if (isset($_SESSION['last_activity']) && time() - $_SESSION['last_activity'] > 1800) {
             $this->logout();
             return false;
         }
 
-      
-        if (time() - $_SESSION['last_activity'] > 1800) {
-            $this->logout();
-            return false;
-        }
-
-        // Update last activity
         $_SESSION['last_activity'] = time();
         return true;
     }
