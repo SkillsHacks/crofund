@@ -140,73 +140,45 @@ function renderWithdrawalInitiateContent(): void {
             </section>
 
             <?php if ($hasVerifiedId): ?>
-                <div class="rounded-xl border border-yellow-200 bg-yellow-50 px-3 py-3 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M12 9v2m0 4v2m0-6V9m0 6h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <p class="text-xs text-yellow-800">
-                            <strong>A 15% fee</strong> is deducted from each withdrawal request. <strong>Minimum withdrawal amount is $<?php echo number_format(MIN_WITHDRAWAL_AMOUNT, 2); ?></strong> and <strong>maximum withdrawal amount is $<?php echo number_format(MAX_WITHDRAWAL_AMOUNT, 2); ?></strong>.
-                        </p>
-                    </div>
-                </div>
+                <p class="text-xs text-slate-600">
+                    <strong>A 15% fee</strong> is deducted from each withdrawal request. <strong>Minimum withdrawal amount is $<?php echo number_format(MIN_WITHDRAWAL_AMOUNT, 2); ?></strong> and <strong>maximum withdrawal amount is $<?php echo number_format(MAX_WITHDRAWAL_AMOUNT, 2); ?></strong>.
+                </p>
             <?php endif; ?>
 
             <?php if ($errorMessage): ?>
-                <div class="rounded-xl border border-red-200 bg-red-50 px-3 py-3 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                        </svg>
-                        <p class="text-xs font-medium text-red-700"><?php echo $errorMessage; ?></p>
-                    </div>
-                </div>
+                <p class="text-xs font-medium text-red-600"><?php echo $errorMessage; ?></p>
             <?php endif; ?>
 
             <?php if (isset($_GET['success']) && $_GET['success'] == 1): ?>
-                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
-                        <p class="text-xs font-medium text-emerald-800">Withdrawal initiated successfully!</p>
-                    </div>
-                </div>
+                <p class="text-xs font-medium text-emerald-700">Withdrawal initiated successfully!</p>
             <?php endif; ?>
 
             <?php if (isset($_SESSION['success_message'])): ?>
-                <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-3 shadow-sm">
-                    <div class="flex items-start gap-3">
-                        <svg class="mt-0.5 h-4 w-4 flex-shrink-0 text-emerald-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
-                        </svg>
-                        <p class="text-xs font-medium text-emerald-800"><?php echo htmlspecialchars($_SESSION['success_message']); ?></p>
-                    </div>
-                </div>
+                <p class="text-xs font-medium text-emerald-700"><?php echo htmlspecialchars($_SESSION['success_message']); ?></p>
                 <?php unset($_SESSION['success_message']); ?>
             <?php endif; ?>
 
             <?php if ($hasVerifiedId): ?>
-                <div class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
-                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <p class="text-sm font-medium text-slate-500">Total donations</p>
-                        <p class="mt-3 text-2xl font-bold text-slate-900">$<?php echo number_format($totalDonations, 2); ?></p>
+                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                        <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Donations</p>
+                        <p class="mt-2 text-xl font-bold text-slate-900">$<?php echo number_format($totalDonations, 2); ?></p>
                     </div>
-                    <div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
-                        <p class="text-sm font-medium text-amber-700">On hold</p>
-                        <p class="mt-3 text-2xl font-bold text-amber-800">$<?php echo number_format($heldDonations, 2); ?></p>
+                    <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 shadow-sm">
+                        <p class="text-[11px] font-medium uppercase tracking-wide text-amber-700">On hold</p>
+                        <p class="mt-2 text-xl font-bold text-amber-800">$<?php echo number_format($heldDonations, 2); ?></p>
                     </div>
-                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <p class="text-sm font-medium text-slate-500">Pending withdrawals</p>
-                        <p class="mt-3 text-2xl font-bold text-yellow-700">$<?php echo number_format($pendingWithdrawals, 2); ?></p>
+                    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                        <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Pending</p>
+                        <p class="mt-2 text-xl font-bold text-yellow-700">$<?php echo number_format($pendingWithdrawals, 2); ?></p>
                     </div>
-                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <p class="text-sm font-medium text-slate-500">Available now</p>
-                        <p class="mt-3 text-2xl font-bold text-emerald-700">$<?php echo number_format($availableBalance, 2); ?></p>
+                    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                        <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Available</p>
+                        <p class="mt-2 text-xl font-bold text-emerald-700">$<?php echo number_format($availableBalance, 2); ?></p>
                     </div>
-                    <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                        <p class="text-sm font-medium text-slate-500">Completed withdrawals</p>
-                        <p class="mt-3 text-2xl font-bold text-slate-900">$<?php echo number_format($totalWithdrawn, 2); ?></p>
+                    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                        <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Completed</p>
+                        <p class="mt-2 text-xl font-bold text-slate-900">$<?php echo number_format($totalWithdrawn, 2); ?></p>
                     </div>
                 </div>
             <?php elseif (!$hasExceededMaxAttempts): ?>
