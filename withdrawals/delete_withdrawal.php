@@ -23,6 +23,18 @@ if (!isset($_POST['csrf_token'], $_SESSION['csrf_token']) || $_POST['csrf_token'
 }
 
 $user_id = $_SESSION['user_id'];
+
+// Premium membership required
+require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../config/PremiumAccountService.php';
+$db = Database::getInstance()->getConnection();
+$premiumService = new PremiumAccountService($db);
+if (!$premiumService->hasPremiumAccess((int) $user_id)) {
+    $_SESSION['error_message'] = 'You need an active premium membership to manage withdrawals. Upgrade to premium to continue.';
+    header("Location: " . BASE_URL . "/withdrawals/initiate.php");
+    exit();
+}
+
 $withdrawal_id = intval($_POST['withdrawal_id'] ?? 0);
 
 if ($withdrawal_id <= 0) {

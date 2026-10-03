@@ -3,6 +3,8 @@ session_start();
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Withdrawal.php';
 require_once __DIR__ . '/../config/User.php';
+require_once __DIR__ . '/../config/Database.php';
+require_once __DIR__ . '/../config/PremiumAccountService.php';
 
 use PHPMailer\PHPMailer\PHPMailer;
 use PHPMailer\PHPMailer\Exception;
@@ -24,6 +26,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $user_id = $_SESSION['user_id'];
     $method = $_POST['withdrawal_method'] ?? '';
     $amount = floatval($_POST['amount']);
+
+    // Premium membership required
+    $db = Database::getInstance()->getConnection();
+    $premiumService = new PremiumAccountService($db);
+    if (!$premiumService->hasPremiumAccess((int) $user_id)) {
+        $_SESSION['error_message'] = 'You need an active premium membership to make withdrawals. <a href="' . BASE_URL . '/account/premium.php" class="text-emerald-700 underline font-semibold">Upgrade to premium</a> to continue.';
+        header("Location: initiate.php");
+        exit();
+    }
 
     // Validate amount
     if ($amount < MIN_WITHDRAWAL_AMOUNT) {
