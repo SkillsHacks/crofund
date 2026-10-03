@@ -66,10 +66,6 @@ $latestVerificationAttempt = $idVerificationService->getLatestAttempt((int) $_SE
 $hasPendingVerificationReview = $idVerificationService->hasPendingReview((int) $_SESSION['user_id']);
 $latestVerificationWorkflowLabel = $idVerificationService->getWorkflowStatusLabel($latestVerificationAttempt);
 
-if (!$hasPremiumAccess) {
-    $errorMessage = 'You need an active premium membership to make withdrawals. <a href="' . BASE_URL . '/account/premium.php" class="text-emerald-700 underline font-semibold">Upgrade to premium</a> to continue.';
-}
-
 if ($hasPremiumAccess && $availableBalance < MIN_WITHDRAWAL_AMOUNT) {
     $errorMessage = 'Minimum withdrawal amount is $' . number_format(MIN_WITHDRAWAL_AMOUNT, 2);
 }
@@ -520,7 +516,7 @@ if (!$isAjaxRequest) {
     <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <div class="flex min-h-screen pt-16">
+    <div class="flex min-h-screen pt-4">
         <?php include '../components/sidebar.php'; ?>
         <main class="app-main flex-1 min-w-0 bg-gray-50 lg:ml-64">
             <?php renderWithdrawalInitiateContent(); ?>
