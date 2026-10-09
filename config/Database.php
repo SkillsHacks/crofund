@@ -30,8 +30,7 @@ class Database {
                 self::$config['options']
             );
             
-                $this->connection->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
-            $this->connection->exec("SET CHARACTER SET utf8mb4");
+            $this->connection->exec("SET NAMES utf8mb4 COLLATE utf8mb4_unicode_ci");
             
             
         } catch (PDOException $e) {
