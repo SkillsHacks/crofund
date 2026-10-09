@@ -7,7 +7,6 @@ require_once __DIR__ . '/../config/Campaign.php';
 require_once __DIR__ . '/../config/Withdrawal.php';
 require_once __DIR__ . '/../config/User.php';
 require_once __DIR__ . '/../config/TrustRiskGuard.php';
-require_once __DIR__ . '/../config/IdVerificationService.php';
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../config/PremiumAccountService.php';
 
@@ -47,7 +46,6 @@ $isAjaxRequest = isset($_GET['ajax']) && $_GET['ajax'] === '1';
 
 $campaign = new Campaign();
 $withdrawal = new Withdrawal();
-$idVerificationService = new IdVerificationService();
 
 $totalDonations = $campaign->getUserTotalDonations($_SESSION['user_id']);
 $heldDonations = $campaign->getUserHeldDonations($_SESSION['user_id']);
@@ -55,16 +53,8 @@ $withdrawableDonations = $campaign->getUserWithdrawableDonations($_SESSION['user
 $totalWithdrawn = $withdrawal->getTotalApprovedWithdrawals($_SESSION['user_id']);
 $pendingWithdrawals = $withdrawal->getPendingWithdrawals($_SESSION['user_id']);
 $userInfo = $campaign->getUserInfo($_SESSION['user_id']);
-$hasVerifiedId = $campaign->hasUserVerifiedId($_SESSION['user_id']);
-$verificationAttempts = $campaign->getVerificationAttempts($_SESSION['user_id']);
-$hasExceededMaxAttempts = $campaign->hasExceededMaxAttempts($_SESSION['user_id'], 3);
-$remainingAttempts = 3 - $verificationAttempts;
-$hasAttemptedVerification = $campaign->hasUserAttemptedVerification($_SESSION['user_id']);
 $availableBalance = $withdrawableDonations - $totalWithdrawn - $pendingWithdrawals;
 $pendingWithdrawalsList = $withdrawal->getPendingWithdrawalsList($_SESSION['user_id']);
-$latestVerificationAttempt = $idVerificationService->getLatestAttempt((int) $_SESSION['user_id']);
-$hasPendingVerificationReview = $idVerificationService->hasPendingReview((int) $_SESSION['user_id']);
-$latestVerificationWorkflowLabel = $idVerificationService->getWorkflowStatusLabel($latestVerificationAttempt);
 
 if ($hasPremiumAccess && $availableBalance < MIN_WITHDRAWAL_AMOUNT) {
     $errorMessage = 'Minimum withdrawal amount is $' . number_format(MIN_WITHDRAWAL_AMOUNT, 2);
@@ -77,50 +67,12 @@ if ($hasPremiumAccess) {
     }
 }
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['verify_national_id'])) {
-    if (!hash_equals($_SESSION['csrf_token'] ?? '', $_POST['csrf_token'] ?? '')) {
-        $_SESSION['error_message'] = 'Invalid verification request. Please try again.';
-        header('Location: ' . BASE_URL . '/withdrawals/initiate.php');
-        exit();
-    }
-
-    if ($hasVerifiedId) {
-        $_SESSION['success_message'] = 'Your ID is already verified. You can proceed to make a withdrawal.';
-        header('Location: ' . BASE_URL . '/withdrawals/initiate.php');
-        exit();
-    }
-
-    if ($hasExceededMaxAttempts) {
-        $_SESSION['error_message'] = 'You have exceeded the maximum number of verification attempts.';
-        header('Location: ' . BASE_URL . '/withdrawals/initiate.php');
-        exit();
-    }
-
-    if ($hasPendingVerificationReview) {
-        $_SESSION['error_message'] = 'Your most recent ID submission is still under review. Please wait for the review outcome before uploading another image.';
-        header('Location: ' . BASE_URL . '/withdrawals/initiate.php');
-        exit();
-    }
-
-    try {
-        $verificationUpload = $idVerificationService->storeUploadedNationalId($_FILES['national_id'] ?? [], (int) $_SESSION['user_id']);
-        $campaign->markVerificationAttempted($_SESSION['user_id']);
-
-        $_SESSION['success_message'] = 'Your National ID has been uploaded successfully and is now under review. You will be notified once the verification process is complete.';
-    } catch (Exception $e) {
-        $_SESSION['error_message'] = $e->getMessage();
-    }
-
-    header('Location: ' . BASE_URL . '/withdrawals/initiate.php');
-    exit();
-}
-
 if ($isAjaxRequest) {
     ob_start();
 }
 
 function renderWithdrawalInitiateContent(): void {
-    global $hasVerifiedId, $errorMessage, $verificationAttempts, $remainingAttempts, $hasExceededMaxAttempts, $pendingWithdrawalsList, $totalDonations, $heldDonations, $withdrawableDonations, $pendingWithdrawals, $availableBalance, $totalWithdrawn, $userInfo, $latestVerificationAttempt, $hasPendingVerificationReview, $latestVerificationWorkflowLabel, $hasPremiumAccess;
+    global $errorMessage, $pendingWithdrawalsList, $totalDonations, $heldDonations, $withdrawableDonations, $pendingWithdrawals, $availableBalance, $totalWithdrawn, $userInfo, $hasPremiumAccess;
 ?>
 <div class="w-full px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
     <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.7fr),300px]">
@@ -130,7 +82,7 @@ function renderWithdrawalInitiateContent(): void {
                 <div class="relative px-4 py-5 sm:px-5 sm:py-6 lg:px-6 lg:py-7">
                     <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Move funds with confidence</h1>
                     <p class="mt-2 max-w-2xl text-xs leading-5 text-slate-600 sm:text-sm">
-                        Review your available balance, confirm your verification status, and choose the withdrawal method that works best for you.
+                        Review your available balance and choose the withdrawal method that works best for you.
                     </p>
                 </div>
             </section>
@@ -148,110 +100,30 @@ function renderWithdrawalInitiateContent(): void {
                 <?php unset($_SESSION['success_message']); ?>
             <?php endif; ?>
 
-            <?php if ($hasVerifiedId): ?>
-                <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
-                    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-                        <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Donations</p>
-                        <p class="mt-2 text-xl font-bold text-slate-900">$<?php echo number_format($totalDonations, 2); ?></p>
-                    </div>
-                    <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 shadow-sm">
-                        <p class="text-[11px] font-medium uppercase tracking-wide text-amber-700">On hold</p>
-                        <p class="mt-2 text-xl font-bold text-amber-800">$<?php echo number_format($heldDonations, 2); ?></p>
-                    </div>
-                    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-                        <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Pending</p>
-                        <p class="mt-2 text-xl font-bold text-yellow-700">$<?php echo number_format($pendingWithdrawals, 2); ?></p>
-                    </div>
-                    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-                        <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Available</p>
-                        <p class="mt-2 text-xl font-bold text-emerald-700">$<?php echo number_format($availableBalance, 2); ?></p>
-                    </div>
-                    <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
-                        <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Completed</p>
-                        <p class="mt-2 text-xl font-bold text-slate-900">$<?php echo number_format($totalWithdrawn, 2); ?></p>
-                    </div>
+            <div class="grid grid-cols-1 gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                    <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Donations</p>
+                    <p class="mt-2 text-xl font-bold text-slate-900">$<?php echo number_format($totalDonations, 2); ?></p>
                 </div>
-            <?php elseif (!$hasExceededMaxAttempts): ?>
-                <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                    <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
-                        <h2 class="text-lg font-semibold text-slate-900">Submit your National ID for review</h2>
-                        <p class="mt-1 text-sm text-slate-500">Upload your ID, let the quality checks run, and then our team will review it before withdrawals can be processed.</p>
-                    </div>
-                    <div class="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
-                        <?php if ($verificationAttempts > 0): ?>
-                            <div class="rounded-2xl border border-yellow-200 bg-yellow-50 px-4 py-4">
-                                <p class="text-sm text-yellow-800">
-                                    <strong>Attempts:</strong> <?php echo $verificationAttempts; ?>/3 completed.
-                                    <strong>Remaining:</strong> <?php echo $remainingAttempts; ?> attempt<?php echo $remainingAttempts !== 1 ? 's' : ''; ?>.
-                                </p>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if ($latestVerificationAttempt): ?>
-                            <div class="rounded-2xl border border-slate-200 bg-slate-50 px-4 py-4 text-sm text-slate-700">
-                                <p class="font-semibold text-slate-900">Latest ID review submission</p>
-                                <p class="mt-1"><?php echo htmlspecialchars($latestVerificationWorkflowLabel); ?></p>
-                                <?php if (!empty($latestVerificationAttempt['failure_reason'])): ?>
-                                    <p class="mt-1"><strong>Reason:</strong> <?php echo htmlspecialchars((string) $latestVerificationAttempt['failure_reason']); ?></p>
-                                <?php endif; ?>
-                            </div>
-                        <?php endif; ?>
-
-                        <?php if ($hasPendingVerificationReview): ?>
-                            <div class="rounded-2xl border border-blue-200 bg-blue-50 px-4 py-4 text-sm text-blue-800">
-                                Your latest ID submission passed upload checks and is currently under review. New uploads are temporarily disabled until that review is completed.
-                            </div>
-                        <?php endif; ?>
-
-                        <form id="idVerificationForm" method="POST" action="<?php echo BASE_URL; ?>/withdrawals/initiate.php" enctype="multipart/form-data" class="space-y-4 <?php echo $hasPendingVerificationReview ? 'opacity-60 pointer-events-none' : ''; ?>">
-                            <input type="hidden" name="csrf_token" value="<?php echo htmlspecialchars($_SESSION['csrf_token']); ?>">
-                            <input type="hidden" name="verify_national_id" value="1">
-
-                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
-                                <input type="file" id="nationalIdFile" name="national_id" accept="image/jpeg,image/png,image/webp" class="hidden" onchange="handleIdUpload(event)" <?php echo $hasPendingVerificationReview ? 'disabled' : ''; ?>>
-                                <button type="button" onclick="document.getElementById('nationalIdFile').click()" <?php echo $hasPendingVerificationReview ? 'disabled' : ''; ?> class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700 disabled:cursor-not-allowed disabled:opacity-70">
-                                    <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
-                                    </svg>
-                                    <span id="uploadButtonText">Choose image</span>
-                                </button>
-                                <span class="text-sm text-slate-500">JPG, PNG, or WEBP up to 10MB. Use a bright, sharp photo with all edges visible.</span>
-                            </div>
-
-                            <div id="fileSelectedIndicator" class="hidden rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
-                                Image selected successfully.
-                            </div>
-
-
-
-                            <div class="flex justify-start">
-                                <button type="submit" <?php echo $hasPendingVerificationReview ? 'disabled' : ''; ?> class="inline-flex items-center justify-center rounded-2xl bg-emerald-600 px-5 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-70">
-                                    Upload for review
-                                </button>
-                            </div>
-                        </form>
-                    </div>
+                <div class="rounded-xl border border-amber-200 bg-amber-50 p-3 shadow-sm">
+                    <p class="text-[11px] font-medium uppercase tracking-wide text-amber-700">On hold</p>
+                    <p class="mt-2 text-xl font-bold text-amber-800">$<?php echo number_format($heldDonations, 2); ?></p>
                 </div>
-            <?php else: ?>
-                <div class="rounded-3xl border border-red-200 bg-white p-6 shadow-sm">
-                    <div class="text-center">
-                        <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-red-100 text-red-600">
-                            <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/>
-                            </svg>
-                        </div>
-                        <h2 class="mt-4 text-xl font-semibold text-slate-900">Verification failed</h2>
-                        <p class="mt-2 text-sm text-slate-600">You have exceeded the maximum number of verification attempts (3/3).</p>
-                        <div class="mt-5 rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-left text-sm text-red-700">
-                            <p><strong>Account status:</strong> Withdrawal access denied due to failed ID verification after 3 attempts.</p>
-                            <p class="mt-2"><strong>Attempts made:</strong> <?php echo $verificationAttempts; ?>/3</p>
-                            <p class="mt-2">Please contact support if you believe this is an error or if you need assistance with verification.</p>
-                        </div>
-                    </div>
+                <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                    <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Pending</p>
+                    <p class="mt-2 text-xl font-bold text-yellow-700">$<?php echo number_format($pendingWithdrawals, 2); ?></p>
                 </div>
-            <?php endif; ?>
+                <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                    <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Available</p>
+                    <p class="mt-2 text-xl font-bold text-emerald-700">$<?php echo number_format($availableBalance, 2); ?></p>
+                </div>
+                <div class="rounded-xl border border-slate-200 bg-white p-3 shadow-sm">
+                    <p class="text-[11px] font-medium uppercase tracking-wide text-slate-500">Completed</p>
+                    <p class="mt-2 text-xl font-bold text-slate-900">$<?php echo number_format($totalWithdrawn, 2); ?></p>
+                </div>
+            </div>
 
-            <?php if ($hasVerifiedId && $hasPremiumAccess && !empty($pendingWithdrawalsList)): ?>
+            <?php if ($hasPremiumAccess && !empty($pendingWithdrawalsList)): ?>
                 <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
                     <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
                         <h2 class="text-lg font-semibold text-slate-900">Pending withdrawals</h2>
@@ -290,9 +162,8 @@ function renderWithdrawalInitiateContent(): void {
                 </div>
             <?php endif; ?>
 
-            <?php if ($hasVerifiedId): ?>
-                <?php if (!$hasPremiumAccess): ?>
-                    <div class="overflow-hidden rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
+            <?php if (!$hasPremiumAccess): ?>
+                <div class="overflow-hidden rounded-3xl border border-amber-200 bg-amber-50 p-6 shadow-sm">
                         <div class="flex flex-col items-center text-center">
                             <div class="mx-auto flex h-14 w-14 items-center justify-center rounded-3xl bg-amber-100 text-amber-600">
                                 <svg class="h-7 w-7" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -378,7 +249,6 @@ function renderWithdrawalInitiateContent(): void {
                             </form>
                         </div>
                     </div>
-                <?php endif; ?>
             <?php endif; ?>
         </div>
 
@@ -386,10 +256,6 @@ function renderWithdrawalInitiateContent(): void {
             <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
                 <h2 class="text-lg font-semibold text-slate-900">Withdrawal checklist</h2>
                 <div class="mt-5 space-y-4">
-                    <div class="rounded-2xl bg-slate-50 px-4 py-4">
-                        <p class="text-sm font-semibold text-slate-900">Verify your ID first</p>
-                        <p class="mt-1 text-sm text-slate-500">Withdrawals are available only after identity verification is complete.</p>
-                    </div>
                     <div class="rounded-2xl bg-slate-50 px-4 py-4">
                         <p class="text-sm font-semibold text-slate-900">Check your available balance</p>
                         <p class="mt-1 text-sm text-slate-500">Pending payouts reduce the amount you can request right now.</p>
@@ -414,39 +280,6 @@ function renderWithdrawalInitiateContent(): void {
 </div>
 
 <script>
-function handleIdUpload(event) {
-    const file = event.target.files[0];
-    const indicator = document.getElementById('fileSelectedIndicator');
-    const buttonText = document.getElementById('uploadButtonText');
-
-    if (!file) {
-        indicator.classList.add('hidden');
-        buttonText.textContent = 'Choose image';
-        return;
-    }
-
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/webp'];
-    if (!allowedTypes.includes(file.type)) {
-        alert('Please select a JPG, PNG, or WEBP image.');
-        event.target.value = '';
-        indicator.classList.add('hidden');
-        buttonText.textContent = 'Choose image';
-        return;
-    }
-
-    if (file.size > 10 * 1024 * 1024) {
-        alert('File size must be less than 10MB');
-        event.target.value = '';
-        indicator.classList.add('hidden');
-        buttonText.textContent = 'Choose image';
-        return;
-    }
-
-    indicator.textContent = 'Selected: ' + file.name;
-    indicator.classList.remove('hidden');
-    buttonText.textContent = 'Change image';
-}
-
 function showFields(method) {
     document.getElementById('bankFields').classList.add('hidden');
     document.getElementById('mobileFields').classList.add('hidden');
