@@ -52,14 +52,13 @@
 
             <div class="flex items-center gap-2 md:hidden">
                 <button type="button"
-                        class="mobile-menu-button inline-flex h-10 items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-3 text-sm font-medium text-slate-600 shadow-sm transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-600"
+                        class="mobile-menu-button inline-flex h-10 items-center justify-center gap-2 rounded-xl px-2 text-sm font-medium text-slate-600 transition hover:text-emerald-600"
                         aria-controls="mobile-menu"
                         aria-expanded="false"
                         aria-label="Open main menu">
                     <svg class="h-5 w-5 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
                     </svg>
-                    <span>Menu</span>
                 </button>
             </div>
         </div>
