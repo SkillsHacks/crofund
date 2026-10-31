@@ -1,96 +1,107 @@
 <?php
 ?>
-<footer class="bg-gray-800">
-    <div class="max-w-7xl mx-auto py-12 px-4 sm:px-6 lg:py-16 lg:px-8">
-        <div class="xl:grid xl:grid-cols-3 xl:gap-8">
-            <!-- Brand Section -->
-            <div class="space-y-8 xl:col-span-1">
-                <h2 class="text-2xl font-bold text-white">CroFunding</h2>
-                <p class="text-gray-300 text-base">
-                    Making fundraising simple, secure, and successful for everyone.
+<footer class="bg-white">
+    <section class="bg-emerald-950 px-4 py-10 text-white sm:px-6 sm:py-14 lg:px-8" aria-labelledby="footer-community-title">
+        <div class="mx-auto grid max-w-7xl items-center gap-8 sm:gap-10 md:grid-cols-[1.1fr,0.9fr]">
+            <div class="max-w-xl">
+                <p class="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-300">A little help goes a long way</p>
+                <h2 id="footer-community-title" class="mt-3 text-2xl font-bold leading-tight tracking-tight sm:text-3xl">
+                    Fundraising is about people coming together.
+                </h2>
+                <p class="mt-3 max-w-lg text-sm leading-6 text-emerald-100 sm:text-base">
+                    Share your cause, invite your community, and keep supporters updated along the way.
                 </p>
-              <div class="flex space-x-6">
-                <!-- Twitter -->
-                <a href="https://x.com/CroFunding1?t=T1lGpFRl_OiDVJ5wAnzONQ&s=09" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-gray-300">
-                    <span class="sr-only">Twitter</span>
-                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/>
-                    </svg>
-                </a>
-
-                <!-- Instagram -->
-                <a href="https://www.instagram.com/crofunding?igsh=eWF3OTR3cmNhaHI=" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-gray-300">
-                    <span class="sr-only">Instagram</span>
-                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                       <path fill-rule="evenodd" d="M12.315 2c2.43 0 2.784.013 3.808.06 1.064.049 1.791.218 2.427.465a4.902 4.902 0 011.772 1.153 4.902 4.902 0 011.153 1.772c.247.636.416 1.363.465 2.427.048 1.067.06 1.407.06 4.123v.08c0 2.643-.012 2.987-.06 4.043-.049 1.064-.218 1.791-.465 2.427a4.902 4.902 0 01-1.153 1.772 4.902 4.902 0 01-1.772 1.153c-.636.247-1.363.416-2.427.465-1.067.048-1.407.06-4.123.06h-.08c-2.643 0-2.987-.012-4.043-.06-1.064-.049-1.791-.218-2.427-.465a4.902 4.902 0 01-1.772-1.153 4.902 4.902 0 01-1.153-1.772c-.247-.636-.416-1.363-.465-2.427-.047-1.024-.06-1.379-.06-3.808v-.63c0-2.43.013-2.784.06-3.808.049-1.064.218-1.791.465-2.427a4.902 4.902 0 011.153-1.772A4.902 4.902 0 015.45 2.525c.636-.247 1.363-.416 2.427-.465C8.901 2.013 9.256 2 11.685 2h.63zm-.081 1.802h-.468c-2.456 0-2.784.011-3.807.058-.975.045-1.504.207-1.857.344-.467.182-.8.398-1.15.748-.35.35-.566.683-.748 1.15-.137.353-.3.882-.344 1.857-.047 1.023-.058 1.351-.058 3.807v.468c0 2.456.011 2.784.058 3.807.045.975.207 1.504.344 1.857.182.466.399.8.748 1.15.35.35.683.566 1.15.748.353.137.882.3 1.857.344 1.054.048 1.37.058 4.041.058h.08c2.597 0 2.917-.01 3.96-.058.976-.045 1.505-.207 1.858-.344.466-.182.8-.398 1.15-.748.35-.35.566-.683.748-1.15.137-.353.3-.882.344-1.857.048-1.055.058-1.37.058-4.041v-.08c0-2.597-.01-2.917-.058-3.96-.045-.976-.207-1.505-.344-1.858a3.097 3.097 0 00-.748-1.15 3.098 3.098 0 00-1.15-.748c-.353-.137-.882-.3-1.857-.344-1.023-.047-1.351-.058-3.807-.058zM12 6.865a5.135 5.135 0 110 10.27 5.135 5.135 0 010-10.27zm0 1.802a3.333 3.333 0 100 6.666 3.333 3.333 0 000-6.666zm5.338-3.205a1.2 1.2 0 110 2.4 1.2 1.2 0 010-2.4z" clip-rule="evenodd"/>
-
-                    </svg>
-                </a>
-
-                <!-- Facebook -->
-                <a href="https://www.facebook.com/profile.php?id=61577868655483" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-gray-300">
-                    <span class="sr-only">Facebook</span>
-                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M22 12.07C22 6.58 17.52 2 12 2S2 6.58 2 12.07c0 4.99 3.66 9.12 8.44 9.88v-6.99h-2.54v-2.89h2.54V9.41c0-2.51 1.49-3.89 3.77-3.89 1.09 0 2.23.2 2.23.2v2.45h-1.26c-1.24 0-1.63.77-1.63 1.56v1.87h2.78l-.44 2.89h-2.34v6.99C18.34 21.19 22 17.06 22 12.07z"/>
-                    </svg>
-                </a>
-
-                <!-- TikTok -->
-                <a href="https://www.tiktok.com/@crofunding?_t=ZM-8xc9rW6a3CI&_r=1" target="_blank" rel="noopener noreferrer" class="text-gray-400 hover:text-gray-300">
-                    <span class="sr-only">TikTok</span>
-                    <svg class="h-6 w-6" fill="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-                        <path d="M16.5 3a5.48 5.48 0 0 0 3 0v3.24a6.79 6.79 0 0 1-3-1.06v7.67a6.5 6.5 0 1 1-6.5-6.5h.25V9h-.25a3.25 3.25 0 1 0 3.25 3.25V3h3.25z"/>
+                <a href="<?php echo BASE_URL; ?>/register.php" class="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50 focus:outline-none focus:ring-4 focus:ring-white/30">
+                    Start a fundraiser
+                    <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
                     </svg>
                 </a>
             </div>
 
-            </div>
-
-            <!-- Navigation Links -->
-            <div class="mt-12 grid grid-cols-2 gap-8 xl:mt-0 xl:col-span-2">
-                <div class="md:grid md:grid-cols-2 md:gap-8">
-                    <!-- Fundraising Categories -->
-                    <div>
-                        <h3 class="text-sm font-semibold text-gray-400 tracking-wider uppercase">
-                            Fundraise For
-                        </h3>
-                        <ul class="mt-4 space-y-4">
-                            <li><a href="<?php echo BASE_URL; ?>/campaigns/browse.php?category=medical" class="text-base text-gray-300 hover:text-white">Medical</a></li>
-                            <li><a href="<?php echo BASE_URL; ?>/campaigns/browse.php?category=education" class="text-base text-gray-300 hover:text-white">Education</a></li>
-                            <li><a href="<?php echo BASE_URL; ?>/campaigns/browse.php?category=emergency" class="text-base text-gray-300 hover:text-white">Emergency</a></li>
-                            <li><a href="<?php echo BASE_URL; ?>/campaigns/browse.php?category=community" class="text-base text-gray-300 hover:text-white">Community</a></li>
-                        </ul>
+            <div class="relative mx-auto flex h-48 w-full max-w-md items-center justify-center overflow-hidden rounded-3xl bg-emerald-900 sm:h-56" aria-hidden="true">
+                <div class="absolute -left-8 -top-12 h-40 w-40 rounded-full bg-emerald-800"></div>
+                <div class="absolute -bottom-16 -right-8 h-48 w-48 rounded-full bg-emerald-800"></div>
+                <div class="relative flex items-end gap-3 sm:gap-5">
+                    <div class="flex flex-col items-center">
+                        <span class="h-10 w-10 rounded-full bg-emerald-200 sm:h-12 sm:w-12"></span>
+                        <span class="mt-2 h-16 w-16 rounded-t-[2rem] bg-emerald-300 sm:h-20 sm:w-20"></span>
                     </div>
-
-                   <div class="mt-12 md:mt-0">
-                        <h3 class="text-sm font-semibold text-gray-400 tracking-wider uppercase">
-                            Learn More
-                        </h3>
-                        <ul class="mt-4 space-y-4">
-                            <li><a href="<?php echo BASE_URL; ?>/how-it-works.php" class="text-base text-gray-300 hover:text-white">How it Works</a></li>
-                            <li><a href="<?php echo BASE_URL; ?>/success-stories.php" class="text-base text-gray-300 hover:text-white">Success Stories</a></li>
-                            <li><a href="<?php echo BASE_URL; ?>/faq.php" class="text-base text-gray-300 hover:text-white">Common Questions</a></li>
-                            <li><a href="<?php echo BASE_URL; ?>/contact.php" class="text-base text-gray-300 hover:text-white">Contact Us</a></li>
-                        </ul>
+                    <div class="z-10 -mb-1 flex h-20 w-20 items-center justify-center rounded-full bg-white text-emerald-700 shadow-lg sm:h-24 sm:w-24">
+                        <svg class="h-10 w-10 sm:h-12 sm:w-12" fill="currentColor" viewBox="0 0 24 24">
+                            <path d="M12 21s-7-4.4-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.6-7 9-7 9z"/>
+                        </svg>
                     </div>
-
-                    
+                    <div class="flex flex-col items-center">
+                        <span class="h-10 w-10 rounded-full bg-lime-200 sm:h-12 sm:w-12"></span>
+                        <span class="mt-2 h-16 w-16 rounded-t-[2rem] bg-lime-300 sm:h-20 sm:w-20"></span>
+                    </div>
                 </div>
             </div>
         </div>
+    </section>
 
-        <!-- Legal Links -->
-        <div class="mt-8 border-t border-gray-700 pt-8">
-            <div class="flex flex-col sm:flex-row justify-center items-center gap-4 text-sm text-gray-400">
-                <a href="<?php echo BASE_URL; ?>/terms.php" class="hover:text-white">Terms & Conditions</a>
-                <span class="hidden sm:inline">•</span>
-                <a href="<?php echo BASE_URL; ?>/privacy.php" class="hover:text-white">Privacy Policy</a>
-                <span class="hidden sm:inline">•</span>
-                <a href="<?php echo BASE_URL; ?>/cookies.php" class="hover:text-white">Cookie Policy</a>
+    <div class="border-t border-slate-200 px-4 py-10 sm:px-6 sm:py-12 lg:px-8">
+        <div class="mx-auto max-w-7xl">
+            <div class="grid grid-cols-2 gap-x-6 gap-y-9 sm:grid-cols-4 sm:gap-8">
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-[0.14em] text-slate-900">Donate</h3>
+                    <ul class="mt-4 space-y-3">
+                        <li><a href="<?php echo BASE_URL; ?>/campaigns/view_compaigns.php" class="text-sm text-slate-600 transition hover:text-emerald-700">Browse fundraisers</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>/campaigns/v/" class="text-sm text-slate-600 transition hover:text-emerald-700">Verified campaigns</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>/campaigns/browse.php?category=medical" class="text-sm text-slate-600 transition hover:text-emerald-700">Medical</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>/campaigns/browse.php?category=emergency" class="text-sm text-slate-600 transition hover:text-emerald-700">Emergency</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-[0.14em] text-slate-900">Fundraise</h3>
+                    <ul class="mt-4 space-y-3">
+                        <li><a href="<?php echo BASE_URL; ?>/register.php" class="text-sm text-slate-600 transition hover:text-emerald-700">Start a fundraiser</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>/how-it-works.php" class="text-sm text-slate-600 transition hover:text-emerald-700">How it works</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>/success-stories.php" class="text-sm text-slate-600 transition hover:text-emerald-700">Success stories</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-[0.14em] text-slate-900">About</h3>
+                    <ul class="mt-4 space-y-3">
+                        <li><a href="<?php echo BASE_URL; ?>/faq.php" class="text-sm text-slate-600 transition hover:text-emerald-700">Common questions</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>/contact.php" class="text-sm text-slate-600 transition hover:text-emerald-700">Contact us</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>/login.php" class="text-sm text-slate-600 transition hover:text-emerald-700">Sign in</a></li>
+                    </ul>
+                </div>
+
+                <div>
+                    <h3 class="text-xs font-bold uppercase tracking-[0.14em] text-slate-900">Resources</h3>
+                    <ul class="mt-4 space-y-3">
+                        <li><a href="<?php echo BASE_URL; ?>/terms.php" class="text-sm text-slate-600 transition hover:text-emerald-700">Terms &amp; conditions</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>/privacy.php" class="text-sm text-slate-600 transition hover:text-emerald-700">Privacy policy</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>/cookies.php" class="text-sm text-slate-600 transition hover:text-emerald-700">Cookie policy</a></li>
+                    </ul>
+                </div>
             </div>
-            <p class="mt-4 text-base text-gray-400 text-center">
-                &copy; <?php echo date('Y'); ?> CroFunding. All rights reserved.
-            </p>
+
+            <div class="mt-10 flex flex-col gap-6 border-t border-slate-200 pt-6 sm:mt-12 sm:flex-row sm:items-center sm:justify-between">
+                <a href="<?php echo BASE_URL; ?>" class="inline-flex items-center gap-2 self-start">
+                    <img src="<?php echo BASE_URL; ?>/assets/images/logo.svg" alt="" class="h-8 w-8">
+                    <span class="text-base font-bold tracking-tight text-slate-900">CroFunding</span>
+                </a>
+
+                <div class="flex flex-wrap gap-x-4 gap-y-2 text-xs text-slate-500">
+                    <a href="<?php echo BASE_URL; ?>/terms.php" class="transition hover:text-emerald-700">Terms</a>
+                    <a href="<?php echo BASE_URL; ?>/privacy.php" class="transition hover:text-emerald-700">Privacy</a>
+                    <a href="<?php echo BASE_URL; ?>/cookies.php" class="transition hover:text-emerald-700">Cookies</a>
+                    <span>&copy; <?php echo date('Y'); ?> CroFunding</span>
+                </div>
+
+                <nav class="flex flex-wrap gap-x-4 gap-y-2 text-xs font-medium text-slate-500" aria-label="Social media">
+                    <a href="https://x.com/CroFunding1?t=T1lGpFRl_OiDVJ5wAnzONQ&amp;s=09" target="_blank" rel="noopener noreferrer" class="transition hover:text-emerald-700">X</a>
+                    <a href="https://www.instagram.com/crofunding?igsh=eWF3OTR3cmNhaHI=" target="_blank" rel="noopener noreferrer" class="transition hover:text-emerald-700">Instagram</a>
+                    <a href="https://www.facebook.com/profile.php?id=61577868655483" target="_blank" rel="noopener noreferrer" class="transition hover:text-emerald-700">Facebook</a>
+                    <a href="https://www.tiktok.com/@crofunding?_t=ZM-8xc9rW6a3CI&amp;_r=1" target="_blank" rel="noopener noreferrer" class="transition hover:text-emerald-700">TikTok</a>
+                </nav>
+            </div>
         </div>
     </div>
 </footer>
