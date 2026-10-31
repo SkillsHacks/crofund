@@ -42,6 +42,16 @@ try {
 
     TrustRiskGuard::enforceOrAbort((int) $_SESSION['user_id'], 'create_campaign', true);
 
+    $campaign = new Campaign();
+    if (!$campaign->canCreateCampaign((int) $_SESSION['user_id'])) {
+        http_response_code(403);
+        echo json_encode([
+            'success' => false,
+            'message' => 'Free accounts can create only one campaign. Upgrade to premium to manage more than one campaign.',
+        ]);
+        exit();
+    }
+
     $requiredFields = ['title', 'category', 'goal', 'description'];
     $fieldErrors = [];
 
@@ -87,7 +97,6 @@ try {
         'campaign_image' => $_FILES['campaign_image'] ?? null,
     ];
 
-    $campaign = new Campaign();
     $campaignId = $campaign->create($campaignData);
 
     if (!$campaignId) {

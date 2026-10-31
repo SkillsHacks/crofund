@@ -28,13 +28,7 @@ $oldInput = [
     'goal' => '',
     'description' => '',
 ];
-
-$campaignLimits = new Campaign();
-if (!$campaignLimits->canCreateCampaign((int) ($_SESSION['user_id'] ?? 0))) {
-    $_SESSION['error'] = 'Free accounts can create only one campaign. Upgrade to premium to manage more than one campaign.';
-    header('Location: ' . BASE_URL . '/account/premium.php');
-    exit();
-}
+$canCreateCampaign = (new Campaign())->canCreateCampaign((int) $_SESSION['user_id']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $oldInput = [
@@ -83,74 +77,103 @@ if ($isAjaxRequest) {
     ob_start();
 }
 
-function renderCreateCampaignContent(?string $error = null, array $fieldErrors = [], array $oldInput = []): void {
+function renderCreateCampaignContent(?string $error = null, array $fieldErrors = [], array $oldInput = [], bool $canCreateCampaign = true): void {
+$initialStep = 0;
+foreach (['title' => 0, 'category' => 0, 'goal' => 1, 'description' => 2, 'campaign_image' => 2] as $field => $step) {
+    if (!empty($fieldErrors[$field])) {
+        $initialStep = $step;
+        break;
+    }
+}
+if ($error && empty($fieldErrors)) {
+    $initialStep = 2;
+}
 ?>
-<div class="w-full px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
-    <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.65fr),300px]">
-        <div class="space-y-6">
-            <section class="relative overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 shadow-sm">
-                <div class="absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-white/50 to-transparent lg:block"></div>
-                <div class="relative px-4 py-5 sm:px-5 sm:py-6 lg:px-6 lg:py-7">
-                    <div class="flex flex-col gap-5 md:flex-row md:items-start md:justify-between">
-                        <div class="max-w-2xl">
-                            <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Bring your story to life</h1>
-                            <p class="mt-2 max-w-2xl text-xs leading-5 text-slate-600 sm:text-sm">
-                                Create a compelling fundraiser with a clear goal, a strong story, and an image that helps supporters instantly understand your cause.
-                            </p>
-                        </div>
-                        <a href="<?php echo BASE_URL; ?>/campaigns/"
-                           class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-700">
-                            <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
-                            </svg>
-                            Back to Campaigns
+<div class="w-full px-0.5 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
+    <div class="mx-auto max-w-[1500px]">
+        <section class="mb-4 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm sm:mb-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:rounded-2xl sm:px-6 sm:py-5">
+            <div class="min-w-0">
+                <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-3xl">Create campaign</h1>
+                <?php if (!$canCreateCampaign): ?>
+                    <p class="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-xs leading-5 text-slate-600 sm:text-sm" role="status" aria-labelledby="campaign-limit-title">
+                        <svg class="h-4 w-4 shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8" d="M12 9v3.75m0 3h.008v.008H12v-.008ZM10.29 3.86 1.82 18.52A1.7 1.7 0 0 0 3.29 21h17.42a1.7 1.7 0 0 0 1.47-2.48L13.71 3.86a1.98 1.98 0 0 0-3.42 0Z"/>
+                        </svg>
+                        <span id="campaign-limit-title" class="font-semibold text-slate-800">Campaign limit reached.</span>
+                        <span>Your plan allows one campaign.</span>
+                        <a href="<?php echo BASE_URL; ?>/account/premium.php" class="font-semibold text-[#4c1d95] underline decoration-[#4c1d95]/30 underline-offset-2 transition hover:text-[#3b1675] hover:decoration-[#3b1675] focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500">
+                            Upgrade to premium
                         </a>
-                    </div>
-                </div>
-            </section>
+                    </p>
+                <?php endif; ?>
+            </div>
+            <a href="<?php echo BASE_URL; ?>/campaigns/"
+               class="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 sm:rounded-xl">
+                <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
+                </svg>
+                My campaigns
+            </a>
+        </section>
 
-            <div data-form-alert class="<?php echo $error ? '' : 'hidden '; ?>rounded-2xl border border-red-200 bg-red-50 px-4 py-4 text-red-700 shadow-sm">
+        <div class="grid grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
+            <aside class="rounded-lg bg-[#4c1d95] p-4 text-white shadow-sm sm:rounded-2xl sm:p-5 xl:sticky xl:top-24 xl:self-start">
+                <p class="text-xs font-semibold uppercase tracking-wide text-violet-200" data-step-counter>Step 1 of 3</p>
+                <h2 class="mt-1 text-lg font-bold tracking-tight sm:mt-2 sm:text-xl" data-step-title>Campaign details</h2>
+                <p class="mt-2 hidden text-sm leading-5 text-violet-100 sm:block" data-step-description>Start with a clear title and category.</p>
+                <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-white/20 sm:mt-5" role="progressbar" aria-label="Campaign creation progress" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1">
+                    <span class="block h-full rounded-full bg-white transition-all duration-300" data-step-progress style="width: 33.333%"></span>
+                </div>
+                <ol class="mt-3 grid grid-cols-3 gap-1 text-xs sm:mt-5 sm:gap-2 xl:grid-cols-1 xl:gap-3">
+                    <li class="flex items-center gap-2 font-semibold text-white" data-step-indicator="0" aria-current="step">
+                        <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white text-[#4c1d95]">1</span>
+                        <span>Details</span>
+                    </li>
+                    <li class="flex items-center gap-2 text-violet-200" data-step-indicator="1">
+                        <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-white/40">2</span>
+                        <span>Goal</span>
+                    </li>
+                    <li class="flex items-center gap-2 text-violet-200" data-step-indicator="2">
+                        <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-white/40">3</span>
+                        <span>Story & image</span>
+                    </li>
+                </ol>
+            </aside>
+
+        <div class="space-y-5">
+            <div data-form-alert class="<?php echo $error ? '' : 'hidden '; ?>rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-red-700">
                 <div class="flex items-start gap-3">
                     <svg class="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <div>
-                        <p class="text-sm font-semibold">We couldn’t create your campaign</p>
+                        <p class="text-sm font-semibold">Couldn’t create campaign</p>
                         <p class="mt-1 text-sm" data-form-alert-message><?php echo htmlspecialchars($error ?? ''); ?></p>
                     </div>
                 </div>
             </div>
 
-            <form method="POST" enctype="multipart/form-data" class="space-y-6" data-campaign-create-form="true">
-                <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                    <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h2 class="text-lg font-semibold text-slate-900">Basic information</h2>
-                                <p class="text-sm text-slate-500">Start with a title and category people can immediately understand.</p>
-                            </div>
+            <form method="POST" action="<?php echo BASE_URL; ?>/api/dashboard/create_campaign.php" enctype="multipart/form-data" class="space-y-5" data-campaign-create-form="true" data-initial-step="<?php echo $initialStep; ?>">
+                <div data-campaign-step="0" class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm sm:rounded-2xl">
+                    <div class="hidden border-b border-slate-200 px-4 py-3 sm:block sm:px-6 sm:py-4">
+                        <div>
+                            <h2 class="text-base font-semibold text-slate-900">Campaign details</h2>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 gap-6 px-5 py-5 sm:px-6 sm:py-6">
+                    <div class="grid grid-cols-1 gap-4 px-4 py-4 sm:grid-cols-2 sm:gap-5 sm:px-6 sm:py-5">
                         <div>
                             <label for="title" class="block text-sm font-semibold text-slate-700">Campaign title</label>
                             <input type="text" id="title" name="title" required
-                                   placeholder="e.g. Help rebuild a family home after the fire"
+                                   placeholder="e.g. Help rebuild a family home"
                                    value="<?php echo htmlspecialchars($oldInput['title'] ?? ''); ?>"
-                                   class="mt-2 block w-full rounded-2xl border <?php echo !empty($fieldErrors['title']) ? 'border-red-300' : 'border-slate-200'; ?> bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-<?php echo !empty($fieldErrors['title']) ? 'red-500 focus:ring-red-500/10' : 'emerald-500 focus:ring-emerald-500/10'; ?> focus:bg-white focus:outline-none">
+                                   class="mt-2 block w-full rounded-lg border <?php echo !empty($fieldErrors['title']) ? 'border-red-300' : 'border-slate-200'; ?> bg-white px-3.5 py-2.5 text-sm text-slate-900 placeholder-slate-400 transition focus:border-<?php echo !empty($fieldErrors['title']) ? 'red-500 focus:ring-red-500/10' : 'emerald-500 focus:ring-emerald-500/10'; ?> focus:outline-none focus:ring-4 sm:rounded-xl">
                             <p class="mt-2 text-sm text-red-600 <?php echo empty($fieldErrors['title']) ? 'hidden' : ''; ?>" data-field-error="title"><?php echo htmlspecialchars($fieldErrors['title'] ?? ''); ?></p>
-                            <p class="mt-2 text-sm text-slate-500">Aim for a clear, specific title that builds trust quickly.</p>
                         </div>
 
                         <div>
                             <label for="category" class="block text-sm font-semibold text-slate-700">Category</label>
                             <select id="category" name="category" required
-                                    class="mt-2 block w-full rounded-2xl border <?php echo !empty($fieldErrors['category']) ? 'border-red-300' : 'border-slate-200'; ?> bg-slate-50 px-4 py-3 text-base text-slate-900 shadow-sm transition focus:border-<?php echo !empty($fieldErrors['category']) ? 'red-500 focus:ring-red-500/10' : 'emerald-500 focus:ring-emerald-500/10'; ?> focus:bg-white focus:outline-none">
+                                    class="mt-2 block w-full rounded-lg border <?php echo !empty($fieldErrors['category']) ? 'border-red-300' : 'border-slate-200'; ?> bg-white px-3.5 py-2.5 text-sm text-slate-900 transition focus:border-<?php echo !empty($fieldErrors['category']) ? 'red-500 focus:ring-red-500/10' : 'emerald-500 focus:ring-emerald-500/10'; ?> focus:outline-none focus:ring-4 sm:rounded-xl">
                                 <option value=""<?php echo ($oldInput['category'] ?? '') === '' ? ' selected' : ''; ?>>Select a category</option>
                                 <option value="education"<?php echo ($oldInput['category'] ?? '') === 'education' ? ' selected' : ''; ?>>Education</option>
                                 <option value="medical"<?php echo ($oldInput['category'] ?? '') === 'medical' ? ' selected' : ''; ?>>Medical & Health</option>
@@ -167,71 +190,54 @@ function renderCreateCampaignContent(?string $error = null, array $fieldErrors =
                     </div>
                 </div>
 
-                <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                    <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h2 class="text-lg font-semibold text-slate-900">Funding goal</h2>
-                                <p class="text-sm text-slate-500">Set a realistic target that reflects what you actually need.</p>
-                            </div>
+                <div data-campaign-step="1" class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm sm:rounded-2xl">
+                    <div class="hidden border-b border-slate-200 px-4 py-3 sm:block sm:px-6 sm:py-4">
+                        <div>
+                            <h2 class="text-base font-semibold text-slate-900">Funding goal</h2>
                         </div>
                     </div>
-                    <div class="px-5 py-5 sm:px-6 sm:py-6">
-                        <div class="max-w-md">
+                    <div class="px-4 py-4 sm:px-6 sm:py-6">
+                        <div class="max-w-sm">
                             <label for="goal" class="block text-sm font-semibold text-slate-700">Funding goal (USD)</label>
                             <div class="relative mt-2">
                                 <span class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4 text-slate-400">$</span>
                                 <input type="number" id="goal" name="goal" min="100" required placeholder="5000"
                                        value="<?php echo htmlspecialchars($oldInput['goal'] ?? ''); ?>"
-                                       class="block w-full rounded-2xl border <?php echo !empty($fieldErrors['goal']) ? 'border-red-300' : 'border-slate-200'; ?> bg-slate-50 py-3 pl-8 pr-4 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-<?php echo !empty($fieldErrors['goal']) ? 'red-500 focus:ring-red-500/10' : 'emerald-500 focus:ring-emerald-500/10'; ?> focus:bg-white focus:outline-none">
+                                       class="block w-full rounded-lg border <?php echo !empty($fieldErrors['goal']) ? 'border-red-300' : 'border-slate-200'; ?> bg-white py-2.5 pl-8 pr-3.5 text-sm text-slate-900 placeholder-slate-400 transition focus:border-<?php echo !empty($fieldErrors['goal']) ? 'red-500 focus:ring-red-500/10' : 'emerald-500 focus:ring-emerald-500/10'; ?> focus:outline-none focus:ring-4 sm:rounded-xl">
                             </div>
                             <p class="mt-2 text-sm text-red-600 <?php echo empty($fieldErrors['goal']) ? 'hidden' : ''; ?>" data-field-error="goal"><?php echo htmlspecialchars($fieldErrors['goal'] ?? ''); ?></p>
-                            <p class="mt-2 text-sm text-slate-500">Minimum campaign goal is $100.</p>
+                            <p class="mt-2 text-xs text-slate-500">Minimum $100.</p>
                         </div>
                     </div>
                 </div>
 
 
-                <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                    <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
-                        <div class="flex items-center gap-3">
-                            <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
-                                <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                                </svg>
-                            </div>
-                            <div>
-                                <h2 class="text-lg font-semibold text-slate-900">Story & media</h2>
-                                <p class="text-sm text-slate-500">Add the details and imagery that make people want to support your cause.</p>
-                            </div>
+                <div data-campaign-step="2" class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm sm:rounded-2xl">
+                    <div class="hidden border-b border-slate-200 px-4 py-3 sm:block sm:px-6 sm:py-4">
+                        <div>
+                            <h2 class="text-base font-semibold text-slate-900">Story and image</h2>
                         </div>
                     </div>
-                    <div class="space-y-6 px-5 py-5 sm:px-6 sm:py-6">
+                    <div class="space-y-4 px-4 py-4 sm:space-y-5 sm:px-6 sm:py-5">
                         <div>
                             <label for="description" class="block text-sm font-semibold text-slate-700">Campaign story</label>
-                            <textarea id="description" name="description" rows="8" required
-                                      placeholder="Tell your story. Why are you raising funds? How will the money be used? What impact will it make?"
-                                      class="mt-2 block w-full rounded-2xl border <?php echo !empty($fieldErrors['description']) ? 'border-red-300' : 'border-slate-200'; ?> bg-slate-50 px-4 py-3 text-base text-slate-900 placeholder-slate-400 shadow-sm transition focus:border-<?php echo !empty($fieldErrors['description']) ? 'red-500 focus:ring-red-500/10' : 'emerald-500 focus:ring-emerald-500/10'; ?> focus:bg-white focus:outline-none focus:ring-4">
+                            <textarea id="description" name="description" rows="6" required
+                                      placeholder="Why are you raising funds, and how will the money help?"
+                                      class="mt-2 block w-full rounded-lg border <?php echo !empty($fieldErrors['description']) ? 'border-red-300' : 'border-slate-200'; ?> bg-white px-3.5 py-3 text-sm text-slate-900 placeholder-slate-400 transition focus:border-<?php echo !empty($fieldErrors['description']) ? 'red-500 focus:ring-red-500/10' : 'emerald-500 focus:ring-emerald-500/10'; ?> focus:outline-none focus:ring-4 sm:rounded-xl">
                                 <?php echo htmlspecialchars($oldInput['description'] ?? ''); ?>
                             </textarea>
                             <p class="mt-2 text-sm text-red-600 <?php echo empty($fieldErrors['description']) ? 'hidden' : ''; ?>" data-field-error="description"><?php echo htmlspecialchars($fieldErrors['description'] ?? ''); ?></p>
-                            <p class="mt-2 text-sm text-slate-500">Be honest, specific, and transparent about where the money will go.</p>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-semibold text-slate-700">Campaign image</label>
-                            <div id="campaign-image-dropzone" class="mt-2 rounded-3xl border-2 border-dashed border-slate-300 bg-slate-50/80 p-6 text-center transition hover:border-emerald-400 hover:bg-emerald-50/40">
+                            <label for="campaign_image" class="block text-sm font-semibold text-slate-700">Campaign image</label>
+                            <div id="campaign-image-dropzone" class="mt-2 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-4 text-center transition hover:border-emerald-400 hover:bg-emerald-50/40 sm:rounded-2xl sm:p-6">
                                 <input id="campaign_image" name="campaign_image" type="file" class="sr-only" accept="image/*" required>
 
                                 <div id="image-preview" class="hidden">
                                     <img src="" alt="Preview" class="mx-auto max-h-64 rounded-2xl object-cover shadow-sm">
                                     <div class="mt-4 flex flex-col items-center justify-center gap-2 sm:flex-row">
-                                        <label for="campaign_image" class="inline-flex cursor-pointer items-center rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-within:outline-none focus-within:ring-4 focus-within:ring-emerald-500/20">
+                                        <label for="campaign_image" class="inline-flex cursor-pointer items-center rounded-2xl bg-[#4c1d95] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3b1675] focus-within:outline-none focus-within:ring-4 focus-within:ring-violet-500/20">
                                             Change image
                                         </label>
                                         <button type="button" id="remove-campaign-image" class="inline-flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
@@ -246,71 +252,45 @@ function renderCreateCampaignContent(?string $error = null, array $fieldErrors =
                                             <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" />
                                         </svg>
                                     </div>
-                                    <p class="mt-4 text-sm font-semibold text-slate-700">Upload a strong cover image</p>
-                                    <p class="mt-1 max-w-md text-sm text-slate-500">Choose a clear image that reflects your campaign and helps donors connect with it instantly.</p>
-                                    <div class="mt-4 flex flex-col items-center gap-2 sm:flex-row">
-                                        <label for="campaign_image" class="inline-flex cursor-pointer items-center rounded-2xl bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-within:outline-none focus-within:ring-4 focus-within:ring-emerald-500/20">
+                                    <p class="mt-3 text-sm font-semibold text-slate-800">Add a cover image</p>
+                                    <p class="mt-1 hidden max-w-md text-xs text-slate-500 sm:block">Use a clear, relevant photo.</p>
+                                    <div class="mt-3 flex flex-col items-center gap-2 sm:flex-row">
+                                        <label for="campaign_image" class="inline-flex cursor-pointer items-center rounded-2xl bg-[#4c1d95] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3b1675] focus-within:outline-none focus-within:ring-4 focus-within:ring-violet-500/20">
                                             <span>Choose image</span>
                                         </label>
-                                        <span class="text-sm text-slate-500">or drag and drop</span>
+                                        <span class="hidden text-sm text-slate-500 sm:inline">or drag and drop</span>
                                     </div>
                                 </div>
 
                                 <p class="mt-3 text-sm text-red-600 <?php echo empty($fieldErrors['campaign_image']) ? 'hidden' : ''; ?>" data-field-error="campaign_image"><?php echo htmlspecialchars($fieldErrors['campaign_image'] ?? ''); ?></p>
-                                <p class="mt-3 text-xs text-slate-500">PNG, JPG, GIF up to 10MB</p>
+                                <p class="mt-3 text-xs text-slate-500">PNG, JPG or GIF · up to 10MB</p>
                             </div>
                         </div>
                     </div>
 
-                <div class="flex flex-col gap-4 rounded-3xl border border-slate-200 bg-white px-5 py-5 shadow-sm sm:flex-row sm:items-center sm:justify-between sm:px-6">
-                    <p class="max-w-2xl text-sm leading-6 text-slate-500">
-                        By creating this campaign, you confirm that the information you provide is accurate and that you agree to the platform terms and privacy policy.
+                </div>
+                <div class="sticky bottom-16 z-10 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm sm:bottom-4 sm:rounded-2xl sm:p-3 sm:px-4">
+                    <p class="mb-3 hidden text-xs leading-5 text-slate-500 sm:text-sm" data-campaign-terms>
+                        By creating this campaign, you confirm these details are accurate and agree to our terms and privacy policy.
                     </p>
-                    <button type="submit"
-                            class="inline-flex w-full items-center justify-center rounded-2xl bg-emerald-600 px-6 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-emerald-700 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 sm:w-auto">
-                        Create campaign
-                    </button>
+                    <div class="flex items-center gap-3">
+                        <button type="button" class="hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-500 sm:rounded-xl" data-step-back aria-label="Go to previous step">
+                            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
+                        </button>
+                        <button type="button" class="hidden min-h-11 flex-1 items-center justify-center rounded-md border border-[#4c1d95] bg-transparent px-5 py-2.5 text-sm font-semibold text-[#4c1d95] transition hover:bg-violet-50 focus:outline-none focus:ring-4 focus:ring-violet-500/20 sm:rounded-xl" data-step-next>
+                            Continue
+                        </button>
+                        <button type="submit"
+                                class="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-[#4c1d95] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3b1675] focus:outline-none focus:ring-4 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:hover:bg-slate-300 sm:w-auto sm:rounded-xl"
+                                <?php echo $canCreateCampaign ? '' : 'disabled aria-describedby="campaign-limit-title"'; ?>
+                                data-step-submit>
+                            <?php echo $canCreateCampaign ? 'Create campaign' : 'Campaign limit reached'; ?>
+                        </button>
+                    </div>
                 </div>
             </form>
         </div>
-
-        <aside class="space-y-6">
-            <div class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                <h2 class="text-lg font-semibold text-slate-900">What makes a campaign work?</h2>
-                <div class="mt-5 space-y-4">
-                    <div class="rounded-2xl bg-slate-50 px-4 py-4">
-                        <p class="text-sm font-semibold text-slate-900">1. Be specific</p>
-                        <p class="mt-1 text-sm text-slate-500">Explain exactly what you need, who it helps, and how the funds will be used.</p>
-                    </div>
-                    <div class="rounded-2xl bg-slate-50 px-4 py-4">
-                        <p class="text-sm font-semibold text-slate-900">2. Use a strong image</p>
-                        <p class="mt-1 text-sm text-slate-500">A real, relevant image improves trust and helps people engage faster.</p>
-                    </div>
-                    <div class="rounded-2xl bg-slate-50 px-4 py-4">
-                        <p class="text-sm font-semibold text-slate-900">3. Keep supporters updated</p>
-                        <p class="mt-1 text-sm text-slate-500">After publishing, share updates so donors can see progress and stay involved.</p>
-                    </div>
-                </div>
-            </div>
-
-            <div class="rounded-3xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm">
-                <h2 class="text-lg font-semibold text-emerald-900">Before you publish</h2>
-                <ul class="mt-4 space-y-3 text-sm text-emerald-900/80">
-                    <li class="flex gap-3">
-                        <span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>
-                        <span>Use a title that explains the campaign clearly in one line.</span>
-                    </li>
-                    <li class="flex gap-3">
-                        <span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>
-                        <span>Set a funding goal that feels realistic and easy to justify.</span>
-                    </li>
-                    <li class="flex gap-3">
-                        <span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>
-                        <span>Write a story that shows urgency, transparency, and expected impact.</span>
-                    </li>
-                </ul>
-            </div>
-        </aside>
+    </div>
     </div>
 </div>
 
@@ -325,8 +305,19 @@ function renderCreateCampaignContent(?string $error = null, array $fieldErrors =
         const dropZone = form ? form.querySelector('#campaign-image-dropzone') : null;
         const alertBox = container ? container.querySelector('[data-form-alert]') : null;
         const alertMessage = container ? container.querySelector('[data-form-alert-message]') : null;
+        const steps = form ? Array.from(form.querySelectorAll('[data-campaign-step]')) : [];
+        const stepPanel = container ? container.querySelector('aside') : null;
+        const stepCounter = stepPanel ? stepPanel.querySelector('[data-step-counter]') : null;
+        const stepTitle = stepPanel ? stepPanel.querySelector('[data-step-title]') : null;
+        const stepDescription = stepPanel ? stepPanel.querySelector('[data-step-description]') : null;
+        const stepProgress = stepPanel ? stepPanel.querySelector('[data-step-progress]') : null;
+        const progressBar = stepPanel ? stepPanel.querySelector('[role="progressbar"]') : null;
+        const backButton = form ? form.querySelector('[data-step-back]') : null;
+        const nextButton = form ? form.querySelector('[data-step-next]') : null;
+        const submitButton = form ? form.querySelector('[data-step-submit]') : null;
+        const terms = form ? form.querySelector('[data-campaign-terms]') : null;
 
-        if (!form || !container) {
+        if (!form || !container || steps.length === 0 || !stepPanel) {
             return;
         }
 
@@ -334,6 +325,174 @@ function renderCreateCampaignContent(?string $error = null, array $fieldErrors =
             return;
         }
         form.dataset.initialized = 'true';
+        form.noValidate = true;
+
+        const stepDetails = [
+            {title: 'Campaign details', description: 'Title and category.'},
+            {title: 'Funding goal', description: 'Set your fundraising target.'},
+            {title: 'Story & image', description: 'Add your story and a photo.'}
+        ];
+        let currentStep = Math.min(Number(form.dataset.initialStep) || 0, steps.length - 1);
+
+        const showStep = (stepIndex) => {
+            currentStep = Math.max(0, Math.min(stepIndex, steps.length - 1));
+            steps.forEach((step, index) => {
+                step.hidden = index !== currentStep;
+            });
+
+            const details = stepDetails[currentStep];
+            if (stepCounter) {
+                stepCounter.textContent = `Step ${currentStep + 1} of ${steps.length}`;
+            }
+            if (stepTitle) {
+                stepTitle.textContent = details.title;
+            }
+            if (stepDescription) {
+                stepDescription.textContent = details.description;
+            }
+            if (stepProgress) {
+                stepProgress.style.width = `${((currentStep + 1) / steps.length) * 100}%`;
+            }
+            if (progressBar) {
+                progressBar.setAttribute('aria-valuenow', String(currentStep + 1));
+            }
+
+            stepPanel.querySelectorAll('[data-step-indicator]').forEach((indicator) => {
+                const index = Number(indicator.getAttribute('data-step-indicator'));
+                const isCurrent = index === currentStep;
+                const number = indicator.querySelector('span');
+                indicator.classList.toggle('font-semibold', isCurrent);
+                indicator.classList.toggle('text-white', isCurrent);
+                indicator.classList.toggle('text-violet-200', !isCurrent);
+                if (isCurrent) {
+                    indicator.setAttribute('aria-current', 'step');
+                } else {
+                    indicator.removeAttribute('aria-current');
+                }
+                if (number) {
+                    number.classList.toggle('bg-white', isCurrent);
+                    number.classList.toggle('text-[#4c1d95]', isCurrent);
+                    number.classList.toggle('border', !isCurrent);
+                    number.classList.toggle('border-white/40', !isCurrent);
+                }
+            });
+
+            backButton?.classList.toggle('hidden', currentStep === 0);
+            nextButton?.classList.toggle('hidden', currentStep === steps.length - 1);
+            submitButton?.classList.toggle('hidden', currentStep !== steps.length - 1);
+            terms?.classList.toggle('hidden', currentStep !== steps.length - 1);
+        };
+
+        const validateCurrentStep = () => {
+            const requiredFields = Array.from(steps[currentStep].querySelectorAll('[required]'));
+            const firstInvalidField = requiredFields.find((field) => !field.checkValidity());
+            if (!firstInvalidField) {
+                return true;
+            }
+
+            firstInvalidField.reportValidity();
+            return false;
+        };
+
+        backButton?.addEventListener('click', () => showStep(currentStep - 1));
+        nextButton?.addEventListener('click', () => {
+            if (validateCurrentStep()) {
+                showStep(currentStep + 1);
+                steps[currentStep].querySelector('input, select, textarea, button')?.focus({preventScroll: true});
+            }
+        });
+        form.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter' && event.target.tagName !== 'TEXTAREA' && currentStep < steps.length - 1) {
+                event.preventDefault();
+                if (validateCurrentStep()) {
+                    showStep(currentStep + 1);
+                }
+            }
+        });
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            if (!validateCurrentStep()) {
+                return;
+            }
+
+            clearErrors();
+            if (imagePreviewImg && imagePreviewImg.src) {
+                saveImagePreviewState(imagePreviewImg.src);
+            }
+
+            const submitLabel = submitButton ? submitButton.textContent : '';
+            if (submitButton) {
+                submitButton.disabled = true;
+                submitButton.textContent = 'Creating...';
+                submitButton.classList.add('cursor-wait', 'opacity-70');
+            }
+
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    body: new FormData(form),
+                    headers: {
+                        'X-Requested-With': 'XMLHttpRequest'
+                    }
+                });
+                const result = await response.json();
+
+                if (!response.ok || !result.success) {
+                    if (response.status === 401) {
+                        window.location.assign('<?php echo BASE_URL; ?>/login.php');
+                        return;
+                    }
+
+                    const errors = result.errors || {};
+                    Object.entries(errors).forEach(([fieldName, message]) => {
+                        setFieldError(fieldName, message);
+                    });
+                    const firstInvalidField = Object.keys(errors)[0];
+                    const stepForField = {
+                        title: 0,
+                        category: 0,
+                        goal: 1,
+                        description: 2,
+                        campaign_image: 2
+                    };
+                    if (firstInvalidField && stepForField[firstInvalidField] !== undefined) {
+                        showStep(stepForField[firstInvalidField]);
+                    }
+                    if (alertBox) {
+                        alertBox.classList.remove('hidden');
+                    }
+                    if (alertMessage) {
+                        alertMessage.textContent = result.message || result.error || 'Please review your details and try again.';
+                    }
+                    alertBox?.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    return;
+                }
+
+                saveImagePreviewState('');
+                if (result.redirect_url) {
+                    window.location.assign(result.redirect_url);
+                    return;
+                }
+
+                throw new Error('Campaign was created, but the next page could not be opened.');
+            } catch (submitError) {
+                console.error('[campaign-create] Submission failed', submitError);
+                if (alertBox) {
+                    alertBox.classList.remove('hidden');
+                }
+                if (alertMessage) {
+                    alertMessage.textContent = 'Unable to create the campaign right now. Please try again.';
+                }
+                alertBox?.scrollIntoView({behavior: 'smooth', block: 'center'});
+            } finally {
+                if (submitButton && submitButton.disabled) {
+                    submitButton.disabled = false;
+                    submitButton.textContent = submitLabel;
+                    submitButton.classList.remove('cursor-wait', 'opacity-70');
+                }
+            }
+        });
+        showStep(currentStep);
 
         const PREVIEW_STORAGE_KEY = 'campaign-create-image-preview';
 
@@ -472,12 +631,6 @@ function renderCreateCampaignContent(?string $error = null, array $fieldErrors =
                 }, false);
             });
 
-            form.addEventListener('submit', function() {
-                if (imagePreviewImg && imagePreviewImg.src) {
-                    saveImagePreviewState(imagePreviewImg.src);
-                }
-            });
-
             restoreImagePreviewState();
 
             dropZone.addEventListener('drop', function(e) {
@@ -550,13 +703,13 @@ if (!$isAjaxRequest) {
     <div class="flex min-h-screen pt-2 sm:pt-3 lg:pt-4">
         <?php include __DIR__ . '/../components/sidebar.php'; ?>
         <main class="app-main flex-1 min-w-0 bg-gray-50 lg:ml-64">
-            <?php renderCreateCampaignContent($error, $fieldErrors, $oldInput); ?>
+            <?php renderCreateCampaignContent($error, $fieldErrors, $oldInput, $canCreateCampaign); ?>
         </main>
     </div>
 </body>
 </html>
 <?php
 } else {
-    renderCreateCampaignContent($error, $fieldErrors, $oldInput);
+    renderCreateCampaignContent($error, $fieldErrors, $oldInput, $canCreateCampaign);
     echo ob_get_clean();
 }

@@ -1,6 +1,15 @@
 Options -Indexes
 RewriteEngine On
 
+# Keep the campaigns dashboard route ahead of the existing directory check.
+RewriteRule ^campaigns/?$ dashboard.php?view=my_campaigns [L,QSA]
+
+# Render the legacy create URL inside the dashboard shell as well.
+RewriteRule ^campaigns/create\.php$ dashboard.php?view=create_campaign [L,QSA]
+
+# Donations is a real directory, so route it before the directory bypass.
+RewriteRule ^donations/?$ dashboard.php?view=donations [L,QSA]
+
 # Serve existing files and directories directly
 RewriteCond %{REQUEST_FILENAME} -f [OR]
 RewriteCond %{REQUEST_FILENAME} -d
@@ -9,8 +18,6 @@ RewriteRule ^ - [L]
 # Clean dashboard-style routes
 RewriteRule ^dashboard/?$ dashboard.php?view=home [L,QSA]
 RewriteRule ^campaigns/create/?$ dashboard.php?view=create_campaign [L,QSA]
-RewriteRule ^campaigns/?$ dashboard.php?view=my_campaigns [L,QSA]
-RewriteRule ^donations/?$ dashboard.php?view=donations [L,QSA]
 RewriteRule ^profile/?$ dashboard.php?view=profile [L,QSA]
 RewriteRule ^settings/?$ dashboard.php?view=settings [L,QSA]
 RewriteRule ^verification/?$ dashboard.php?view=verification [L,QSA]

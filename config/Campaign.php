@@ -466,6 +466,17 @@ class Campaign {
         }
     }
 
+    private function getDonationHoldColumns(): array {
+        try {
+            $stmt = $this->db->getConnection()->query('SHOW COLUMNS FROM donations');
+            $columns = $stmt->fetchAll(PDO::FETCH_COLUMN, 0);
+
+            return array_fill_keys($columns, true);
+        } catch (Exception $e) {
+            throw new Exception('Failed to inspect donation hold columns: ' . $e->getMessage());
+        }
+    }
+
     public function getUserTotalDonations($userId) {
         try {
             $query = "SELECT COALESCE(SUM(d.amount), 0) as total_donations
@@ -548,6 +559,10 @@ class Campaign {
 
     public function getUserDonationRecords($userId) {
         try {
+            $columns = $this->getDonationHoldColumns();
+            $isOnHoldColumn = isset($columns['is_on_hold']) ? 'COALESCE(d.is_on_hold, 0)' : '0';
+            $holdReasonColumn = isset($columns['hold_reason']) ? 'd.hold_reason' : 'NULL';
+            $holdAtColumn = isset($columns['hold_at']) ? 'd.hold_at' : 'NULL';
             $query = "SELECT
                         d.id,
                         d.amount,
@@ -557,9 +572,9 @@ class Campaign {
                         d.donor_email,
                         d.transaction_id,
                         d.created_at,
-                        COALESCE(d.is_on_hold, 0) as is_on_hold,
-                        d.hold_reason,
-                        d.hold_at,
+                        {$isOnHoldColumn} as is_on_hold,
+                        {$holdReasonColumn} as hold_reason,
+                        {$holdAtColumn} as hold_at,
                         c.id as campaign_id,
                         c.title as campaign_title
                       FROM donations d

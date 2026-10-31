@@ -66,6 +66,7 @@ $publicShareUrl = BASE_URL . '/campaigns/public-view.php?id=' . (int) $campaignD
 $categoryLabel = $campaignDetails['category_name'] ?? $campaignDetails['category'] ?? 'Uncategorized';
 $createdDate = !empty($campaignDetails['created_at']) ? date('M j, Y', strtotime($campaignDetails['created_at'])) : 'Recently created';
 $statusLabel = ucfirst((string) ($campaignDetails['status'] ?? 'active'));
+$useDashboardShell = true;
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -84,220 +85,391 @@ $statusLabel = ucfirst((string) ($campaignDetails['status'] ?? 'active'));
             -webkit-box-orient: vertical;
             overflow: hidden;
         }
+
+        body.campaign-view-page {
+            background: #f3f2ef;
+            color: #1c1c1c;
+        }
+
+        body.campaign-view-page > .bg-gradient-to-r.from-emerald-600 {
+            display: none;
+        }
+
+        body.campaign-view-page .dashboard-app-header {
+            height: 72px;
+            border-color: #e7e5e1;
+            background: #fff;
+            box-shadow: 0 1px 3px rgb(28 28 28 / 4%);
+        }
+
+        body.campaign-view-page .dashboard-app-header > div {
+            height: 100%;
+            padding-right: 24px;
+            padding-left: 24px;
+        }
+
+        body.campaign-view-page .dashboard-app-header > div > div {
+            display: flex;
+            height: 100%;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+        }
+
+        body.campaign-view-page .dashboard-app-header > div > div > div:first-child {
+            flex: 0 1 auto;
+            justify-content: flex-start;
+            gap: 24px;
+        }
+
+        body.campaign-view-page #app-brand-link {
+            position: static;
+            gap: 10px;
+            padding: 0;
+            color: #1c1c1c;
+            transform: none;
+        }
+
+        body.campaign-view-page #app-brand-link > span:first-child {
+            display: flex;
+            width: 38px;
+            height: 38px;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0;
+            background: transparent;
+            box-shadow: none;
+        }
+
+        body.campaign-view-page #app-brand-link > span:last-child {
+            display: inline;
+            color: #047857;
+            font-size: 1rem;
+            font-weight: 700;
+            letter-spacing: -0.02em;
+        }
+
+        body.campaign-view-page .dashboard-app-header > div > div > div:nth-child(2) {
+            display: none;
+        }
+
+        body.campaign-view-page .dashboard-app-header > div > div > div:last-child {
+            flex: 0 0 auto;
+            gap: 12px;
+        }
+
+        body.campaign-view-page #user-menu-button {
+            min-height: 42px;
+            gap: 9px;
+            padding: 4px 10px 4px 5px;
+            border: 1px solid #e7e5e1;
+            border-radius: 12px;
+            background: #fff;
+            color: #292524;
+            font-size: 0.8125rem;
+            font-weight: 600;
+        }
+
+        body.campaign-view-page #user-menu-button img {
+            width: 32px;
+            height: 32px;
+            border: 0;
+            box-shadow: 0 0 0 1px #e7e5e1;
+        }
+
+        body.campaign-view-page #sidebar {
+            top: 72px;
+            bottom: 0;
+            width: 280px;
+            border: 0;
+            background: #f3f2ef;
+            padding-top: 0;
+        }
+
+        body.campaign-view-page #sidebar .flex-1.space-y-4 > .flex.items-center.gap-3,
+        body.campaign-view-page #sidebar .sidebar-section-title {
+            display: none;
+        }
+
+        body.campaign-view-page #sidebar .flex-1.space-y-4 {
+            padding: 24px 18px;
+        }
+
+        body.campaign-view-page #sidebar .sidebar-link {
+            min-height: 64px;
+            gap: 14px;
+            border-radius: 999px;
+            padding: 6px 10px;
+            color: #1c1c1c;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        body.campaign-view-page #sidebar .sidebar-link > svg,
+        body.campaign-view-page #sidebar .sidebar-link > span:first-child > svg {
+            width: 48px;
+            height: 48px;
+            flex: 0 0 48px;
+            border-radius: 50%;
+            background: #eceae6;
+            padding: 15px;
+            color: #292524;
+        }
+
+        body.campaign-view-page #sidebar .sidebar-link.bg-emerald-50 {
+            background: #ece7f8;
+            color: #1c1c1c;
+        }
+
+        body.campaign-view-page #sidebar .sidebar-link.bg-emerald-50 > svg {
+            background: #ddd4f5;
+            color: #4c1d95;
+        }
+
+        body.campaign-view-page #sidebar-toggle,
+        body.campaign-view-page .sidebar-overlay {
+            display: none !important;
+        }
+
+        body.campaign-view-page .app-main {
+            margin-left: 0 !important;
+            width: auto;
+            background: #f3f2ef;
+        }
+
+        body.campaign-view-page .campaign-view-shell {
+            padding-top: 72px;
+            padding-left: 280px;
+        }
+
+        @media (max-width: 1023px) {
+            body.campaign-view-page .dashboard-app-header {
+                height: 64px;
+            }
+
+            body.campaign-view-page .dashboard-app-header > div {
+                padding-right: 16px;
+                padding-left: 16px;
+            }
+
+            body.campaign-view-page .dashboard-app-header > div > div > div:first-child {
+                position: static;
+                flex: 1 1 100%;
+                justify-content: center;
+            }
+
+            body.campaign-view-page #app-brand-link {
+                position: absolute;
+                left: 50%;
+                transform: translateX(-50%);
+            }
+
+            body.campaign-view-page #app-brand-link > span:first-child,
+            body.campaign-view-page #app-brand-link > span:first-child svg {
+                width: 34px;
+                height: 34px;
+            }
+
+            body.campaign-view-page .dashboard-app-header > div > div > div:nth-child(2) {
+                position: absolute;
+                right: 16px;
+                display: flex;
+                width: auto;
+                flex: 0 0 auto;
+                justify-content: flex-end;
+            }
+
+            body.campaign-view-page .dashboard-app-header > div > div > div:nth-child(2) img {
+                width: 34px;
+                height: 34px;
+                border: 0;
+                border-radius: 50%;
+                box-shadow: 0 0 0 1px #e7e5e1;
+            }
+
+            body.campaign-view-page .dashboard-app-header > div > div > div:last-child {
+                display: none;
+            }
+
+            body.campaign-view-page #sidebar {
+                display: none;
+            }
+
+            body.campaign-view-page .campaign-view-shell {
+                display: block;
+                padding: 64px 0 0;
+            }
+
+            body.campaign-view-page .app-main {
+                display: block;
+                width: 100%;
+            }
+
+            body.campaign-view-page .dashboard-mobile-nav {
+                min-height: 64px;
+                padding-top: 6px;
+                background: #fff;
+                box-shadow: 0 -3px 14px rgb(28 28 28 / 5%);
+            }
+        }
     </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="campaign-view-page min-h-screen bg-[#f3f2ef]">
     <?php include __DIR__ . '/../components/header.php'; ?>
-    <div class="flex min-h-screen pt-2 sm:pt-3 lg:pt-4">
+    <div class="campaign-view-shell flex min-h-screen">
         <?php include __DIR__ . '/../components/sidebar.php'; ?>
 
-        <main class="app-main flex-1 min-w-0 bg-gray-50 lg:ml-64">
-            <div class="w-full px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
-                <div class="grid grid-cols-1 gap-6 xl:grid-cols-[minmax(0,1.65fr),300px]">
-                    <div class="space-y-6">
-                        <section class="relative overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 shadow-sm">
-                            <div class="absolute inset-y-0 right-0 hidden w-1/3 bg-gradient-to-l from-white/50 to-transparent lg:block"></div>
-                            <div class="relative px-4 py-5 sm:px-5 sm:py-6 lg:px-6 lg:py-7">
-                                <div class="flex flex-col gap-5 lg:flex-row lg:items-start lg:justify-between">
-                                    <div class="max-w-3xl">
-                                        <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">
-                                            <?php echo htmlspecialchars($campaignDetails['title']); ?>
-                                        </h1>
-                                        <p class="mt-2 max-w-2xl text-xs leading-5 text-slate-600 sm:text-sm">
-                                            Review campaign performance, share it with supporters, and manage updates from one place.
-                                        </p>
-                                        <div class="mt-5 flex flex-wrap items-center gap-3 text-sm text-slate-500">
-                                            <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-700">
-                                                <?php echo htmlspecialchars($statusLabel); ?>
-                                            </span>
-                                            <span class="inline-flex items-center rounded-full border border-slate-200 bg-white px-3 py-1 font-medium text-slate-700">
-                                                <?php echo htmlspecialchars(ucwords(str_replace('_', ' ', (string) $categoryLabel))); ?>
-                                            </span>
-                                            <span>Created <?php echo htmlspecialchars($createdDate); ?></span>
-                                            <span>By <?php echo htmlspecialchars($campaignDetails['creator_name'] ?? 'Anonymous'); ?></span>
-                                        </div>
-                                    </div>
-                                    <div class="flex flex-wrap gap-3">
+        <main class="app-main min-w-0 flex-1 overflow-auto bg-[#f3f2ef]">
+            <div class="w-full px-3 py-4 pb-24 sm:px-5 sm:py-5 lg:px-6 lg:py-6 lg:pb-6">
+                <div class="mx-auto w-full max-w-[1440px]">
+                <div class="grid grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-[minmax(0,1.65fr),300px]">
+                    <div class="space-y-4 sm:space-y-5">
+                        <section class="rounded-2xl border border-[#e7e5e1] bg-white px-4 py-4 sm:px-5">
+                            <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                                <div class="min-w-0">
+                                    <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-2xl">
+                                        <?php echo htmlspecialchars($campaignDetails['title']); ?>
+                                    </h1>
+                                    <p class="mt-1 text-sm text-slate-500">
+                                        Organized by <span class="font-semibold text-slate-700"><?php echo htmlspecialchars($campaignDetails['creator_name'] ?? 'Anonymous'); ?></span>
+                                    </p>
+                                </div>
+                                <div class="flex shrink-0 items-center gap-2 sm:justify-end">
                                         <a href="<?php echo BASE_URL; ?>/campaigns/"
-                                           class="inline-flex items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:-translate-y-0.5 hover:border-emerald-200 hover:text-emerald-700">
-                                            <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                           class="inline-flex min-h-9 items-center justify-center rounded-full border border-[#e7e5e1] bg-white px-3 py-1.5 text-xs font-semibold text-slate-700 transition hover:bg-[#f7f6f4] sm:text-sm">
+                                            <svg class="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                                             </svg>
-                                            Back to Campaigns
+                                            Back
                                         </a>
                                         <?php if ($isOwner): ?>
                                             <a href="<?php echo BASE_URL; ?>/campaigns/edit.php?id=<?php echo (int) $campaignDetails['id']; ?>"
-                                               class="inline-flex items-center justify-center rounded-2xl border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm font-semibold text-amber-700 shadow-sm transition hover:-translate-y-0.5 hover:bg-amber-100">
-                                                Edit campaign
+                                               class="inline-flex min-h-9 items-center justify-center rounded-full bg-[#4c1d95] px-4 py-1.5 text-xs font-semibold text-white transition hover:bg-[#3b1675] sm:text-sm">
+                                                Edit
                                             </a>
                                             <button type="button" onclick="openDeleteModal()"
-                                                    class="inline-flex items-center justify-center rounded-2xl bg-red-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-red-700">
-                                                Delete campaign
+                                                    class="inline-flex min-h-9 items-center justify-center rounded-full border border-red-200 bg-white px-4 py-1.5 text-xs font-semibold text-red-700 transition hover:bg-red-50 sm:text-sm">
+                                                Delete
                                             </button>
                                         <?php endif; ?>
-                                    </div>
                                 </div>
                             </div>
                         </section>
 
-                        <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
+                        <section class="overflow-hidden rounded-2xl border border-[#e7e5e1] bg-white">
                             <div class="relative h-64 overflow-hidden bg-slate-100 sm:h-80 lg:h-[28rem]">
                                 <img src="<?php echo htmlspecialchars($imageUrl); ?>"
                                      alt="<?php echo htmlspecialchars($campaignDetails['title']); ?>"
                                      class="h-full w-full object-cover"
                                      onerror="this.src='<?php echo BASE_URL; ?>/assets/images/default-campaign.jpg'">
-                                <div class="absolute inset-x-0 bottom-0 bg-gradient-to-t from-slate-950/75 via-slate-950/35 to-transparent px-6 py-5 sm:px-8">
-                                    <div class="flex flex-wrap items-end justify-between gap-3">
-                                        <div>
-                                            <p class="text-sm font-medium text-white/80">Campaign progress</p>
-                                            <p class="mt-1 text-3xl font-bold tracking-tight text-white"><?php echo round($progress); ?>%</p>
-                                        </div>
-                                        <span class="inline-flex rounded-full bg-white/90 px-3 py-1 text-xs font-semibold text-slate-700">
-                                            <?php echo $donorCount; ?> donor<?php echo $donorCount === 1 ? '' : 's'; ?>
-                                        </span>
-                                    </div>
+                            </div>
+                        </section>
+
+                        <section class="rounded-2xl border border-[#e7e5e1] bg-white p-4 sm:p-5">
+                            <div class="flex items-end justify-between gap-3">
+                                <div>
+                                    <p class="text-xs font-medium text-slate-500">Raised</p>
+                                    <p class="mt-0.5 text-xl font-bold tracking-tight text-emerald-700">$<?php echo number_format($currentAmount, 2); ?></p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="text-xs font-medium text-slate-500">Goal</p>
+                                    <p class="mt-0.5 text-lg font-bold tracking-tight text-slate-900">$<?php echo number_format($goalAmount, 2); ?></p>
                                 </div>
                             </div>
-                        </section>
-
-                        <section class="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <p class="text-sm font-medium text-slate-500">Raised</p>
-                                <p class="mt-3 text-3xl font-bold tracking-tight text-emerald-700">$<?php echo number_format($currentAmount, 2); ?></p>
+                            <div class="mt-3 h-2 rounded-full bg-slate-100" role="progressbar" aria-label="Campaign funding progress" aria-valuenow="<?php echo (int) round($progress); ?>" aria-valuemin="0" aria-valuemax="100">
+                                <div class="h-2 rounded-full bg-emerald-500 transition-all duration-500" style="width: <?php echo $progress; ?>%"></div>
                             </div>
-                            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <p class="text-sm font-medium text-slate-500">Goal</p>
-                                <p class="mt-3 text-3xl font-bold tracking-tight text-slate-900">$<?php echo number_format($goalAmount, 2); ?></p>
-                            </div>
-                            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <p class="text-sm font-medium text-slate-500">Pending donations</p>
-                                <p class="mt-3 text-3xl font-bold tracking-tight text-amber-600">$<?php echo number_format($pendingAmount, 2); ?></p>
-                            </div>
-                            <div class="rounded-2xl border border-slate-200 bg-white p-5 shadow-sm">
-                                <p class="text-sm font-medium text-slate-500">Supporters</p>
-                                <p class="mt-3 text-3xl font-bold tracking-tight text-blue-700"><?php echo $donorCount; ?></p>
-                            </div>
-                        </section>
-
-                        <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                            <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
+                            <div class="mt-3 flex flex-wrap items-center justify-between gap-x-4 gap-y-1 text-xs text-slate-500">
+                                <span><?php echo round($progress); ?>% funded</span>
                                 <div class="flex items-center gap-3">
-                                    <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-600">
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h2 class="text-lg font-semibold text-slate-900">Funding progress</h2>
-                                        <p class="text-sm text-slate-500">Track how close this campaign is to reaching its goal.</p>
-                                    </div>
+                                    <span>Pending <strong class="font-semibold text-amber-700">$<?php echo number_format($pendingAmount, 2); ?></strong></span>
+                                    <span><?php echo $donorCount; ?> supporter<?php echo $donorCount === 1 ? '' : 's'; ?></span>
                                 </div>
-                            </div>
-                            <div class="space-y-5 px-5 py-5 sm:px-6 sm:py-6">
-                                <div class="flex flex-wrap items-center justify-between gap-3 text-sm">
-                                    <span class="font-medium text-slate-700">$<?php echo number_format($currentAmount, 2); ?> raised</span>
-                                    <span class="text-slate-500">Goal: $<?php echo number_format($goalAmount, 2); ?></span>
-                                </div>
-                                <div class="h-3 rounded-full bg-slate-100">
-                                    <div class="h-3 rounded-full bg-emerald-500 transition-all duration-500" style="width: <?php echo $progress; ?>%"></div>
-                                </div>
-                                <p class="text-sm text-slate-500"><?php echo round($progress); ?>% of the goal has been reached so far.</p>
                             </div>
                         </section>
 
-                        <section class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">
-                            <div class="border-b border-slate-200 px-5 py-4 sm:px-6">
-                                <div class="flex items-center gap-3">
-                                    <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
-                                        <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z"/>
-                                        </svg>
-                                    </div>
-                                    <div>
-                                        <h2 class="text-lg font-semibold text-slate-900">Campaign story</h2>
-                                        <p class="text-sm text-slate-500">The details supporters see when deciding whether to contribute.</p>
-                                    </div>
-                                </div>
+                        <section class="overflow-hidden rounded-2xl border border-[#e7e5e1] bg-white">
+                            <div class="border-b border-[#e7e5e1] px-4 py-3 sm:px-5">
+                                <h2 class="text-base font-bold text-slate-900">Campaign story</h2>
                             </div>
-                            <div class="px-5 py-5 sm:px-6 sm:py-6">
-                                <div class="prose max-w-none whitespace-pre-line text-sm leading-7 text-slate-600 sm:text-base">
+                            <div class="px-4 py-4 sm:px-5 sm:py-5">
+                                <div class="prose max-w-none whitespace-pre-line text-sm leading-7 text-slate-600">
                                     <?php echo htmlspecialchars($campaignDetails['description']); ?>
                                 </div>
                             </div>
                         </section>
                     </div>
 
-                    <aside class="space-y-6">
-                        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <h2 class="text-lg font-semibold text-slate-900">Share campaign</h2>
-                            <p class="mt-2 text-sm leading-6 text-slate-500">Send this fundraiser to supporters and make it easy to spread the word.</p>
-
-                            <div class="mt-5 space-y-3">
+                    <aside class="space-y-4 sm:space-y-5">
+                        <section class="overflow-hidden rounded-2xl border border-[#e7e5e1] bg-white">
+                            <div class="p-4 sm:p-5">
+                                <h2 class="text-base font-bold text-slate-900">Share campaign</h2>
+                                <div class="mt-3 grid grid-cols-2 gap-2">
                                 <button type="button" onclick="copyToClipboard()"
-                                        class="inline-flex w-full items-center justify-center rounded-2xl bg-slate-900 px-4 py-3 text-sm font-semibold text-white shadow-sm transition hover:-translate-y-0.5 hover:bg-slate-800">
-                                    Copy campaign link
+                                        class="col-span-2 inline-flex min-h-10 w-full items-center justify-center rounded-xl bg-[#4c1d95] px-3 py-2 text-sm font-semibold text-white transition hover:bg-[#3b1675]">
+                                    Copy link
                                 </button>
                                 <a href="https://www.facebook.com/sharer/sharer.php?u=<?php echo urlencode($publicShareUrl); ?>" target="_blank" rel="noopener noreferrer"
-                                   class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700">
+                                   class="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 sm:text-sm">
                                     Share on Facebook
                                 </a>
                                 <a href="https://twitter.com/intent/tweet?url=<?php echo urlencode($publicShareUrl); ?>&text=<?php echo urlencode('Check out this campaign: ' . $campaignDetails['title']); ?>" target="_blank" rel="noopener noreferrer"
-                                   class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700">
+                                   class="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 sm:text-sm">
                                     Share on Twitter
                                 </a>
                                 <a href="https://www.linkedin.com/sharing/share-offsite/?url=<?php echo urlencode($publicShareUrl); ?>" target="_blank" rel="noopener noreferrer"
-                                   class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700">
+                                   class="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 sm:text-sm">
                                     Share on LinkedIn
                                 </a>
                                 <a href="mailto:?subject=<?php echo urlencode($campaignDetails['title']); ?>&body=<?php echo urlencode('Check out this campaign: ' . $publicShareUrl); ?>"
-                                   class="inline-flex w-full items-center justify-center rounded-2xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-emerald-200 hover:text-emerald-700">
+                                   class="inline-flex min-h-10 items-center justify-center rounded-xl border border-slate-200 bg-white px-2 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 sm:text-sm">
                                     Share by email
                                 </a>
                             </div>
-                        </section>
-
-                        <section class="rounded-3xl border border-slate-200 bg-white p-5 shadow-sm">
-                            <h2 class="text-lg font-semibold text-slate-900">Quick details</h2>
-                            <div class="mt-5 space-y-4">
-                                <div class="rounded-2xl bg-slate-50 px-4 py-4">
-                                    <p class="text-sm font-semibold text-slate-900">Category</p>
-                                    <p class="mt-1 text-sm text-slate-500"><?php echo htmlspecialchars(ucwords(str_replace('_', ' ', (string) $categoryLabel))); ?></p>
-                                </div>
-                                <div class="rounded-2xl bg-slate-50 px-4 py-4">
-                                    <p class="text-sm font-semibold text-slate-900">Campaign status</p>
-                                    <p class="mt-1 text-sm text-slate-500"><?php echo htmlspecialchars($statusLabel); ?></p>
-                                </div>
-                                <div class="rounded-2xl bg-slate-50 px-4 py-4">
-                                    <p class="text-sm font-semibold text-slate-900">Created on</p>
-                                    <p class="mt-1 text-sm text-slate-500"><?php echo htmlspecialchars($createdDate); ?></p>
-                                </div>
+                            </div>
+                            <div class="border-t border-[#e7e5e1] px-4 py-3 sm:px-5">
+                                <h3 class="text-xs font-semibold uppercase tracking-wide text-slate-500">Details</h3>
+                                <dl class="mt-2 grid grid-cols-2 gap-3 text-sm">
+                                    <div>
+                                        <dt class="text-xs text-slate-500">Category</dt>
+                                        <dd class="mt-0.5 font-medium text-slate-800"><?php echo htmlspecialchars(ucwords(str_replace('_', ' ', (string) $categoryLabel))); ?></dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-xs text-slate-500">Status</dt>
+                                        <dd class="mt-0.5 font-medium text-slate-800"><?php echo htmlspecialchars($statusLabel); ?></dd>
+                                    </div>
+                                    <div class="col-span-2">
+                                        <dt class="text-xs text-slate-500">Created</dt>
+                                        <dd class="mt-0.5 font-medium text-slate-800"><?php echo htmlspecialchars($createdDate); ?></dd>
+                                    </div>
+                                </dl>
                             </div>
                         </section>
-
-                        <?php if ($isOwner): ?>
-                            <section class="rounded-3xl border border-emerald-100 bg-emerald-50 p-5 shadow-sm">
-                                <h2 class="text-lg font-semibold text-emerald-900">Owner actions</h2>
-                                <ul class="mt-4 space-y-3 text-sm text-emerald-900/80">
-                                    <li class="flex gap-3">
-                                        <span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>
-                                        <span>Share your campaign regularly to reach more supporters.</span>
-                                    </li>
-                                    <li class="flex gap-3">
-                                        <span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>
-                                        <span>Review your story and image if you want to improve conversion.</span>
-                                    </li>
-                                    <li class="flex gap-3">
-                                        <span class="mt-1 h-2 w-2 rounded-full bg-emerald-500"></span>
-                                        <span>Keep your campaign up to date so donors stay informed.</span>
-                                    </li>
-                                </ul>
-                            </section>
-                        <?php endif; ?>
                     </aside>
+                </div>
                 </div>
             </div>
         </main>
     </div>
+
+    <nav class="dashboard-mobile-nav fixed inset-x-0 bottom-0 z-30 grid grid-cols-4 border-t border-[#e7e5e1] bg-white px-2 pt-2 pb-[env(safe-area-inset-bottom)] shadow-[0_-3px_14px_rgba(28,28,28,0.05)] lg:hidden" aria-label="Dashboard navigation">
+        <a href="<?php echo BASE_URL; ?>/dashboard.php" class="flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold text-slate-500 transition">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
+            Home
+        </a>
+        <a href="<?php echo BASE_URL; ?>/campaigns/" aria-current="page" class="flex flex-col items-center gap-1 rounded-xl bg-[#ece7f8] px-2 py-2 text-[11px] font-semibold text-[#4c1d95] transition">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm7 0v5h5M9 13h6m-6 4h6"/></svg>
+            Campaigns
+        </a>
+        <a href="<?php echo BASE_URL; ?>/donations/" class="flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold text-slate-500 transition">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21s-7-4.4-7-9a4 4 0 0 1 7-2 4 4 0 0 1 7 2c0 4.6-7 9-7 9z"/></svg>
+            Donations
+        </a>
+        <a href="<?php echo BASE_URL; ?>/profile/" class="flex flex-col items-center gap-1 rounded-xl px-2 py-2 text-[11px] font-semibold text-slate-500 transition">
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 21a8 8 0 0 0-16 0m8-10a4 4 0 1 0 0-8 4 4 0 0 0 0 8z"/></svg>
+            Account
+        </a>
+    </nav>
 
     <div id="share-toast" class="fixed bottom-4 right-4 z-50 rounded-2xl bg-slate-900 px-5 py-3 text-sm font-medium text-white shadow-lg transform translate-y-full opacity-0 transition-all duration-300">
         Link copied to clipboard!

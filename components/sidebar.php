@@ -7,6 +7,88 @@ $sidebarTrustRiskUi = isset($trustRiskUi) && is_array($trustRiskUi)
     ? $trustRiskUi
     : getTrustRiskUiState($currentUser ?? null);
 ?>
+<style>
+    @media (min-width: 1024px) {
+        body:not(.dashboard-page) #sidebar {
+            top: 72px;
+            width: 280px;
+            border: 0;
+            background: #f3f2ef;
+            padding-top: 0;
+        }
+
+        body:not(.dashboard-page) #sidebar > .overflow-y-auto {
+            scrollbar-width: none;
+            -ms-overflow-style: none;
+        }
+
+        body:not(.dashboard-page) #sidebar > .overflow-y-auto::-webkit-scrollbar {
+            display: none;
+        }
+
+        body:not(.dashboard-page) #sidebar .flex-1.space-y-4 > .flex.items-center.gap-3,
+        body:not(.dashboard-page) #sidebar .sidebar-section-title {
+            display: none;
+        }
+
+        body:not(.dashboard-page) #sidebar .flex-1.space-y-4 {
+            padding: 24px 18px;
+        }
+
+        body:not(.dashboard-page) #sidebar .flex-1.space-y-4 > .space-y-1 > :not([hidden]) ~ :not([hidden]) {
+            margin-top: 0.125rem;
+        }
+
+        body:not(.dashboard-page) #sidebar .sidebar-link {
+            min-height: 64px;
+            gap: 14px;
+            border-radius: 999px;
+            padding: 6px 10px;
+            color: #1c1c1c;
+            font-size: 0.9rem;
+            font-weight: 700;
+        }
+
+        body:not(.dashboard-page) #sidebar .sidebar-link > svg,
+        body:not(.dashboard-page) #sidebar .sidebar-link > span:first-child > svg {
+            width: 48px;
+            height: 48px;
+            flex: 0 0 48px;
+            border-radius: 50%;
+            background: #eceae6;
+            padding: 15px;
+            color: #292524;
+        }
+
+        body:not(.dashboard-page) #sidebar .sidebar-link.bg-emerald-50 {
+            background: #ece7f8;
+            color: #1c1c1c;
+        }
+
+        body:not(.dashboard-page) #sidebar .sidebar-link.bg-emerald-50 > svg {
+            background: #ddd4f5;
+            color: #4c1d95;
+        }
+
+        body:not(.dashboard-page) #sidebar-toggle {
+            display: none;
+        }
+
+        body:not(.dashboard-page) .app-main {
+            margin-left: 280px;
+        }
+
+        body:not(.dashboard-page).sidebar-collapsed #sidebar {
+            width: 80px;
+        }
+    }
+
+    @media (max-width: 1023px) {
+        body:not(.dashboard-page) #sidebar {
+            padding-top: 4rem;
+        }
+    }
+</style>
 <button type="button"
         class="fixed top-3 left-4 z-50 inline-flex h-10 items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-3 text-gray-700 shadow-lg transition-all duration-200 hover:bg-gray-50 hover:text-emerald-600 focus:outline-none focus:ring-2 focus:ring-emerald-500 lg:h-10 lg:w-10 lg:px-0"
         aria-controls="sidebar"
@@ -36,7 +118,7 @@ $sidebarTrustRiskUi = isset($trustRiskUi) && is_array($trustRiskUi)
             </div>
 
             <div class="space-y-1">
-                <a href="<?php echo BASE_URL; ?>/dashboard.php" class="sidebar-link <?php echo $current_page === 'dashboard' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700'; ?> group flex items-center rounded-lg px-3 py-3 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-600" title="Dashboard">
+                <a href="<?php echo BASE_URL; ?>/dashboard.php" class="sidebar-link <?php echo $current_page === 'dashboard' && in_array($_GET['view'] ?? 'home', ['', 'home'], true) ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700'; ?> group flex items-center rounded-lg px-3 py-3 transition-all duration-200 hover:bg-emerald-50 hover:text-emerald-600" title="Dashboard">
                     <svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
                     </svg>
@@ -48,7 +130,7 @@ $sidebarTrustRiskUi = isset($trustRiskUi) && is_array($trustRiskUi)
                 <h3 class="sidebar-section-title px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Fundraising</h3>
                 <?php renderSidebarNavItem([
                     'label' => 'Create Campaign',
-                    'href' => BASE_URL . '/campaigns/create.php',
+                    'href' => BASE_URL . '/campaigns/create/',
                     'action_key' => 'create_campaign',
                     'icon_html' => '<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6"/></svg>',
                 ], $current_dir === 'campaigns' && $current_page === 'create' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
@@ -57,29 +139,17 @@ $sidebarTrustRiskUi = isset($trustRiskUi) && is_array($trustRiskUi)
                     'href' => BASE_URL . '/campaigns/index.php',
                     'action_key' => 'view_campaigns',
                     'icon_html' => '<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/></svg>',
-                ], $current_dir === 'campaigns' && $current_page === 'index' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
+                ], $current_dir === 'campaigns' && in_array($current_page, ['index', 'edit', 'view'], true) ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
             </div>
 
             <div class="space-y-1">
                 <h3 class="sidebar-section-title px-3 text-xs font-semibold uppercase tracking-wider text-gray-500">Finance</h3>
                 <?php renderSidebarNavItem([
                     'label' => 'Donations',
-                    'href' => BASE_URL . '/donations/index.php',
+                    'href' => BASE_URL . '/donations/',
                     'action_key' => 'view_withdraw_logs',
                     'icon_html' => '<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-3.314 0-6 1.79-6 4s2.686 4 6 4 6-1.79 6-4-2.686-4-6-4zm0 0V5m0 11v3m-7-7H3m18 0h-2"/></svg>',
-                ], $current_dir === 'donations' && $current_page === 'index' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
-                <?php renderSidebarNavItem([
-                    'label' => 'Initiate Withdrawal',
-                    'href' => BASE_URL . '/withdrawals/initiate.php',
-                    'action_key' => 'withdraw_funds',
-                    'icon_html' => '<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2z"/></svg>',
-                ], $current_dir === 'withdrawals' && $current_page === 'initiate' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
-                <?php renderSidebarNavItem([
-                    'label' => 'Withdraw Logs',
-                    'href' => BASE_URL . '/withdrawals/logs.php',
-                    'action_key' => 'view_withdraw_logs',
-                    'icon_html' => '<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/></svg>',
-                ], $current_dir === 'withdrawals' && $current_page === 'logs' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
+                ], ($current_dir === 'donations' && $current_page === 'index') || ($current_dir === 'withdrawals' && in_array($current_page, ['initiate', 'logs'], true)) || (basename($_SERVER['SCRIPT_NAME'] ?? '') === 'dashboard.php' && in_array($_GET['view'] ?? '', ['donations', 'withdrawals', 'withdrawal_logs'], true)) ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
             </div>
 
             <div class="space-y-1">
@@ -90,18 +160,6 @@ $sidebarTrustRiskUi = isset($trustRiskUi) && is_array($trustRiskUi)
                     'action_key' => 'update_sensitive_profile',
                     'icon_html' => '<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/></svg>',
                 ], $current_dir === 'account' && $current_page === 'settings' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
-                <?php renderSidebarNavItem([
-                    'label' => 'Verification',
-                    'href' => BASE_URL . '/account/verification.php',
-                    'action_key' => 'view_verification',
-                    'icon_html' => '<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/></svg>',
-                ], $current_dir === 'account' && $current_page === 'verification' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
-                <?php renderSidebarNavItem([
-                    'label' => 'Premium Upgrade',
-                    'href' => BASE_URL . '/account/premium.php',
-                    'action_key' => 'view_premium',
-                    'icon_html' => '<svg class="h-5 w-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3l2.5 5.5L20 11l-5.5 2.5L12 19l-2.5-5.5L4 11l5.5-2.5L12 3z"/></svg>',
-                ], $current_dir === 'account' && $current_page === 'premium' ? 'bg-emerald-50 text-emerald-600' : 'text-gray-700', $sidebarTrustRiskUi); ?>
                 <?php renderSidebarNavItem([
                     'label' => 'Notifications',
                     'href' => BASE_URL . '/account/notifications.php',

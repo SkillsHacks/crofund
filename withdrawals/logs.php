@@ -23,13 +23,15 @@ function renderWithdrawalLogsContent(array $withdrawalHistory): void {
 ?>
 <div class="w-full px-4 py-4 sm:px-6 sm:py-5 lg:px-8 lg:py-6">
     <div class="space-y-6">
-        <section class="relative overflow-hidden rounded-2xl border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-slate-50 shadow-sm">
-            <div class="relative px-4 py-5 sm:px-5 sm:py-6 lg:px-6 lg:py-7">
-                <h1 class="mt-1 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Track every payout request</h1>
-                <p class="mt-2 max-w-2xl text-xs leading-5 text-slate-600 sm:text-sm">
-                    Review your withdrawal timeline, monitor statuses, and inspect the details attached to each request.
-                </p>
+        <section class="flex flex-col gap-3 rounded-2xl border border-[#e7e5e1] bg-white px-4 py-4 sm:flex-row sm:items-center sm:justify-between sm:px-5">
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">Withdrawal history</h1>
+                <p class="mt-1 text-xs text-slate-500 sm:text-sm">Review your payout requests and their status.</p>
             </div>
+            <a href="<?php echo BASE_URL; ?>/donations/"
+               class="inline-flex min-h-10 items-center justify-center rounded-full border border-[#e7e5e1] bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#f7f6f4] focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
+                Back to donations
+            </a>
         </section>
 
         <div class="overflow-hidden rounded-3xl border border-slate-200 bg-white shadow-sm">

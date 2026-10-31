@@ -1,39 +1,77 @@
-name: Deploy to crofund.org/new/
-
+name: Deploy to VPS
 on:
-  push:
-    branches:
-      - master
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Dry run: list what would change without copying anything"
+        type: boolean
+        default: false
+
+# one deploy at a time, never cancel one halfway
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+permissions:
+  contents: read
 
 jobs:
   deploy:
-    name: FTP Deploy
     runs-on: ubuntu-latest
-
     steps:
-      - name: Checkout repository
+      - name: Check out code
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 2
 
-      - name: Deploy via FTP
-        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+      - name: Set up PHP
+        uses: shivammathur/setup-php@v2
         with:
-          server: ${{ secrets.FTP_SERVER }}
-          username: ${{ secrets.FTP_USERNAME }}
-          password: ${{ secrets.FTP_PASSWORD }}
-          server-dir: /
-          exclude: |
-            **/.git*
-            **/.git*/**
-            **/node_modules/**
-            .github/**
-            README.md
-            api/config/config.php
-            config/config.php
-            config/Database.php
-            database/schema.sql
-            uploads/**
-            public/assests/**
-            error_log
-            api/error_log
+          php-version: "8.5"
+
+      - name: PHP syntax check
+        run: |
+          find . -name '*.php' -not -path './vendor/*' -print0 | xargs -0 -n1 php -l > /dev/null
+
+      - name: Set up SSH
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          SSH_KNOWN_HOSTS: ${{ secrets.SSH_KNOWN_HOSTS }}
+        run: |
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$SSH_PRIVATE_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          printf '%s\n' "$SSH_KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 644 ~/.ssh/known_hosts
+
+      - name: Deploy with rsync
+        env:
+          DEPLOY_HOST: ${{ secrets.SSH_HOST }}
+          DEPLOY_USER: ${{ secrets.SSH_USER }}
+          DRY: ${{ inputs.dry_run && '--dry-run' || '' }}
+        run: |
+          # No --delete on purpose: files removed from the repo stay on the server
+          # until you remove them by hand. Files listed in --exclude are never
+          # touched, so server-only settings, uploads and logs are safe.
+          rsync -rltz --itemize-changes $DRY \
+            --chmod=D755,F644 \
+            -e "ssh -i ~/.ssh/deploy_key -o IdentitiesOnly=yes -o StrictHostKeyChecking=yes" \
+            --exclude='.git/' \
+            --exclude='.github/' \
+            --exclude='.gitignore' \
+            --exclude='README.md' \
+            --exclude='config/Database.php' \
+            --exclude='config/config.php' \
+            --exclude='api/config/config.php' \
+            --exclude='database/schema.sql' \
+            --exclude='uploads/' \
+            --exclude='error.log' \
+            --exclude='error_log' \
+            --exclude='api/error_log' \
+            --exclude='.env' \
+            --exclude='*.bak' \
+            --exclude='*.sql' \
+            --exclude='node_modules/' \
+            ./ "$DEPLOY_USER@$DEPLOY_HOST:/var/www/crowdfund/"
+
+      - name: Remove SSH key from runner
+        if: always()
+        run: rm -f ~/.ssh/deploy_key
