@@ -4,11 +4,11 @@ class Mail {
     private $apiKey;
 
     public function __construct() {
-        if (!defined('RESEND_API_KEY') || trim((string) RESEND_API_KEY) === '') {
-            throw new RuntimeException('Resend is not configured. Please set the Resend API key.');
+        if (!defined('BREVO_API_KEY') || trim((string) BREVO_API_KEY) === '') {
+            throw new RuntimeException('Brevo is not configured. Please set the Brevo API key.');
         }
 
-        $this->apiKey = trim((string) RESEND_API_KEY);
+        $this->apiKey = trim((string) BREVO_API_KEY);
     }
 
     private function throwUserSafeMailException(string $contextMessage, Throwable $e): void {
@@ -16,20 +16,40 @@ class Mail {
         throw new RuntimeException('We could not send the email right now. Please try again in a few minutes.');
     }
 
+    // Address that receives admin notifications. Define ADMIN_EMAIL in config to override.
+    private function getAdminEmail(): string {
+        if (defined('ADMIN_EMAIL') && trim((string) ADMIN_EMAIL) !== '') {
+            return trim((string) ADMIN_EMAIL);
+        }
+
+        return 'support@crofund.org';
+    }
+
     private function sendEmail(string $to, string $subject, string $html, string $text): bool {
         $payload = [
-            'from' => sprintf('%s <%s>', MAIL_FROM_NAME, MAIL_FROM),
-            'to' => [$to],
+            'sender' => [
+                'name' => MAIL_FROM_NAME,
+                'email' => MAIL_FROM,
+            ],
+            'to' => [
+                ['email' => $to],
+            ],
             'subject' => $subject,
-            'html' => $html,
-            'text' => $text,
+            'htmlContent' => $html,
+            'textContent' => $text,
         ];
 
         if (defined('MAIL_REPLY_TO') && trim((string) MAIL_REPLY_TO) !== '') {
-            $payload['reply_to'] = [sprintf('%s <%s>', MAIL_REPLY_TO_NAME, MAIL_REPLY_TO)];
+            $replyTo = ['email' => MAIL_REPLY_TO];
+
+            if (defined('MAIL_REPLY_TO_NAME') && trim((string) MAIL_REPLY_TO_NAME) !== '') {
+                $replyTo['name'] = MAIL_REPLY_TO_NAME;
+            }
+
+            $payload['replyTo'] = $replyTo;
         }
 
-        $ch = curl_init('https://api.resend.com/emails');
+        $ch = curl_init('https://api.brevo.com/v3/smtp/email');
 
         if ($ch === false) {
             throw new RuntimeException('Unable to initialize the email transport.');
@@ -39,7 +59,7 @@ class Mail {
             CURLOPT_POST => true,
             CURLOPT_RETURNTRANSFER => true,
             CURLOPT_HTTPHEADER => [
-                'Authorization: Bearer ' . $this->apiKey,
+                'api-key: ' . $this->apiKey,
                 'Content-Type: application/json',
                 'Accept: application/json',
             ],
@@ -51,14 +71,14 @@ class Mail {
         $response = curl_exec($ch);
         $curlError = curl_error($ch);
         $httpCode = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
-        curl_close($ch);
+        // No curl_close(): it is deprecated in PHP 8.5 and the handle is freed automatically.
 
         if ($response === false) {
             throw new RuntimeException('Email request failed: ' . $curlError);
         }
 
         if ($httpCode < 200 || $httpCode >= 300) {
-            error_log('Resend API error [' . $httpCode . ']: ' . $response);
+            error_log('Brevo API error [' . $httpCode . ']: ' . $response);
             throw new RuntimeException('Email service rejected the request.');
         }
 
@@ -175,7 +195,7 @@ class Mail {
 
     public function sendAdminRegistrationNotification($userData) {
         try {
-            $adminEmail = 'support@crofund.org';
+            $adminEmail = $this->getAdminEmail();
 
             return $this->sendEmail(
                 $adminEmail,
@@ -190,7 +210,7 @@ class Mail {
 
     public function sendDonationAdminNotification(array $donationData): bool {
         try {
-            $adminEmail = 'support@crofund.org';
+            $adminEmail = $this->getAdminEmail();
 
             return $this->sendEmail(
                 $adminEmail,
@@ -221,7 +241,7 @@ class Mail {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>New donation received</title>
 </head>
-<body style="font-family: -apple-system, BlinkMacSystemFont, \"Segoe UI\", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
+<body style="font-family: -apple-system, BlinkMacSystemFont, \'Segoe UI\', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif; line-height: 1.6; color: #1f2937; max-width: 600px; margin: 0 auto; padding: 20px;">
     <div style="background-color: #ffffff;">
         ' . $this->getEmailBrandHeader('New Donation Received') . '
         <p>A new donation has been received on ' . SITE_NAME . ':</p>
