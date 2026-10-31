@@ -141,50 +141,6 @@ require_once __DIR__ . '/config/Database.php';
             </div>
         </section>
 
-    <!-- Trust Indicators -->
-    <section class="border-y border-[#e7e5e1] bg-white py-8">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="grid grid-cols-2 gap-4 md:grid-cols-4">
-                <div class="flex flex-col items-center text-center">
-                    <div class="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50">
-                        <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.025 12.025 0 002 12c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-sm font-semibold text-slate-900">Medical & emergency</h3>
-                    <p class="mt-1 text-xs text-slate-500">Support urgent needs</p>
-                </div>
-                <div class="flex flex-col items-center text-center">
-                    <div class="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-slate-50">
-                        <svg class="w-8 h-8 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-sm font-semibold text-slate-900">Education</h3>
-                    <p class="mt-1 text-xs text-slate-500">Help open doors</p>
-                </div>
-                <div class="flex flex-col items-center text-center">
-                    <div class="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-emerald-50">
-                        <svg class="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-sm font-semibold text-slate-900">Community</h3>
-                    <p class="mt-1 text-xs text-slate-500">Bring people together</p>
-                </div>
-                <div class="flex flex-col items-center text-center">
-                    <div class="mb-3 flex h-11 w-11 items-center justify-center rounded-xl bg-slate-50">
-                        <svg class="w-8 h-8 text-slate-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
-                        </svg>
-                    </div>
-                    <h3 class="text-sm font-semibold text-slate-900">Animals & more</h3>
-                    <p class="mt-1 text-xs text-slate-500">Fund what matters to you</p>
-                </div>
-            </div>
-        </div>
-    </section>
-
     <!-- Stats Section -->
     <section class="bg-[#f7f6f3] px-4 py-10 sm:px-6 lg:px-8">
         <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -308,43 +264,6 @@ require_once __DIR__ . '/config/Database.php';
         </div>
     </section>
 
-    <!-- CTA Section -->
-    <section class="bg-[#f7f6f3] px-4 py-12 sm:px-6 sm:py-16 lg:px-8">
-        <div class="mx-auto max-w-5xl rounded-3xl border border-[#e7e5e1] bg-white px-5 py-8 text-center sm:px-10 sm:py-10">
-            <p class="text-xs font-semibold uppercase tracking-[0.16em] text-emerald-700">Your next step</p>
-            <h2 class="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">Start with the story that matters to you.</h2>
-            <p class="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">Create a fundraiser or find a campaign to support.</p>
-            <div class="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
-                <a href="<?php echo BASE_URL; ?>/register.php" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-700/20">
-                    Start a fundraiser
-                </a>
-                <a href="<?php echo BASE_URL; ?>/campaigns/v/" class="inline-flex min-h-11 items-center justify-center rounded-xl border border-slate-200 bg-white px-5 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-4 focus:ring-slate-300/50">
-                    Browse verified campaigns
-                </a>
-            </div>
-        </div>
-    </section>
-
-    <!-- Newsletter -->
-    <section class="bg-white px-4 py-12 sm:px-6 lg:px-8">
-        <div class="mx-auto max-w-2xl">
-            <div class="mb-5 text-center">
-                <h2 class="text-xl font-bold text-slate-900 sm:text-2xl">Stay in the loop</h2>
-                <p class="mt-1 text-sm text-slate-600">Get campaign and community updates.</p>
-            </div>
-            <form id="newsletter-form-main" class="flex flex-col gap-3 sm:flex-row">
-                <input type="email" name="newsletter_email" required
-                       class="min-h-12 flex-1 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm focus:border-emerald-600 focus:outline-none focus:ring-4 focus:ring-emerald-600/10"
-                       placeholder="Email address">
-                <button type="submit"
-                        class="min-h-12 rounded-xl bg-emerald-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-700/20">
-                    Subscribe
-                </button>
-            </form>
-            <div id="newsletter-success" class="hidden mt-4 text-emerald-600 text-center font-medium"></div>
-            <div id="newsletter-error" class="hidden mt-4 text-red-600 text-center font-medium"></div>
-        </div>
-    </section>
     </main>
 
     <script>
@@ -499,38 +418,6 @@ require_once __DIR__ . '/config/Database.php';
 
     </script>
 
-    <!-- Newsletter Script -->
-    <script>
-        document.getElementById('newsletter-form-main').addEventListener('submit', function(e) {
-            e.preventDefault();
-            const email = this.newsletter_email.value;
-            const successDiv = document.getElementById('newsletter-success');
-            const errorDiv = document.getElementById('newsletter-error');
-            successDiv.classList.add('hidden');
-            errorDiv.classList.add('hidden');
-
-            fetch('<?php echo BASE_URL; ?>/api/subscribe_newsletter.php', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                body: 'email=' + encodeURIComponent(email)
-            })
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    successDiv.textContent = "Thank you for subscribing!";
-                    successDiv.classList.remove('hidden');
-                    this.reset();
-                } else {
-                    errorDiv.textContent = data.error || "Subscription failed. Please try again.";
-                    errorDiv.classList.remove('hidden');
-                }
-            })
-            .catch(() => {
-                errorDiv.textContent = "An error occurred. Please try again.";
-                errorDiv.classList.remove('hidden');
-            });
-        });
-    </script>
     <!-- WhatsApp Button -->
     <a href="https://wa.me/447878371924" target="_blank" rel="noopener noreferrer" 
        class="fixed bottom-6 right-6 bg-green-500 hover:bg-green-600 text-white p-4 rounded-xl shadow-large transition-all duration-200 hover:shadow-xl z-50">
