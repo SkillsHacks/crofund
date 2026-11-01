@@ -241,9 +241,34 @@ $ogImageUrl = !empty($details['image_path'])
 
     /* ── Mobile bottom bar ── */
     .mobile-cta-bar{ display:none; }
+    .mobile-organizer{ display:none; }
     @media(max-width:1023px){
-      .mobile-cta-bar{ display:flex; position:fixed; bottom:0; left:0; right:0; z-index:200; background:#fff; border-top:1px solid #e2e8f0; padding:.75rem 1rem; gap:.75rem; box-shadow:0 -4px 16px rgba(0,0,0,.08); }
-      body{ padding-bottom:72px; }
+      .hero-wrap{ width:calc(100% - 2rem); margin:4rem auto 0; border-radius:0 0 1.5rem 1.5rem; background:transparent; }
+      .hero-wrap img{ height:clamp(220px,58vw,340px); border-radius:0 0 1.5rem 1.5rem; opacity:1; }
+      .hero-gradient{ display:none; }
+      .campaign-breadcrumb{ display:none !important; }
+      .campaign-meta-badges{ display:none !important; }
+      .campaign-title-card{ padding:1rem 0; border:0; background:transparent; box-shadow:none; margin-bottom:.75rem; }
+      .campaign-title-card:hover{ box-shadow:none; }
+      .campaign-title-card .campaign-progress-summary{ display:none; }
+      .mobile-organizer{ display:flex; }
+      .campaign-story-card{ padding:1rem 0; border:0; background:transparent; box-shadow:none; }
+      .campaign-story-card:hover{ box-shadow:none; }
+      .campaign-story-card h2{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
+      .mobile-cta-bar{ display:grid; grid-template-columns:minmax(0,1fr); position:fixed; bottom:calc(.75rem + env(safe-area-inset-bottom)); left:.75rem; right:.75rem; z-index:200; gap:1rem; padding:1.15rem 1.25rem; background:#fff; border:1px solid #e2e8f0; border-radius:1.6rem; box-shadow:0 12px 32px rgba(15,23,42,.16); }
+      .mobile-cta-summary{ display:flex; align-items:center; gap:1rem; min-width:0; }
+      .mobile-progress-ring{ display:flex; width:4rem; height:4rem; align-items:center; justify-content:center; flex:0 0 auto; border-radius:50%; background:conic-gradient(#059669 var(--progress),#e5e7eb 0); }
+      .mobile-progress-ring span{ display:flex; width:3.1rem; height:3.1rem; align-items:center; justify-content:center; border-radius:50%; background:#fff; font-size:.88rem; font-weight:800; color:#0f172a; }
+      .mobile-cta-amount{ min-width:0; font-size:1.12rem; font-weight:800; line-height:1.4; color:#0f172a; }
+      .mobile-cta-amount span{ color:#64748b; font-size:.95rem; font-weight:500; }
+      .mobile-cta-donors{ margin-top:.2rem; font-size:.9rem; color:#64748b; }
+      .mobile-cta-actions{ display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
+      .mobile-cta-actions button{ min-height:3.6rem; border-radius:999px; font-size:1.08rem; font-weight:700; }
+      .mobile-cta-donate{ background:#059669; color:#fff; transition:background .18s; }
+      .mobile-cta-donate:hover{ background:#047857; }
+      .mobile-cta-share{ border:1px solid #d1d5db; background:#fff; color:#0f172a; transition:background .18s; }
+      .mobile-cta-share:hover{ background:#f8fafc; }
+      body{ padding-bottom:230px; }
     }
 
     /* ── Badge ── */
@@ -274,7 +299,7 @@ $ogImageUrl = !empty($details['image_path'])
 <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-5 md:pb-12 md:pt-7">
 
   <!-- Breadcrumb -->
-  <nav class="mb-4 flex items-center gap-2 text-xs text-slate-500" aria-label="Breadcrumb">
+  <nav class="campaign-breadcrumb mb-4 flex items-center gap-2 text-xs text-slate-500" aria-label="Breadcrumb">
     <a href="<?php echo BASE_URL; ?>" class="hover:text-emerald-600 transition-colors">Home</a>
     <i class="fas fa-chevron-right text-[9px]"></i>
     <a href="<?php echo BASE_URL; ?>/campaigns/view_compaigns.php" class="hover:text-emerald-600 transition-colors">Campaigns</a>
@@ -283,9 +308,9 @@ $ogImageUrl = !empty($details['image_path'])
   </nav>
 
   <!-- Campaign title block -->
-  <div class="card mb-6 p-4 sm:p-5">
+  <div class="campaign-title-card card mb-6 p-4 sm:p-5">
     <div class="flex-1 min-w-0">
-      <div class="mb-2 flex flex-nowrap items-center gap-1.5 overflow-hidden">
+      <div class="campaign-meta-badges mb-2 flex flex-nowrap items-center gap-1.5 overflow-hidden">
         <span class="badge <?php
           if ($details['status']==='active') echo 'status-active';
           elseif ($details['status']==='completed') echo 'status-completed';
@@ -313,8 +338,17 @@ $ogImageUrl = !empty($details['image_path'])
       <h1 class="text-lg font-bold leading-snug text-slate-900 sm:text-xl lg:text-2xl">
         <?php echo htmlspecialchars($details['title']); ?>
       </h1>
+      <div class="mobile-organizer mt-4 items-center gap-3">
+        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-lg font-bold text-white">
+          <?php echo htmlspecialchars($creatorInitial); ?>
+        </div>
+        <div class="min-w-0">
+          <p class="truncate text-base font-bold text-slate-900"><?php echo $creatorName; ?></p>
+          <p class="mt-0.5 text-sm text-slate-500"><?php echo htmlspecialchars(ucfirst($details['category'])); ?></p>
+        </div>
+      </div>
     </div>
-    <div class="mt-4 border-t border-slate-100 pt-4">
+    <div class="campaign-progress-summary mt-4 border-t border-slate-100 pt-4">
       <div class="flex items-end justify-between gap-3">
         <div>
           <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Raised</p>
@@ -346,7 +380,7 @@ $ogImageUrl = !empty($details['image_path'])
     <div class="order-2 space-y-5 lg:col-span-2 lg:order-1 lg:space-y-6">
 
       <!-- About -->
-      <div class="card p-5 sm:p-6 md:p-7">
+      <div class="campaign-story-card card p-5 sm:p-6 md:p-7">
         <h2 class="mb-4 text-lg font-bold text-slate-900 sm:text-xl">The story</h2>
 
         <div x-data="{ expanded: false }">
@@ -604,22 +638,26 @@ $ogImageUrl = !empty($details['image_path'])
 </main>
 
 <!-- ═══════════════  MOBILE BOTTOM BAR  ═══════════════ -->
-<div class="mobile-cta-bar">
-  <?php if ($campaignUnderReview): ?>
-  <button type="button" disabled
-    class="flex-1 cursor-not-allowed rounded-xl border border-amber-200 bg-amber-50 py-3 text-sm font-bold text-amber-700 opacity-90">
-    <i class="fas fa-shield-alt mr-1.5"></i> Campaign under review
-  </button>
-  <?php else: ?>
-  <button onclick="openDonationModal()"
-    class="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3 rounded-xl text-sm transition-all">
-    <i class="fas fa-heart mr-1.5"></i> Donate Now
-  </button>
-  <?php endif; ?>
-  <button onclick="copyShareLink()"
-    class="w-11 h-11 flex items-center justify-center border-2 border-slate-200 rounded-xl text-slate-600 hover:border-emerald-400 hover:text-emerald-700 transition-all shrink-0">
-    <i class="fas fa-share-alt text-sm"></i>
-  </button>
+<div class="mobile-cta-bar" role="region" aria-label="Campaign donation actions">
+  <div class="mobile-cta-summary">
+    <div class="mobile-progress-ring" style="--progress:<?php echo round($percent); ?>%" role="img" aria-label="<?php echo round($percent); ?> percent funded">
+      <span><?php echo round($percent); ?>%</span>
+    </div>
+    <div class="min-w-0">
+      <p class="mobile-cta-amount">$<?php echo $raisedFmt; ?> raised <span>of $<?php echo $goalFmt; ?></span></p>
+      <p class="mobile-cta-donors"><?php echo (int)$details['donor_count']; ?> donations</p>
+    </div>
+  </div>
+  <div class="mobile-cta-actions">
+    <?php if ($campaignUnderReview): ?>
+    <button type="button" disabled class="mobile-cta-donate cursor-not-allowed border border-amber-200 bg-amber-50 text-amber-700 opacity-90" style="grid-column:1 / -1">
+      Campaign under review
+    </button>
+    <?php else: ?>
+    <button type="button" onclick="openDonationModal()" class="mobile-cta-donate">Donate</button>
+    <button type="button" onclick="copyShareLink()" class="mobile-cta-share">Share</button>
+    <?php endif; ?>
+  </div>
 </div>
 
 <!-- ═══════════════  DONATION MODAL  ═══════════════ -->

@@ -66,29 +66,84 @@
 
 </nav>
 
-<div class="fixed inset-x-0 bottom-0 top-16 z-40 hidden overflow-y-auto overscroll-contain border-t border-slate-200 bg-white md:hidden" id="mobile-menu">
-    <div class="space-y-2 px-4 py-4">
-        <a href="<?php echo BASE_URL; ?>" class="block rounded-2xl px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900">
-            Home
-        </a>
-        <a href="<?php echo BASE_URL; ?>/campaigns/v/" class="block rounded-2xl px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900">
-            Verified Campaigns
-        </a>
-        <a href="<?php echo BASE_URL; ?>/campaigns/view_compaigns.php" class="block rounded-2xl px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900">
-            Browse Campaigns
-        </a>
-        <a href="<?php echo BASE_URL; ?>/campaigns/v/gaza/" class="block rounded-2xl px-4 py-3 text-base font-medium text-slate-700 transition hover:bg-slate-100 hover:text-slate-900">
-            Gaza World
-        </a>
-    </div>
-    <div class="border-t border-slate-200 px-4 py-4 space-y-3">
-        <a href="<?php echo BASE_URL; ?>/register.php" class="block w-full rounded-2xl bg-emerald-600 px-4 py-3 text-center text-base font-semibold text-white shadow-sm transition hover:bg-emerald-700">
-            Sign Up
-        </a>
-        <a href="<?php echo BASE_URL; ?>/login.php" class="block w-full rounded-2xl border border-emerald-200 bg-emerald-50 px-4 py-3 text-center text-base font-semibold text-emerald-700 transition hover:bg-emerald-100">
-            Sign In
-        </a>
-    </div>
+<div id="mobile-menu" class="fixed inset-0 z-[60] hidden md:hidden" aria-hidden="true">
+    <button type="button" class="absolute inset-0 h-full w-full bg-slate-950/40" data-close-mobile-menu aria-label="Dismiss main menu backdrop"></button>
+    <section class="absolute inset-y-0 right-0 flex w-[min(90%,28rem)] flex-col bg-white shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="mobile-menu-title">
+        <div class="flex h-16 shrink-0 items-center justify-between px-6">
+            <h2 id="mobile-menu-title" class="sr-only">Main menu</h2>
+            <span class="text-sm font-semibold text-slate-500">Explore CroFunding</span>
+            <button type="button" data-close-mobile-menu class="inline-flex h-10 w-10 items-center justify-center rounded-full text-slate-700 transition hover:bg-slate-100 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600" aria-label="Close main menu">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 6l12 12M18 6L6 18"/>
+                </svg>
+            </button>
+        </div>
+
+        <nav class="min-h-0 flex-1 overflow-y-auto px-0 pb-4" aria-label="Mobile navigation">
+            <a href="<?php echo BASE_URL; ?>/login.php" class="group flex items-start justify-between gap-4 bg-slate-50 px-6 py-5 transition hover:bg-slate-100">
+                <span>
+                    <span class="block text-lg font-bold tracking-tight text-slate-900">Manage your activity</span>
+                    <span class="mt-1 block text-sm leading-5 text-slate-500">Sign in or sign up to manage your donations, fundraisers and more</span>
+                </span>
+                <svg class="mt-1 h-5 w-5 shrink-0 text-slate-400 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
+
+            <div class="px-6">
+                <details class="group border-b border-slate-100">
+                    <summary class="flex cursor-pointer list-none items-start justify-between gap-4 py-5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
+                        <span><span class="block text-lg font-bold tracking-tight text-slate-900">Donate</span><span class="mt-1 block text-sm leading-5 text-slate-500">Discover fundraisers and causes to support</span></span>
+                        <svg class="mt-1 h-5 w-5 shrink-0 text-slate-400 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </summary>
+                    <div class="space-y-1 pb-4 pl-3">
+                        <a href="<?php echo BASE_URL; ?>/campaigns/view_compaigns.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">Browse fundraisers</a>
+                        <a href="<?php echo BASE_URL; ?>/campaigns/v/" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">Verified campaigns</a>
+                        <a href="<?php echo BASE_URL; ?>/campaigns/v/gaza/" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">Gaza fundraiser</a>
+                    </div>
+                </details>
+
+                <details class="group border-b border-slate-100">
+                    <summary class="flex cursor-pointer list-none items-start justify-between gap-4 py-5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
+                        <span><span class="block text-lg font-bold tracking-tight text-slate-900">Fundraise</span><span class="mt-1 block text-sm leading-5 text-slate-500">Start fundraising, tips, and resources</span></span>
+                        <svg class="mt-1 h-5 w-5 shrink-0 text-slate-400 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </summary>
+                    <div class="space-y-1 pb-4 pl-3">
+                        <a href="<?php echo BASE_URL; ?>/register.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">Start a fundraiser</a>
+                        <a href="<?php echo BASE_URL; ?>/how-it-works.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">How it works</a>
+                        <a href="<?php echo BASE_URL; ?>/success-stories.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">Success stories</a>
+                    </div>
+                </details>
+
+                <details class="group border-b border-slate-100">
+                    <summary class="flex cursor-pointer list-none items-start justify-between gap-4 py-5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
+                        <span><span class="block text-lg font-bold tracking-tight text-slate-900">About</span><span class="mt-1 block text-sm leading-5 text-slate-500">How it works and more</span></span>
+                        <svg class="mt-1 h-5 w-5 shrink-0 text-slate-400 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </summary>
+                    <div class="space-y-1 pb-4 pl-3">
+                        <a href="<?php echo BASE_URL; ?>/how-it-works.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">How it works</a>
+                        <a href="<?php echo BASE_URL; ?>/terms.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">Terms &amp; conditions</a>
+                        <a href="<?php echo BASE_URL; ?>/privacy.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">Privacy policy</a>
+                        <a href="<?php echo BASE_URL; ?>/cookies.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">Cookie policy</a>
+                    </div>
+                </details>
+
+                <details class="group">
+                    <summary class="flex cursor-pointer list-none items-start justify-between gap-4 py-5 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600">
+                        <span><span class="block text-lg font-bold tracking-tight text-slate-900">Help Center</span><span class="mt-1 block text-sm leading-5 text-slate-500">Technical support and help</span></span>
+                        <svg class="mt-1 h-5 w-5 shrink-0 text-slate-400 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                    </summary>
+                    <div class="space-y-1 pb-4 pl-3">
+                        <a href="<?php echo BASE_URL; ?>/faq.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">Common questions</a>
+                        <a href="<?php echo BASE_URL; ?>/contact.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">Contact support</a>
+                    </div>
+                </details>
+            </div>
+        </nav>
+
+        <div class="mt-auto shrink-0 space-y-3 border-t border-slate-200 bg-white px-6 py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
+            <a href="<?php echo BASE_URL; ?>/register.php" class="flex min-h-14 w-full items-center justify-center rounded-full bg-emerald-700 px-5 py-3 text-base font-bold text-white transition hover:bg-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">Start a fundraiser</a>
+            <a href="<?php echo BASE_URL; ?>/login.php" class="flex min-h-14 w-full items-center justify-center rounded-full border-2 border-slate-200 bg-white px-5 py-3 text-base font-bold text-slate-900 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">Sign in</a>
+        </div>
+    </section>
 </div>
 
 <script>
@@ -96,15 +151,63 @@
     const mobileMenuButton = document.querySelector('.mobile-menu-button');
     const mobileMenu = document.getElementById('mobile-menu');
 
-    if (mobileMenuButton && mobileMenu) {
-        mobileMenuButton.addEventListener('click', function () {
-            const isOpening = mobileMenu.classList.contains('hidden');
-            mobileMenu.classList.toggle('hidden', !isOpening);
-            mobileMenuButton.setAttribute('aria-expanded', String(isOpening));
-            mobileMenuButton.setAttribute('aria-label', isOpening ? 'Close main menu' : 'Open main menu');
-            document.body.classList.toggle('overflow-hidden', isOpening);
-        });
-    }
+    if (!mobileMenuButton || !mobileMenu) return;
+
+    const closeButtons = mobileMenu.querySelectorAll('[data-close-mobile-menu]');
+    const closeMenu = function () {
+        if (mobileMenu.classList.contains('hidden')) return;
+        mobileMenu.classList.add('hidden');
+        mobileMenu.setAttribute('aria-hidden', 'true');
+        mobileMenuButton.setAttribute('aria-expanded', 'false');
+        mobileMenuButton.setAttribute('aria-label', 'Open main menu');
+        document.body.classList.remove('overflow-hidden');
+        mobileMenuButton.focus();
+    };
+
+    mobileMenuButton.addEventListener('click', function () {
+        mobileMenu.classList.remove('hidden');
+        mobileMenu.setAttribute('aria-hidden', 'false');
+        mobileMenuButton.setAttribute('aria-expanded', 'true');
+        mobileMenuButton.setAttribute('aria-label', 'Close main menu');
+        document.body.classList.add('overflow-hidden');
+        const closeButton = mobileMenu.querySelector('[role="dialog"] button[aria-label="Close main menu"]');
+        if (closeButton) closeButton.focus();
+    });
+
+    closeButtons.forEach(function (button) {
+        button.addEventListener('click', closeMenu);
+    });
+
+    mobileMenu.querySelectorAll('nav a').forEach(function (link) {
+        link.addEventListener('click', closeMenu);
+    });
+
+    document.addEventListener('keydown', function (event) {
+        if (mobileMenu.classList.contains('hidden')) return;
+
+        if (event.key === 'Escape') {
+            closeMenu();
+            return;
+        }
+
+        if (event.key === 'Tab') {
+            const dialog = mobileMenu.querySelector('[role="dialog"]');
+            const focusableElements = dialog.querySelectorAll('button:not([disabled]), a[href], summary');
+            const visibleElements = Array.from(focusableElements).filter(function (element) {
+                return element.getClientRects().length > 0;
+            });
+            const firstElement = visibleElements[0];
+            const lastElement = visibleElements[visibleElements.length - 1];
+
+            if (event.shiftKey && document.activeElement === firstElement) {
+                event.preventDefault();
+                lastElement.focus();
+            } else if (!event.shiftKey && document.activeElement === lastElement) {
+                event.preventDefault();
+                firstElement.focus();
+            }
+        }
+    });
 })();
 
 function getHeaderSearchInput(mode) {
