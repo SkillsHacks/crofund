@@ -110,6 +110,8 @@ if (!isset($_SESSION['csrf_token'])) {
 $percent  = ($details['goal_amount'] > 0)
     ? min(100, ($details['current_amount'] / $details['goal_amount']) * 100)
     : 0;
+$raisedFmt = number_format($details['current_amount'], 0);
+$goalFmt = number_format($details['goal_amount'], 0);
 
 
 $creatorInitial = !empty($details['creator_name']) ? strtoupper(substr($details['creator_name'], 0, 1)) : 'O';
@@ -177,11 +179,8 @@ $ogImageUrl = !empty($details['image_path'])
 
     /* ── Hero ── */
     .hero-wrap{ position:relative; width:100%; background:#0f172a; overflow:hidden; }
-    .hero-wrap img{ width:100%; height:300px; object-fit:cover; object-position:50% 30%; opacity:.88; display:block; }
-    @media(min-width:640px){ .hero-wrap img{ height:360px; object-position:center; } }
-    @media(min-width:768px){ .hero-wrap img{ height:430px; object-position:center; } }
-    @media(min-width:1024px){ .hero-wrap img{ height:480px; object-position:center; } }
-    .hero-gradient{ position:absolute; inset:0; background:linear-gradient(to bottom, rgba(15,23,42,.1) 0%, rgba(15,23,42,.55) 100%); }
+    .hero-wrap img{ width:100%; height:clamp(220px,32vw,360px); object-fit:cover; object-position:50% 35%; opacity:.9; display:block; }
+    .hero-gradient{ position:absolute; inset:0; background:linear-gradient(180deg,rgba(15,23,42,.05) 15%,rgba(15,23,42,.45) 100%); }
 
     /* ── Cards ── */
     .card{ background:#fff; border-radius:1.25rem; box-shadow:0 1px 3px rgba(0,0,0,.06),0 4px 16px rgba(0,0,0,.06); border:1px solid #f1f5f9; }
@@ -250,8 +249,6 @@ $ogImageUrl = !empty($details['image_path'])
     /* ── Badge ── */
     .badge{ display:inline-flex; align-items:center; gap:.25rem; padding:.2rem .55rem; border-radius:999px; font-size:.62rem; font-weight:700; letter-spacing:.03em; text-transform:uppercase; white-space:nowrap; }
 
-    /* ── Verified check ── */
-    .verified-badge{ background:#ecfdf5; color:#059669; }
     .status-active{ background:#ecfdf5; color:#047857; }
     .status-completed{ background:#eff6ff; color:#1d4ed8; }
     .status-other{ background:#f1f5f9; color:#475569; }
@@ -271,10 +268,10 @@ $ogImageUrl = !empty($details['image_path'])
 </div>
 
 <!-- ═══════════════════  MAIN  ═══════════════════ -->
-<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+<main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-8 pt-5 md:pb-12 md:pt-7">
 
   <!-- Breadcrumb -->
-  <nav class="flex items-center gap-2 text-xs text-slate-500 mb-6" aria-label="Breadcrumb">
+  <nav class="mb-4 flex items-center gap-2 text-xs text-slate-500" aria-label="Breadcrumb">
     <a href="<?php echo BASE_URL; ?>" class="hover:text-emerald-600 transition-colors">Home</a>
     <i class="fas fa-chevron-right text-[9px]"></i>
     <a href="<?php echo BASE_URL; ?>/campaigns/view_compaigns.php" class="hover:text-emerald-600 transition-colors">Campaigns</a>
@@ -283,10 +280,10 @@ $ogImageUrl = !empty($details['image_path'])
   </nav>
 
   <!-- Campaign title block -->
-  <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-8">
+  <div class="card mb-6 p-4 sm:p-5">
     <div class="flex-1 min-w-0">
-      <div class="flex flex-nowrap items-center gap-1.5 mb-3 overflow-x-auto">
-        <span class="badge hidden sm:inline-flex <?php
+      <div class="mb-2 flex flex-wrap items-center gap-2">
+        <span class="badge <?php
           if ($details['status']==='active') echo 'status-active';
           elseif ($details['status']==='completed') echo 'status-completed';
           else echo 'status-other';
@@ -294,13 +291,13 @@ $ogImageUrl = !empty($details['image_path'])
           <span class="w-1.5 h-1.5 rounded-full bg-current inline-block"></span>
           <?php echo ucfirst($details['status']); ?>
         </span>
-        <span class="badge hidden sm:inline-flex" style="background:#f0fdf4;color:#166534;">
+        <span class="badge" style="background:#f0fdf4;color:#166534;">
           <i class="fas fa-tag text-[9px]"></i>
           <?php echo htmlspecialchars(ucfirst($details['category'])); ?>
         </span>
-        <span class="badge verified-badge">
-          <i class="fas fa-shield-alt text-[9px]"></i>
-          Verified Campaign
+        <span class="badge" style="background:#f1f5f9;color:#475569;">
+          <i class="far fa-calendar-alt text-[9px]"></i>
+          Started <?php echo date('M j, Y', strtotime($details['created_at'])); ?>
         </span>
         <?php if (!empty($details['is_premium_owner'])): ?>
         <span class="badge" style="background:#dbeafe;color:#1d4ed8;">
@@ -309,70 +306,53 @@ $ogImageUrl = !empty($details['image_path'])
         </span>
         <?php endif; ?>
       </div>
-      <h1 class="text-lg md:text-2xl lg:text-3xl font-bold text-slate-900 leading-snug mb-2">
+      <h1 class="text-xl font-bold leading-snug text-slate-900 sm:text-2xl lg:text-3xl">
         <?php echo htmlspecialchars($details['title']); ?>
       </h1>
-      <p class="text-sm text-slate-500">
-        <i class="far fa-calendar-alt mr-1"></i>
-        Started <?php echo date('F j, Y', strtotime($details['created_at'])); ?>
-      </p>
     </div>
-    <button onclick="copyShareLink()"
-      class="flex items-center gap-2 px-4 py-2.5 border-2 border-slate-200 text-slate-700 rounded-xl hover:border-emerald-500 hover:text-emerald-700 hover:bg-emerald-50 transition-all font-semibold text-sm shrink-0 self-start">
-      <i class="fas fa-share-alt"></i> Share
-    </button>
+    <div class="mt-4 border-t border-slate-100 pt-4">
+      <div class="flex items-end justify-between gap-3">
+        <div>
+          <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Raised</p>
+          <p class="mt-0.5 text-2xl font-extrabold tracking-tight text-slate-900 sm:text-3xl">
+            $<?php echo $raisedFmt; ?>
+          </p>
+        </div>
+        <div class="text-right">
+          <p class="text-[10px] font-semibold uppercase tracking-wide text-slate-500">Goal</p>
+          <p class="mt-0.5 text-sm font-semibold text-slate-700 sm:text-base">
+            $<?php echo $goalFmt; ?>
+          </p>
+        </div>
+      </div>
+      <div class="progress-track my-2.5">
+        <div class="progress-fill" style="width:<?php echo round($percent); ?>%"></div>
+      </div>
+      <div class="flex items-center justify-between text-xs text-slate-600">
+        <span><strong class="text-slate-900"><?php echo (int)$details['donor_count']; ?></strong> donors</span>
+        <span><strong class="text-slate-900"><?php echo round($percent); ?>%</strong> funded</span>
+      </div>
+    </div>
   </div>
 
   <!-- ── Two-column grid ── -->
-  <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+  <div class="grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
 
     <!-- ════ LEFT COLUMN ════ -->
-    <div class="lg:col-span-2 space-y-8 order-2 lg:order-1">
-
-      <!-- Progress stats card (mobile shows here, desktop in sidebar) -->
-      <div class="card p-6 lg:hidden">
-        <?php $raisedFmt = number_format($details['current_amount'], 0); $goalFmt = number_format($details['goal_amount'], 0); ?>
-        <div class="mb-1 flex items-end justify-between">
-          <span class="text-3xl font-extrabold text-slate-900">$<?php echo $raisedFmt; ?></span>
-          <span class="text-sm text-slate-500 mb-1">of $<?php echo $goalFmt; ?> goal</span>
-        </div>
-        <div class="progress-track my-3">
-          <div class="progress-fill" style="width:<?php echo round($percent); ?>%"></div>
-        </div>
-        <div class="flex items-center justify-between text-sm text-slate-600">
-          <span><strong class="text-slate-900"><?php echo (int)$details['donor_count']; ?></strong> donors</span>
-          <span><strong class="text-slate-900"><?php echo round($percent); ?>%</strong> funded</span>
-        </div>
-        <?php if ($campaignUnderReview): ?>
-        <button type="button" disabled
-          class="mt-5 w-full cursor-not-allowed rounded-xl border border-amber-200 bg-amber-50 py-3.5 text-base font-bold text-amber-700 opacity-90">
-          <i class="fas fa-shield-alt mr-2"></i> Campaign under review
-        </button>
-        <?php else: ?>
-        <button onclick="openDonationModal()"
-          class="mt-5 w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-3.5 rounded-xl shadow-cta transition-all active:scale-[.98] text-base">
-          <i class="fas fa-heart mr-2"></i> Donate Now
-        </button>
-        <?php endif; ?>
-      </div>
+    <div class="order-2 space-y-5 lg:col-span-2 lg:order-1 lg:space-y-6">
 
       <!-- About -->
-      <div class="card p-6 md:p-8">
-        <div class="flex items-center gap-3 mb-5">
-          <div class="w-9 h-9 bg-emerald-100 rounded-xl flex items-center justify-center shrink-0">
-            <i class="fas fa-info-circle text-emerald-700 text-sm"></i>
-          </div>
-          <h2 class="text-xl font-bold text-slate-900">About this campaign</h2>
-        </div>
+      <div class="card p-5 sm:p-6 md:p-7">
+        <h2 class="mb-4 text-lg font-bold text-slate-900 sm:text-xl">The story</h2>
 
         <div x-data="{ expanded: false }">
-          <div class="text-slate-700 leading-relaxed text-base prose max-w-none"
+          <div class="text-sm leading-7 text-slate-700 prose max-w-none sm:text-base"
                :class="expanded ? '' : 'line-clamp-6'">
             <?php echo nl2br(htmlspecialchars($details['description'])); ?>
           </div>
           <button @click="expanded = !expanded"
             class="mt-4 flex items-center gap-2 text-emerald-700 hover:text-emerald-800 font-semibold text-sm transition-colors">
-            <span x-text="expanded ? 'Show less' : 'Read full story'"></span>
+            <span x-text="expanded ? 'Show less' : 'Read more'"></span>
             <svg class="w-4 h-4 transition-transform duration-300" :class="{'rotate-180': expanded}"
                  fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
@@ -382,18 +362,13 @@ $ogImageUrl = !empty($details['image_path'])
       </div>
 
       <!-- Updates -->
-      <div class="card p-6 md:p-8">
-        <div class="flex items-center justify-between mb-6">
-          <div class="flex items-center gap-3">
-            <div class="w-9 h-9 bg-blue-100 rounded-xl flex items-center justify-center shrink-0">
-              <i class="fas fa-bullhorn text-blue-700 text-sm"></i>
-            </div>
-            <h2 class="text-xl font-bold text-slate-900">Campaign Updates</h2>
-          </div>
+      <div class="card p-5 sm:p-6 md:p-7">
+        <div class="mb-5 flex items-center justify-between gap-3">
+          <h2 class="text-lg font-bold text-slate-900 sm:text-xl">Updates</h2>
           <?php if (isset($_SESSION['user_id']) && $_SESSION['user_id'] == $details['user_id']): ?>
             <button onclick="showUpdateForm()"
               class="flex items-center gap-1.5 px-4 py-2 bg-emerald-600 text-white text-sm font-semibold rounded-xl hover:bg-emerald-700 transition-colors">
-              <i class="fas fa-plus text-xs"></i> Add Update
+              <i class="fas fa-plus text-xs"></i> Update
             </button>
           <?php endif; ?>
         </div>
@@ -436,8 +411,7 @@ $ogImageUrl = !empty($details['image_path'])
           <div class="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
             <i class="fas fa-bullhorn text-slate-300 text-xl"></i>
           </div>
-          <p class="font-semibold text-slate-700 mb-1">No updates yet</p>
-          <p class="text-sm text-slate-500">Campaign organizers will post updates here</p>
+          <p class="text-sm font-medium text-slate-600">No updates yet</p>
         </div>
         <?php endif; ?>
       </div>
@@ -482,21 +456,11 @@ $ogImageUrl = !empty($details['image_path'])
       <?php endif; ?>
 
       <!-- Recent Donors -->
-      <div class="card p-6 md:p-8">
-        <div class="flex items-center gap-3 mb-6">
-          <div class="w-9 h-9 bg-pink-100 rounded-xl flex items-center justify-center shrink-0">
-            <i class="fas fa-heart text-pink-600 text-sm"></i>
-          </div>
-          <div>
-            <h2 class="text-xl font-bold text-slate-900">Recent Donors</h2>
-            <?php if ($totalDonors > 0): ?>
-              <p class="text-xs text-slate-500"><?php echo $totalDonors; ?> people have supported this campaign</p>
-            <?php endif; ?>
-          </div>
-        </div>
+      <div class="card p-5 sm:p-6 md:p-7">
+        <h2 class="mb-5 text-lg font-bold text-slate-900 sm:text-xl">Recent donors</h2>
 
         <?php if (!empty($donors)): ?>
-        <div class="space-y-3">
+        <div class="space-y-2.5">
           <?php
           $avatarGradients = [
             'from-emerald-400 to-teal-500',
@@ -514,8 +478,8 @@ $ogImageUrl = !empty($details['image_path'])
 
             $timeAgo = formatRelativeTime($donor['donated_at'] ?? null);
           ?>
-          <div class="flex items-center gap-4 p-4 bg-slate-50 rounded-xl hover:bg-slate-100 transition-colors">
-            <div class="donor-avatar bg-gradient-to-br <?php echo $grad; ?>">
+          <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-3 transition-colors hover:bg-slate-100 sm:gap-4 sm:p-4">
+            <div class="donor-avatar h-10 w-10 bg-gradient-to-br text-sm <?php echo $grad; ?>">
               <?php echo $donorInitial; ?>
             </div>
             <div class="flex-1 min-w-0">
@@ -523,10 +487,7 @@ $ogImageUrl = !empty($details['image_path'])
               <p class="text-xs text-slate-500"><?php echo $timeAgo; ?></p>
             </div>
             <div class="text-right shrink-0">
-              <p class="font-bold text-emerald-700 text-base">$<?php echo number_format($donor['amount'], 2); ?></p>
-              <?php if ($isAnon): ?>
-                <p class="text-[10px] text-slate-400 mt-0.5">Anonymous</p>
-              <?php endif; ?>
+              <p class="text-sm font-bold text-emerald-700 sm:text-base">$<?php echo number_format($donor['amount'], 2); ?></p>
             </div>
           </div>
           <?php endforeach; ?>
@@ -561,39 +522,9 @@ $ogImageUrl = !empty($details['image_path'])
           <div class="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
             <i class="fas fa-heart text-slate-300 text-xl"></i>
           </div>
-          <p class="font-semibold text-slate-700 mb-1">No donations yet</p>
-          <p class="text-sm text-slate-500">Be the first to make a difference!</p>
-          <?php if ($campaignUnderReview): ?>
-          <button type="button" disabled
-            class="mt-4 cursor-not-allowed rounded-xl border border-amber-200 bg-amber-50 px-6 py-2.5 text-sm font-semibold text-amber-700 opacity-90">
-            Campaign under review
-          </button>
-          <?php else: ?>
-          <button onclick="openDonationModal()"
-            class="mt-4 px-6 py-2.5 bg-emerald-600 text-white rounded-xl font-semibold text-sm hover:bg-emerald-700 transition-all">
-            Donate Now
-          </button>
-          <?php endif; ?>
+          <p class="font-semibold text-slate-700">No donations yet</p>
         </div>
         <?php endif; ?>
-      </div>
-
-      <!-- Browse other campaigns -->
-      <div class="rounded-2xl overflow-hidden"
-           style="background:linear-gradient(135deg,#059669 0%,#0d9488 100%); padding:2rem;">
-        <div class="flex items-center gap-3 mb-3">
-          <div class="w-10 h-10 bg-white/20 rounded-xl flex items-center justify-center">
-            <i class="fas fa-compass text-white"></i>
-          </div>
-          <h3 class="text-lg font-bold text-white">Discover more campaigns</h3>
-        </div>
-        <p class="text-emerald-100 mb-5 text-sm leading-relaxed">
-          Browse hundreds of verified fundraisers and find causes you care about.
-        </p>
-        <a href="<?php echo BASE_URL; ?>/campaigns/view_compaigns.php"
-           class="inline-flex items-center gap-2 px-5 py-2.5 bg-white text-emerald-700 font-bold rounded-xl hover:bg-emerald-50 transition-all text-sm">
-          <i class="fas fa-th-large"></i> Browse Campaigns
-        </a>
       </div>
 
     </div><!-- /left column -->
@@ -603,32 +534,7 @@ $ogImageUrl = !empty($details['image_path'])
       <div class="sticky-sidebar space-y-5">
 
         <!-- Donation widget -->
-        <div class="card p-6">
-
-          <!-- Progress -->
-          <?php $raisedFmt = number_format($details['current_amount'], 0); $goalFmt = number_format($details['goal_amount'], 0); ?>
-          <div class="mb-1">
-            <span class="text-3xl font-extrabold text-slate-900">$<?php echo $raisedFmt; ?></span>
-            <span class="text-sm text-slate-500 ml-1">raised</span>
-          </div>
-          <p class="text-sm text-slate-500 mb-3">of <strong class="text-slate-700">$<?php echo $goalFmt; ?></strong> goal</p>
-          <div class="progress-track mb-4">
-            <div class="progress-fill" id="sidebarProgress" style="width:0%"
-                 data-target="<?php echo round($percent); ?>"></div>
-          </div>
-
-          <!-- Stats row -->
-          <div class="grid grid-cols-2 gap-3 mb-5">
-            <div class="text-center bg-slate-50 rounded-xl p-3 border border-slate-100">
-              <p class="text-lg font-extrabold text-slate-900"><?php echo (int)$details['donor_count']; ?></p>
-              <p class="text-[10px] font-semibold text-slate-500 uppercase tracking-wide">Donors</p>
-            </div>
-            <div class="text-center bg-emerald-50 rounded-xl p-3 border border-emerald-100">
-              <p class="text-lg font-extrabold text-emerald-700"><?php echo round($percent); ?>%</p>
-              <p class="text-[10px] font-semibold text-emerald-600 uppercase tracking-wide">Funded</p>
-            </div>
-          </div>
-
+        <div class="card p-5">
           <!-- Donate CTA -->
           <?php if ($campaignUnderReview): ?>
           <button type="button" disabled
@@ -649,13 +555,13 @@ $ogImageUrl = !empty($details['image_path'])
                target="_blank" rel="noopener"
                class="share-btn border-blue-200 text-blue-600 hover:bg-blue-50 flex-col py-2.5">
               <i class="fab fa-facebook-f text-sm"></i>
-              <span class="text-[9px] font-bold mt-0.5">Share</span>
+              <span class="mt-0.5 text-[9px] font-bold">Facebook</span>
             </a>
             <a href="https://twitter.com/intent/tweet?url=<?php echo urlencode(BASE_URL.'/campaigns/public-view.php?id='.$details['id']); ?>&text=<?php echo urlencode('Support: '.$details['title']); ?>"
                target="_blank" rel="noopener"
                class="share-btn border-sky-200 text-sky-500 hover:bg-sky-50 flex-col py-2.5">
               <i class="fab fa-x-twitter text-sm"></i>
-              <span class="text-[9px] font-bold mt-0.5">Tweet</span>
+              <span class="mt-0.5 text-[9px] font-bold">X</span>
             </a>
             <a href="https://wa.me/?text=<?php echo urlencode('Support this campaign: '.BASE_URL.'/campaigns/public-view.php?id='.$details['id']); ?>"
                target="_blank" rel="noopener"
@@ -669,46 +575,20 @@ $ogImageUrl = !empty($details['image_path'])
               <span class="text-[9px] font-bold mt-0.5">Copy</span>
             </button>
           </div>
-        </div>
-
-        <!-- Creator card -->
-        <div class="card p-5">
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Campaign Organizer</p>
-          <div class="flex items-center gap-3">
-            <div class="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 flex items-center justify-center text-white font-bold text-lg shrink-0">
+          <div class="mt-4 border-t border-slate-100 pt-4">
+            <p class="mb-3 text-xs font-bold uppercase tracking-widest text-slate-400">Organizer</p>
+            <div class="flex items-center gap-3">
+              <div class="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-emerald-400 to-teal-600 text-lg font-bold text-white">
               <?php echo $creatorInitial; ?>
-            </div>
-            <div>
-              <p class="font-bold text-slate-900 text-sm"><?php echo $creatorName; ?></p>
-              <p class="text-xs text-slate-500">Campaign Organizer</p>
-              <span class="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full mt-1">
-                <i class="fas fa-check-circle text-[9px]"></i> Verified
-              </span>
-            </div>
-          </div>
-        </div>
-
-        <!-- Trust badges -->
-        <div class="card p-5">
-          <p class="text-xs font-bold text-slate-400 uppercase tracking-widest mb-3">Trust & Safety</p>
-          <div class="space-y-2.5">
-            <div class="flex items-center gap-2.5 text-xs text-slate-600">
-              <div class="w-7 h-7 bg-emerald-50 rounded-lg flex items-center justify-center shrink-0">
-                <i class="fas fa-lock text-emerald-600 text-[11px]"></i>
               </div>
-              <span>All payments are encrypted &amp; secure</span>
-            </div>
-            <div class="flex items-center gap-2.5 text-xs text-slate-600">
-              <div class="w-7 h-7 bg-blue-50 rounded-lg flex items-center justify-center shrink-0">
-                <i class="fas fa-shield-alt text-blue-600 text-[11px]"></i>
+              <div>
+                <p class="text-sm font-bold text-slate-900"><?php echo $creatorName; ?></p>
+                <?php if (!empty($details['creator_is_verified'])): ?>
+                <span class="mt-1 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-semibold text-emerald-700">
+                  <i class="fas fa-check-circle text-[9px]"></i> Verified
+                </span>
+                <?php endif; ?>
               </div>
-              <span>Campaign verified by CroFunding team</span>
-            </div>
-            <div class="flex items-center gap-2.5 text-xs text-slate-600">
-              <div class="w-7 h-7 bg-purple-50 rounded-lg flex items-center justify-center shrink-0">
-                <i class="fas fa-undo text-purple-600 text-[11px]"></i>
-              </div>
-              <span>Donation protected by our guarantee</span>
             </div>
           </div>
         </div>
@@ -721,10 +601,6 @@ $ogImageUrl = !empty($details['image_path'])
 
 <!-- ═══════════════  MOBILE BOTTOM BAR  ═══════════════ -->
 <div class="mobile-cta-bar">
-  <div class="flex-1">
-    <p class="text-xs text-slate-500 leading-none">Raised so far</p>
-    <p class="text-base font-extrabold text-slate-900">$<?php echo number_format($details['current_amount'],0); ?></p>
-  </div>
   <?php if ($campaignUnderReview): ?>
   <button type="button" disabled
     class="flex-1 cursor-not-allowed rounded-xl border border-amber-200 bg-amber-50 py-3 text-sm font-bold text-amber-700 opacity-90">
@@ -749,8 +625,7 @@ $ogImageUrl = !empty($details['image_path'])
     <div class="sticky top-0 bg-white/95 backdrop-blur-sm border-b border-slate-100 px-6 py-4 flex items-center justify-between z-10 rounded-t-2xl">
       <div class="flex items-center gap-3">
         <div>
-          <h2 class="text-lg font-bold text-slate-900 leading-tight">Make a Donation</h2>
-          <p class="text-xs text-slate-400">Secure &amp; encrypted payment</p>
+          <h2 class="text-lg font-bold text-slate-900 leading-tight">Make a donation</h2>
         </div>
       </div>
       <button onclick="closeDonationModal()"
@@ -762,7 +637,7 @@ $ogImageUrl = !empty($details['image_path'])
     <div class="px-6 py-6">
       <div id="donationFormLoader" class="text-center py-14">
         <div class="inline-block animate-spin rounded-full h-12 w-12 border-4 border-emerald-200 border-t-emerald-600"></div>
-        <p class="mt-4 text-sm text-slate-500">Loading secure payment form...</p>
+        <p class="mt-4 text-sm text-slate-500">Loading donation form...</p>
       </div>
       <div id="donationFormContainer" class="hidden"></div>
     </div>
