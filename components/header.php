@@ -116,10 +116,27 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
 
             <div class="flex-1 flex items-center justify-center md:hidden">
                 <div class="relative">
-                    <img src="<?php echo htmlspecialchars($avatarUrl); ?>" 
-                         alt="<?php echo htmlspecialchars($currentUser['name'] ?? 'User'); ?>"
-                         class="w-8 h-8 rounded-full object-cover border-2 border-emerald-600"
-                         onerror="this.src='<?php echo BASE_URL; ?>/assets/images/default-avatar.png'">
+                    <button type="button"
+                            id="mobile-user-menu-button"
+                            class="flex h-10 w-10 items-center justify-center rounded-full focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-600 focus-visible:ring-offset-2"
+                            aria-label="Open account menu"
+                            aria-controls="mobile-user-menu"
+                            aria-expanded="false">
+                        <img src="<?php echo htmlspecialchars($avatarUrl); ?>"
+                             alt=""
+                             class="w-8 h-8 rounded-full object-cover border-2 border-emerald-600"
+                             onerror="this.src='<?php echo BASE_URL; ?>/assets/images/default-avatar.png'">
+                    </button>
+                    <div class="hidden absolute right-0 top-full mt-2 w-48 rounded-xl border border-gray-200 bg-white py-1 shadow-lg z-50 md:hidden"
+                         id="mobile-user-menu"
+                         role="menu"
+                         aria-label="Account menu">
+                        <a href="<?php echo BASE_URL; ?>/account/settings.php" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" role="menuitem">Your Profile</a>
+                        <a href="<?php echo BASE_URL; ?>/campaigns/index.php" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" role="menuitem">Your Campaigns</a>
+                        <a href="<?php echo BASE_URL; ?>/account/settings.php" class="block px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50" role="menuitem">Settings</a>
+                        <div class="my-1 border-t border-gray-100"></div>
+                        <a href="<?php echo BASE_URL; ?>/logout.php" class="block px-4 py-2.5 text-sm font-medium text-red-600 hover:bg-red-50" role="menuitem">Sign out</a>
+                    </div>
                 </div>
             </div>
 
@@ -178,6 +195,8 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
     document.addEventListener('DOMContentLoaded', function() {
         const userMenuButton = document.getElementById('user-menu-button');
         const userMenu = document.getElementById('user-menu');
+        const mobileUserMenuButton = document.getElementById('mobile-user-menu-button');
+        const mobileUserMenu = document.getElementById('mobile-user-menu');
         const mobileMenuButton = document.getElementById('mobile-menu-button');
         const mobileMenu = document.getElementById('mobile-menu');
 
@@ -186,6 +205,13 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
             const isExpanded = userMenuButton.getAttribute('aria-expanded') === 'true';
             userMenuButton.setAttribute('aria-expanded', String(!isExpanded));
             userMenu.classList.toggle('hidden', isExpanded);
+        });
+
+        mobileUserMenuButton?.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const isExpanded = mobileUserMenuButton.getAttribute('aria-expanded') === 'true';
+            mobileUserMenuButton.setAttribute('aria-expanded', String(!isExpanded));
+            mobileUserMenu.classList.toggle('hidden', isExpanded);
         });
 
         mobileMenuButton?.addEventListener('click', () => {
@@ -197,6 +223,10 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
                 userMenu.classList.add('hidden');
                 userMenuButton?.setAttribute('aria-expanded', 'false');
             }
+            if (mobileUserMenu && !mobileUserMenuButton?.contains(event.target) && !mobileUserMenu.contains(event.target)) {
+                mobileUserMenu.classList.add('hidden');
+                mobileUserMenuButton?.setAttribute('aria-expanded', 'false');
+            }
             if (mobileMenu && !mobileMenuButton?.contains(event.target) && !mobileMenu.contains(event.target)) {
                 mobileMenu.classList.add('hidden');
             }
@@ -207,6 +237,11 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
                 userMenu.classList.add('hidden');
                 userMenuButton?.setAttribute('aria-expanded', 'false');
                 userMenuButton?.focus();
+            }
+            if (event.key === 'Escape' && mobileUserMenu && !mobileUserMenu.classList.contains('hidden')) {
+                mobileUserMenu.classList.add('hidden');
+                mobileUserMenuButton?.setAttribute('aria-expanded', 'false');
+                mobileUserMenuButton?.focus();
             }
         });
     });
