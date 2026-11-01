@@ -102,13 +102,6 @@ try {
     [x-cloak] {
       display: none !important;
     }
-    .campaign-card-content {
-      min-height: 0;
-    }
-    .campaign-card-content * {
-      word-wrap: break-word;
-      overflow-wrap: break-word;
-    }
     #campaigns-container > div {
       min-width: 0;
     }
@@ -130,39 +123,19 @@ try {
     <div class="hero-orb top-24 right-[-3rem] h-64 w-64 bg-sky-200"></div>
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative">
-      <section class="relative overflow-hidden rounded-[2rem] border border-white/70 bg-gradient-to-br from-slate-950 via-slate-900 to-emerald-950 px-6 py-8 text-white shadow-2xl sm:px-8 md:px-10 md:py-10 lg:px-12">
-        <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_left,_rgba(16,185,129,0.22),_transparent_34%),radial-gradient(circle_at_bottom_right,_rgba(59,130,246,0.14),_transparent_30%)]"></div>
-        <div class="relative grid gap-8 lg:grid-cols-[1.25fr_0.75fr] lg:items-end">
-          <div class="max-w-3xl">
-            <h1 class="mt-5 text-3xl font-bold tracking-tight text-white sm:text-4xl lg:text-5xl">
-              Browse campaigns making a real-world impact.
-            </h1>
-            <p class="mt-4 max-w-2xl text-sm leading-7 text-slate-200 sm:text-base">
-              Explore verified causes, urgent needs, and community-led fundraisers. Filter by category, sort by momentum, and support the stories that matter most to you.
-            </p>
-          </div>
-
-          <div class="grid gap-4 sm:grid-cols-3 lg:grid-cols-1 xl:grid-cols-3">
-            <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur-sm">
-              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Campaigns</p>
-              <p class="mt-2 text-2xl font-bold text-white"><?= number_format($total) ?></p>
-              <p class="mt-1 text-sm text-slate-300">Active fundraising stories</p>
-            </div>
-            <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur-sm">
-              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Categories</p>
-              <p class="mt-2 text-2xl font-bold text-white">4</p>
-              <p class="mt-1 text-sm text-slate-300">Medical, education and more</p>
-            </div>
-            <div class="rounded-2xl border border-white/10 bg-white/10 px-4 py-4 backdrop-blur-sm">
-              <p class="text-xs font-semibold uppercase tracking-[0.24em] text-slate-300">Page</p>
-              <p class="mt-2 text-2xl font-bold text-white"><?= number_format($page) ?></p>
-              <p class="mt-1 text-sm text-slate-300">Of <?= number_format($totalPages) ?> available</p>
-            </div>
-          </div>
+      <section class="rounded-[1.75rem] border border-slate-200 bg-white px-6 py-7 shadow-sm sm:px-8 sm:py-9">
+        <div class="max-w-3xl">
+          <p class="text-xs font-semibold uppercase tracking-[0.2em] text-emerald-700">Find a cause</p>
+          <h1 class="mt-3 text-3xl font-bold tracking-tight text-slate-950 sm:text-4xl">
+            Fundraisers worth supporting.
+          </h1>
+          <p class="mt-3 text-sm leading-6 text-slate-600 sm:text-base">
+            Browse active campaigns and find a cause that matters to you.
+          </p>
         </div>
       </section>
 
-      <section class="-mt-6 relative z-10 rounded-[1.75rem] border border-slate-200/70 bg-white/95 p-5 shadow-xl shadow-slate-200/60 backdrop-blur sm:p-6 lg:p-7">
+      <section class="mt-5 rounded-[1.5rem] border border-slate-200 bg-white p-4 shadow-sm sm:p-5">
         <div class="flex flex-col gap-5 xl:flex-row xl:items-end xl:justify-between">
           <div class="grid flex-1 gap-4 md:grid-cols-2 xl:max-w-2xl">
             <div>
@@ -226,7 +199,7 @@ try {
         </div>
       </div>
 
-      <div id="campaigns-container" class="mt-8 grid grid-cols-1 gap-8 md:grid-cols-2 xl:grid-cols-3">
+      <div id="campaigns-container" class="mt-8 grid grid-cols-2 gap-x-4 gap-y-6 md:grid-cols-4 md:gap-x-5 md:gap-y-6">
         <?php if (empty($campaigns)): ?>
           <div class="col-span-full rounded-[1.75rem] border border-dashed border-slate-300 bg-white px-6 py-16 text-center shadow-sm">
             <div class="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-3xl bg-slate-100">
@@ -238,96 +211,36 @@ try {
             <p class="mt-2 text-slate-600">Try changing the current filters or check back a little later.</p>
           </div>
         <?php else: ?>
-          <?php foreach ($campaigns as $index => $camp): 
-            $title = htmlspecialchars($camp['title'] ?? '');
-            $description = htmlspecialchars($camp['description'] ?? '');
-            $category = htmlspecialchars($camp['category'] ?? '');
+          <?php foreach ($campaigns as $index => $camp):
+            $title = htmlspecialchars($camp['title'] ?? '', ENT_QUOTES, 'UTF-8');
             $current = (float)($camp['current_amount'] ?? 0);
             $goal = (float)($camp['goal_amount'] ?? 0);
             $donors = (int)($camp['donor_count'] ?? 0);
             $id = (int)($camp['id'] ?? 0);
             $percent = $goal > 0 ? min(($current / $goal) * 100, 100) : 0;
             $imageUrl = !empty($camp['image_path']) ? BASE_URL . '/' . ltrim($camp['image_path'], '/') : BASE_URL . '/assets/images/default-campaign.jpg';
+            $donorLabel = $donors > 0 ? number_format($donors) : '0';
           ?>
-          <div class="group flex flex-col overflow-hidden rounded-[1.75rem] border border-slate-200/80 bg-white shadow-sm transition-all duration-300 hover:-translate-y-1 hover:shadow-2xl hover:shadow-slate-200/70">
-            <!-- Image -->
-            <a href="public-view.php?id=<?= $id ?>" class="relative block h-60 overflow-hidden flex-shrink-0 bg-slate-100">
-              <img src="<?= $imageUrl ?>" alt="<?= $title ?>" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='<?= BASE_URL ?>/assets/images/default-campaign.jpg'" />
-              <div class="absolute inset-x-0 top-0 flex items-start justify-between p-4">
-                <span class="inline-flex items-center rounded-full bg-white/90 px-3 py-1.5 text-xs font-semibold text-slate-800 shadow-sm backdrop-blur-sm">
-                  <?= $category ?>
-                </span>
-                <span class="inline-flex items-center rounded-full bg-slate-950/75 px-3 py-1.5 text-xs font-semibold text-white backdrop-blur-sm">
-                  <?= round($percent) ?>% funded
+          <div class="group min-w-0 <?= $index === 0 ? 'col-span-2 md:row-span-2' : '' ?>">
+            <a href="public-view.php?id=<?= $id ?>" class="block h-full min-w-0">
+              <div class="relative <?= $index === 0 ? 'aspect-[1.55/1] md:aspect-[1.4/1]' : 'aspect-[1.55/1]' ?> overflow-hidden rounded-lg bg-slate-100">
+                <img src="<?= htmlspecialchars($imageUrl, ENT_QUOTES, 'UTF-8') ?>" alt="<?= $title ?>" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src='<?= BASE_URL ?>/assets/images/default-campaign.jpg'" />
+                <span class="absolute bottom-2 left-2 rounded bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-white sm:text-xs">
+                  <?= $donorLabel ?> donations
                 </span>
               </div>
-              <div class="absolute inset-x-0 bottom-0 h-24 bg-gradient-to-t from-slate-950/70 to-transparent"></div>
-            </a>
-
-            <!-- Content -->
-            <div class="campaign-card-content flex flex-1 flex-col p-6">
-              <h3 class="line-clamp-2 text-xl font-semibold tracking-tight text-slate-900 transition-colors group-hover:text-emerald-700 flex-shrink-0">
-                <a href="public-view.php?id=<?= $id ?>">
+              <div class="<?= $index === 0 ? 'pt-2.5' : 'pt-2' ?>">
+                <h3 class="line-clamp-2 <?= $index === 0 ? 'text-base font-semibold sm:text-lg' : 'text-xs font-semibold sm:text-sm' ?> leading-snug tracking-tight text-slate-900 transition-colors group-hover:text-emerald-800">
                   <?= $title ?>
-                </a>
-              </h3>
-
-              <div class="mt-3 flex flex-wrap items-center gap-2 text-xs font-medium text-slate-500">
-                <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1">Campaign</span>
-                <?php if (!empty($camp['is_premium_owner'])): ?>
-                <span class="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2.5 py-1 text-blue-700">
-                  <i class="fas fa-certificate"></i>
-                  Premium
-                </span>
-                <?php endif; ?>
-                <span class="inline-flex items-center gap-1">
-                  <svg class="h-3.5 w-3.5 text-emerald-500" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M9.049 2.927C9.469 1.675 10.531 1.675 10.951 2.927l1.07 3.207a1 1 0 00.95.69h3.374c1.317 0 1.86 1.687.795 2.454l-2.73 1.967a1 1 0 00-.364 1.118l1.07 3.207c.42 1.252-.566 2.19-1.63 1.423l-2.73-1.967a1 1 0 00-1.172 0l-2.73 1.967c-1.064.767-2.05-.171-1.63-1.423l1.07-3.207a1 1 0 00-.364-1.118L2.68 9.278c-1.065-.767-.522-2.454.795-2.454h3.374a1 1 0 00.95-.69l1.07-3.207z"/>
-                  </svg>
-                  Open for support
-                </span>
-              </div>
-
-              <div class="mt-4 min-h-[4.75rem] flex-grow text-sm leading-7 text-slate-600 line-clamp-3">
-                <?= $description ?>
-              </div>
-
-              <div class="mt-6 rounded-2xl bg-slate-50 p-4">
-                <div class="mb-3 flex items-center justify-between text-sm">
-                  <span class="text-slate-600">Raised</span>
-                  <span class="font-semibold text-emerald-700"><?= round($percent) ?>%</span>
-                </div>
-                <div class="mb-3 h-2.5 overflow-hidden rounded-full bg-slate-200">
-                  <div class="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600" style="width: <?= round($percent) ?>%"></div>
-                </div>
-                <div class="grid grid-cols-2 gap-3 text-sm">
-                  <div>
-                    <p class="text-slate-500">Current</p>
-                    <p class="mt-1 font-semibold text-slate-900">$<?= number_format($current, 2) ?></p>
-                  </div>
-                  <div>
-                    <p class="text-slate-500">Goal</p>
-                    <p class="mt-1 font-semibold text-slate-900">$<?= number_format($goal, 2) ?></p>
-                  </div>
+                </h3>
+                <div class="mt-2 h-1 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label="Fundraising progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="<?= round($percent) ?>">
+                  <div class="h-full rounded-full bg-gradient-to-r from-lime-400 to-emerald-600" style="width: <?= round($percent) ?>%"></div>
                 </div>
               </div>
-
-              <div class="mt-5 flex items-center justify-between border-t border-slate-100 pt-4 flex-shrink-0">
-                <div class="flex items-center text-sm text-slate-600">
-                  <svg class="mr-1.5 h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
-                  </svg>
-                  <?= $donors ?> donors
-                </div>
-                <div class="flex items-center gap-2">
-                  <button onclick="copyShareLink(<?= $id ?>, '<?= addslashes($title) ?>')" class="inline-flex items-center justify-center rounded-xl border border-slate-200 px-3 py-2 text-xs font-semibold text-slate-700 transition hover:bg-slate-50 whitespace-nowrap">
-                    Share
-                  </button>
-                  <a href="public-view.php?id=<?= $id ?>" class="inline-flex items-center justify-center rounded-xl bg-emerald-600 px-4 py-2 text-xs font-semibold text-white transition hover:bg-emerald-700 whitespace-nowrap">
-                    Donate
-                  </a>
-                </div>
-              </div>
+            </a>
+            <div class="mt-1.5 flex items-center justify-between gap-2">
+              <p class="text-xs font-medium text-slate-700 sm:text-sm">$<?= number_format($current) ?> raised</p>
+              <button type="button" onclick="copyShareLink(<?= $id ?>)" class="text-[10px] font-semibold text-slate-500 transition hover:text-emerald-700 sm:text-xs">Share</button>
             </div>
           </div>
           <?php endforeach; ?>
@@ -414,7 +327,7 @@ try {
       // All JavaScript functions are now available
     });
 
-    function copyShareLink(campaignId, title) {
+    function copyShareLink(campaignId) {
       const url = `${BASE_URL}/campaigns/public-view.php?id=${campaignId}`;
       navigator.clipboard.writeText(url).then(() => {
         const toast = document.getElementById('share-toast');

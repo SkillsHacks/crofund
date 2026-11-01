@@ -48,66 +48,41 @@ try {
             <p class="text-slate-600">Try adjusting your filters or check back later.</p>
           </div>';
     } else {
-        foreach ($campaigns as $camp) {
-            $title = htmlspecialchars($camp['title'] ?? '');
-            $description = htmlspecialchars($camp['description'] ?? '');
-            $campCategory = htmlspecialchars($camp['category'] ?? '');
+        foreach ($campaigns as $index => $camp) {
+            $title = htmlspecialchars($camp['title'] ?? '', ENT_QUOTES, 'UTF-8');
             $current = (float)($camp['current_amount'] ?? 0);
             $goal = (float)($camp['goal_amount'] ?? 0);
             $donors = (int)($camp['donor_count'] ?? 0);
             $id = (int)($camp['id'] ?? 0);
             $percent = $goal > 0 ? min(($current / $goal) * 100, 100) : 0;
-            $imageUrl = !empty($camp['image_path']) ? BASE_URL . '/' . ltrim($camp['image_path'], '/') : BASE_URL . '/assets/images/default-campaign.jpg';
+            $imageUrl = htmlspecialchars(
+                !empty($camp['image_path']) ? BASE_URL . '/' . ltrim($camp['image_path'], '/') : BASE_URL . '/assets/images/default-campaign.jpg',
+                ENT_QUOTES,
+                'UTF-8'
+            );
+            $donorLabel = number_format($donors);
 
             $html .= '
-          <div class="group bg-white rounded-2xl border border-slate-100 shadow-soft hover:shadow-medium transition-all duration-300 overflow-hidden flex flex-col">
-            <!-- Image -->
-            <a href="public-view.php?id=' . $id . '" class="block relative h-56 overflow-hidden flex-shrink-0">
-              <img src="' . $imageUrl . '" alt="' . $title . '" class="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src=\'' . BASE_URL . '/assets/images/default-campaign.jpg\'" />
-              <span class="absolute top-4 left-4 px-3 py-1.5 text-xs font-semibold text-white bg-emerald-600 rounded-xl shadow">
-                ' . $campCategory . '
-              </span>
-            </a>
-
-            <!-- Content -->
-            <div class="p-6 flex flex-col flex-1 campaign-card-content">
-              <h3 class="text-lg font-semibold text-slate-900 mb-3 line-clamp-2 group-hover:text-emerald-700 transition-colors flex-shrink-0">
-                <a href="public-view.php?id=' . $id . '">
+          <div class="group min-w-0 ' . ($index === 0 ? 'col-span-2 md:row-span-2' : '') . '">
+            <a href="public-view.php?id=' . $id . '" class="block h-full min-w-0">
+              <div class="relative ' . ($index === 0 ? 'aspect-[1.55/1] md:aspect-[1.4/1]' : 'aspect-[1.55/1]') . ' overflow-hidden rounded-lg bg-slate-100">
+                <img src="' . $imageUrl . '" alt="' . $title . '" class="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105" onerror="this.src=\'' . BASE_URL . '/assets/images/default-campaign.jpg\'" />
+                <span class="absolute bottom-2 left-2 rounded bg-slate-950/75 px-2 py-1 text-[10px] font-semibold text-white sm:text-xs">
+                  ' . $donorLabel . ' donations
+                </span>
+              </div>
+              <div class="' . ($index === 0 ? 'pt-2.5' : 'pt-2') . '">
+                <h3 class="line-clamp-2 ' . ($index === 0 ? 'text-base font-semibold sm:text-lg' : 'text-xs font-semibold sm:text-sm') . ' leading-snug tracking-tight text-slate-900 transition-colors group-hover:text-emerald-800">
                   ' . $title . '
-                </a>
-              </h3>
-
-              <div class="text-slate-600 text-sm line-clamp-3 mb-6 flex-grow min-h-[4.5rem]">
-                ' . $description . '
-              </div>
-
-              <!-- Progress Section -->
-              <div class="mb-4 flex-shrink-0">
-                <div class="h-2.5 bg-slate-100 rounded-full overflow-hidden mb-3">
-                  <div class="h-full bg-emerald-600 rounded-full" style="width: ' . round($percent) . '%"></div>
-                </div>
-                <div class="flex items-center justify-between text-sm">
-                  <span class="text-slate-600"><strong class="text-slate-900">$' . number_format($current, 2) . '</strong> of $' . number_format($goal, 2) . '</span>
-                  <span class="font-semibold text-emerald-700">' . round($percent) . '%</span>
+                </h3>
+                <div class="mt-2 h-1 overflow-hidden rounded-full bg-slate-200" role="progressbar" aria-label="Fundraising progress" aria-valuemin="0" aria-valuemax="100" aria-valuenow="' . round($percent) . '">
+                  <div class="h-full rounded-full bg-gradient-to-r from-lime-400 to-emerald-600" style="width: ' . round($percent) . '%"></div>
                 </div>
               </div>
-
-              <div class="flex items-center justify-between pt-4 border-t border-slate-100 flex-shrink-0">
-                <div class="flex items-center text-slate-600 text-sm">
-                  <svg class="w-4 h-4 mr-1.5" fill="currentColor" viewBox="0 0 20 20">
-                    <path d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z"/>
-                  </svg>
-                  ' . $donors . ' donors
-                </div>
-                <div class="flex items-center gap-2">
-                  <button onclick="copyShareLink(' . $id . ', \'' . addslashes($title) . '\')" class="px-3 py-1.5 text-xs font-semibold text-slate-700 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors whitespace-nowrap">
-                    Share
-                  </button>
-                  ' . (!empty($camp['owner_donation_blocked'])
-                    ? '<span class="px-4 py-1.5 text-xs font-semibold rounded-xl border border-amber-200 bg-amber-50 text-amber-700 whitespace-nowrap cursor-not-allowed">Campaign under review</span>'
-                    : '<a href="public-view.php?id=' . $id . '" class="px-4 py-1.5 text-xs font-semibold text-white rounded-xl bg-emerald-600 hover:bg-emerald-700 transition-colors whitespace-nowrap">Donate</a>') . '
-                </div>
-              </div>
+            </a>
+            <div class="mt-1.5 flex items-center justify-between gap-2">
+              <p class="text-xs font-medium text-slate-700 sm:text-sm">$' . number_format($current) . ' raised</p>
+              <button type="button" onclick="copyShareLink(' . $id . ')" class="text-[10px] font-semibold text-slate-500 transition hover:text-emerald-700 sm:text-xs">Share</button>
             </div>
           </div>';
         }
