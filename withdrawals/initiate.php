@@ -72,7 +72,7 @@ if ($isAjaxRequest) {
 }
 
 function renderWithdrawalInitiateContent(): void {
-    global $errorMessage, $pendingWithdrawalsList, $totalDonations, $heldDonations, $withdrawableDonations, $pendingWithdrawals, $availableBalance, $totalWithdrawn, $userInfo, $hasPremiumAccess;
+    global $currentUser, $errorMessage, $pendingWithdrawalsList, $totalDonations, $heldDonations, $withdrawableDonations, $pendingWithdrawals, $availableBalance, $totalWithdrawn, $userInfo, $hasPremiumAccess;
 ?>
 <div class="w-full px-4 py-4 pb-24 sm:px-6 sm:py-5 lg:px-8 lg:py-6 lg:pb-6">
     <div class="space-y-4 sm:space-y-5">
@@ -234,7 +234,7 @@ function renderWithdrawalInitiateContent(): void {
                                 </div>
 
                                 <div id="paypalFields" class="hidden space-y-4">
-                                    <input type="email" name="paypal_email" placeholder="PayPal Email" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-violet-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-violet-500/10">
+                                    <input type="email" name="paypal_email" value="<?php echo htmlspecialchars((string) ($currentUser['paypal_email'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>" placeholder="PayPal Email" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-900 focus:border-violet-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-violet-500/10">
                                 </div>
 
                                 <div>

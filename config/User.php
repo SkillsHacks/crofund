@@ -10,20 +10,6 @@ class User {
 
     public function __construct() {
         $this->db = Database::getInstance();
-        $this->ensurePaypalEmailColumn();
-    }
-
-    private function ensurePaypalEmailColumn(): void {
-        try {
-            $column = $this->db->fetchOne("SHOW COLUMNS FROM users LIKE 'paypal_email'");
-            if ($column) {
-                return;
-            }
-
-            $this->db->query("ALTER TABLE users ADD COLUMN paypal_email VARCHAR(255) NULL AFTER phone");
-        } catch (Exception $e) {
-            error_log('User::ensurePaypalEmailColumn failed: ' . $e->getMessage());
-        }
     }
 
     private function checkLoginAttempts($email) {
@@ -229,8 +215,6 @@ class User {
             return null;
         }
 
-        $this->ensurePaypalEmailColumn();
-
         $sql = "SELECT id, name, email, phone, paypal_email, country, city, newsletter, status, avatar, 
                 created_at, updated_at, email_verified, is_verified, verification_token, risk_status, risk_status_reason, risk_review_expires_at, is_admin
                 FROM users 
@@ -264,8 +248,6 @@ class User {
     }
 
     public function savePaypalEmail(int $userId, string $paypalEmail): void {
-        $this->ensurePaypalEmailColumn();
-
         $trimmed = trim($paypalEmail);
         if ($trimmed === '') {
             throw new InvalidArgumentException('Please enter your PayPal email address.');
@@ -282,8 +264,6 @@ class User {
     }
 
     public function clearPaypalEmail(int $userId): void {
-        $this->ensurePaypalEmailColumn();
-
         $this->db->query(
             "UPDATE users SET paypal_email = NULL, updated_at = CURRENT_TIMESTAMP WHERE id = ?",
             [$userId]
