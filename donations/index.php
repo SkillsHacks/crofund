@@ -46,12 +46,12 @@ function renderDonationContent(array $summary, array $donationRecords, float $pe
             </div>
             <div class="flex flex-col gap-2 sm:flex-row">
                 <a href="<?php echo BASE_URL; ?>/withdrawals/initiate.php"
-                   class="inline-flex min-h-10 items-center justify-center rounded-full bg-[#4c1d95] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#3b1675] focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
+                   class="inline-flex min-h-10 items-center justify-center rounded-full bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2">
                     Initiate withdrawal
                 </a>
                 <a href="<?php echo BASE_URL; ?>/withdrawal-logs/"
                    data-dashboard-route="withdrawal_logs"
-                   class="inline-flex min-h-10 items-center justify-center rounded-full border border-[#e7e5e1] bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#f7f6f4] focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
+                   class="inline-flex min-h-10 items-center justify-center rounded-full border border-[#e7e5e1] bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-[#f7f6f4] focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2">
                     Withdrawal history
                 </a>
             </div>

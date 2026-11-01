@@ -422,12 +422,12 @@ include 'components/header.php';
             color: #292524;
         }
         body.dashboard-page #sidebar .sidebar-link.bg-emerald-50 {
-            background: #ece7f8;
-            color: #1c1c1c;
+            background: #f5ffe7;
+            color: #274a32;
         }
         body.dashboard-page #sidebar .sidebar-link.bg-emerald-50 > svg {
-            background: #ddd4f5;
-            color: #4c1d95;
+            background: #d9f9a5;
+            color: #274a32;
         }
         body.dashboard-page #sidebar-toggle {
             display: none;
@@ -655,7 +655,7 @@ include 'components/header.php';
                         <?php if (trustRiskActionDisabled($trustRiskUi, 'create_campaign')): ?>
                             <span class="rounded-full bg-amber-100 px-3 py-2 text-xs font-semibold text-amber-800">Campaign creation unavailable</span>
                         <?php else: ?>
-                            <a href="<?php echo dashboardRouteUrl('create_campaign'); ?>" data-dashboard-route="create_campaign" class="inline-flex shrink-0 items-center justify-center rounded-full bg-[#4c1d95] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3b1675]">Create campaign</a>
+                            <a href="<?php echo dashboardRouteUrl('create_campaign'); ?>" data-dashboard-route="create_campaign" class="inline-flex shrink-0 items-center justify-center rounded-full bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800">Create campaign</a>
                         <?php endif; ?>
                     </div>
                     <?php if (empty($recentCampaigns)): ?>
@@ -804,7 +804,7 @@ include 'components/header.php';
                                 <p class="mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"><?php echo number_format($userStats['total_campaigns'] ?? 0); ?></p>
                                 <p class="mt-2 text-xs text-slate-500">Your active, completed, and archived fundraising efforts.</p>
                             </div>
-                            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-blue-50 text-blue-600">
+                            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
                                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
                                 </svg>
@@ -819,7 +819,7 @@ include 'components/header.php';
                                 <p class="mt-3 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl"><?php echo number_format($userStats['total_donors'] ?? 0); ?></p>
                                 <p class="mt-2 text-xs text-slate-500">People who have supported your fundraising work.</p>
                             </div>
-                            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-violet-50 text-violet-600">
+                            <div class="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700">
                                 <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"/>
                                 </svg>
@@ -917,7 +917,7 @@ include 'components/header.php';
                                         <span class="text-slate-500"><?php echo number_format($userStats['total_donors'] ?? 0); ?> donors</span>
                                     </div>
                                     <div class="h-2.5 rounded-full bg-slate-100">
-                                        <div class="h-2.5 rounded-full bg-violet-500" style="width: <?php echo min(100, max(6, (float) (($userStats['total_donors'] ?? 0) * 4))); ?>%"></div>
+                                        <div class="h-2.5 rounded-full bg-emerald-700" style="width: <?php echo min(100, max(6, (float) (($userStats['total_donors'] ?? 0) * 4))); ?>%"></div>
                                     </div>
                                 </div>
                                 <div>
@@ -926,7 +926,7 @@ include 'components/header.php';
                                         <span class="text-slate-500">$<?php echo number_format($userStats['total_raised'] ?? 0, 0); ?></span>
                                     </div>
                                     <div class="h-2.5 rounded-full bg-slate-100">
-                                        <div class="h-2.5 rounded-full bg-blue-500" style="width: <?php echo min(100, max(10, (float) (($userStats['total_raised'] ?? 0) / 50))); ?>%"></div>
+                                        <div class="h-2.5 rounded-full bg-emerald-700" style="width: <?php echo min(100, max(10, (float) (($userStats['total_raised'] ?? 0) / 50))); ?>%"></div>
                                     </div>
                                 </div>
                             </div>

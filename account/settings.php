@@ -128,11 +128,11 @@ function renderAccountSettingsContent(array $currentUser, bool $hasPremiumAccess
             </div>
             <div class="grid grid-cols-1 gap-3 p-4 sm:grid-cols-2 sm:p-5">
                 <a href="<?php echo BASE_URL; ?>/account/verification.php"
-                   class="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e7e5e1] bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-[#f7f6f4] focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
+                   class="inline-flex min-h-11 items-center justify-center rounded-xl border border-[#e7e5e1] bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 transition hover:bg-[#f7f6f4] focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2">
                     Verification
                 </a>
                 <a href="<?php echo BASE_URL; ?>/account/premium.php"
-                   class="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#4c1d95] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3b1675] focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
+                   class="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2">
                     Premium upgrade
                 </a>
             </div>
@@ -148,14 +148,14 @@ function renderAccountSettingsContent(array $currentUser, bool $hasPremiumAccess
                         <div class="min-w-0 flex-1">
                             <label for="paypal_email" class="block text-xs font-semibold text-slate-700">PayPal email</label>
                             <input id="paypal_email" type="email" name="paypal_email" value="<?php echo htmlspecialchars((string) ($currentUser['paypal_email'] ?? '')); ?>" placeholder="name@example.com" required
-                                   class="mt-1.5 block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/15">
+                                   class="mt-1.5 block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-700/15">
                         </div>
                         <?php if (!empty($currentUser['paypal_email'])): ?>
                             <button type="submit" name="remove_paypal_email" formnovalidate class="inline-flex min-h-11 items-center justify-center rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50">
                                 Remove
                             </button>
                         <?php endif; ?>
-                        <button type="submit" name="save_paypal_email" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#4c1d95] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3b1675]">
+                        <button type="submit" name="save_paypal_email" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800">
                             Save
                         </button>
                     </form>
@@ -173,21 +173,21 @@ function renderAccountSettingsContent(array $currentUser, bool $hasPremiumAccess
                         <div>
                             <label for="current_password" class="block text-xs font-semibold text-slate-700">Current password</label>
                             <input id="current_password" type="password" name="current_password" autocomplete="current-password" required
-                                   class="mt-1.5 block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/15">
+                                   class="mt-1.5 block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-700/15">
                         </div>
                         <div>
                             <label for="new_password" class="block text-xs font-semibold text-slate-700">New password</label>
                             <input id="new_password" type="password" name="new_password" autocomplete="new-password" required
-                                   class="mt-1.5 block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/15">
+                                   class="mt-1.5 block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-700/15">
                         </div>
                         <div>
                             <label for="confirm_password" class="block text-xs font-semibold text-slate-700">Confirm new password</label>
                             <input id="confirm_password" type="password" name="confirm_password" autocomplete="new-password" required
-                                   class="mt-1.5 block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:border-violet-500 focus:outline-none focus:ring-2 focus:ring-violet-500/15">
+                                   class="mt-1.5 block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-700/15">
                         </div>
                     </div>
                     <div class="mt-4 flex justify-end">
-                        <button type="submit" name="change_password" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-[#4c1d95] px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3b1675]">
+                        <button type="submit" name="change_password" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800">
                             Update password
                         </button>
                     </div>

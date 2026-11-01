@@ -42,7 +42,7 @@ function renderCampaignsIndexContent(array $userCampaigns, array $stats, string 
                 <div>
                     <h1 class="text-lg font-bold tracking-tight text-slate-900 sm:text-xl">Your campaigns</h1>
                 </div>
-                <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="inline-flex min-h-10 items-center justify-center rounded-xl bg-[#4c1d95] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#3b1675] focus:outline-none focus:ring-2 focus:ring-violet-500 focus:ring-offset-2">
+                <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-2 focus:ring-emerald-700 focus:ring-offset-2">
                         <svg class="mr-2 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                         </svg>
@@ -113,7 +113,7 @@ function renderCampaignsIndexContent(array $userCampaigns, array $stats, string 
                 </div>
                 <h3 class="mt-3 text-base font-semibold text-slate-900">No campaigns yet</h3>
                 <p class="mt-1 text-sm text-slate-500">Create your first campaign to get started.</p>
-                <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="mt-4 inline-flex min-h-10 items-center justify-center rounded-xl bg-[#4c1d95] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#3b1675]">
+                <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="mt-4 inline-flex min-h-10 items-center justify-center rounded-xl bg-emerald-700 px-4 py-2 text-sm font-semibold text-white transition hover:bg-emerald-800">
                     Create campaign
                 </a>
             </section>
@@ -348,13 +348,13 @@ if (!$isAjaxRequest) {
         }
 
         body.campaigns-index-page #sidebar .sidebar-link.bg-emerald-50 {
-            background: #ece7f8;
-            color: #1c1c1c;
+            background: #f5ffe7;
+            color: #274a32;
         }
 
         body.campaigns-index-page #sidebar .sidebar-link.bg-emerald-50 > svg {
-            background: #ddd4f5;
-            color: #4c1d95;
+            background: #d9f9a5;
+            color: #274a32;
         }
 
         body.campaigns-index-page #sidebar-toggle,
@@ -458,7 +458,7 @@ if (!$isAjaxRequest) {
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10.5 12 3l9 7.5V20a1 1 0 0 1-1 1h-5v-6H9v6H4a1 1 0 0 1-1-1z"/></svg>
             Home
         </a>
-        <a href="<?php echo BASE_URL; ?>/campaigns/" aria-current="page" class="flex flex-col items-center gap-1 rounded-xl bg-[#ece7f8] px-2 py-2 text-[11px] font-semibold text-[#4c1d95] transition">
+        <a href="<?php echo BASE_URL; ?>/campaigns/" aria-current="page" class="flex flex-col items-center gap-1 rounded-xl bg-emerald-50 px-2 py-2 text-[11px] font-semibold text-emerald-700 transition">
             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 3h7l5 5v13H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2zm7 0v5h5M9 13h6m-6 4h6"/></svg>
             Campaigns
         </a>
