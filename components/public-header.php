@@ -1,5 +1,15 @@
 <?php
 ?>
+<style>
+    button:not([data-close-mobile-menu]),
+    input[type="button"],
+    input[type="submit"],
+    input[type="reset"],
+    [role="button"],
+    a[class*="justify-center"][class*="px-"] {
+        border-radius: 9999px !important;
+    }
+</style>
 <nav class="fixed inset-x-0 top-0 z-50 border-b border-white/60 bg-white/90 backdrop-blur-xl shadow-sm">
     <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div class="flex h-16 items-center justify-between gap-4">
@@ -107,7 +117,7 @@
                         <svg class="mt-1 h-5 w-5 shrink-0 text-slate-400 transition-transform group-open:rotate-90" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
                     </summary>
                     <div class="space-y-1 pb-4 pl-3">
-                        <a href="<?php echo BASE_URL; ?>/register.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">Start a fundraiser</a>
+                        <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">Start a fundraiser</a>
                         <a href="<?php echo BASE_URL; ?>/how-it-works.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">How it works</a>
                         <a href="<?php echo BASE_URL; ?>/success-stories.php" class="block rounded-lg px-3 py-2.5 text-sm font-medium text-slate-700 hover:bg-emerald-50 hover:text-emerald-800">Success stories</a>
                     </div>
@@ -140,7 +150,7 @@
         </nav>
 
         <div class="mt-auto shrink-0 space-y-3 border-t border-slate-200 bg-white px-6 py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))]">
-            <a href="<?php echo BASE_URL; ?>/register.php" class="flex min-h-14 w-full items-center justify-center rounded-full bg-emerald-700 px-5 py-3 text-base font-bold text-white transition hover:bg-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">Start a fundraiser</a>
+            <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="flex min-h-14 w-full items-center justify-center rounded-full bg-emerald-700 px-5 py-3 text-base font-bold text-white transition hover:bg-emerald-800 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">Start a fundraiser</a>
             <a href="<?php echo BASE_URL; ?>/login.php" class="flex min-h-14 w-full items-center justify-center rounded-full border-2 border-slate-200 bg-white px-5 py-3 text-base font-bold text-slate-900 transition hover:bg-slate-50 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">Sign in</a>
         </div>
     </section>

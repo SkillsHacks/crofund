@@ -95,7 +95,7 @@ require_once __DIR__ . '/config/Database.php';
                         Tell your story, set a goal, and invite people to support the things that matter most.
                     </p>
                     <div class="mt-7 flex flex-col justify-center gap-3 sm:flex-row lg:justify-start">
-                        <a href="<?php echo BASE_URL; ?>/register.php" class="inline-flex min-h-12 items-center justify-center rounded-xl bg-emerald-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-700/20">
+                        <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="inline-flex min-h-12 items-center justify-center rounded-xl bg-emerald-700 px-6 py-3 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-700/20">
                             Start a fundraiser
                             <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>

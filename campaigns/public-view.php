@@ -29,6 +29,7 @@ $offset     = ($page - 1) * $perPage;
 $totalDonors = $campaign->getCampaignDonorCount($campaignId);
 $totalPages  = ceil($totalDonors / $perPage);
 $donors      = $campaign->getCampaignDonors($campaignId, $perPage, $offset);
+$mobileDonors = $campaign->getCampaignDonors($campaignId, 5, 0);
 
 function formatRelativeTime(?string $timestamp): string {
   if (empty($timestamp)) {
@@ -262,6 +263,7 @@ $ogImageUrl = !empty($details['image_path'])
       .mobile-cta-amount{ min-width:0; font-size:1.12rem; font-weight:800; line-height:1.4; color:#0f172a; }
       .mobile-cta-amount span{ color:#64748b; font-size:.95rem; font-weight:500; }
       .mobile-cta-donors{ margin-top:.2rem; font-size:.9rem; color:#64748b; }
+      .mobile-cta-donor-update{ overflow:hidden; color:#475569; font-size:.82rem; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
       .mobile-cta-actions{ display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
       .mobile-cta-actions button{ min-height:3.6rem; border-radius:999px; font-size:1.08rem; font-weight:700; }
       .mobile-cta-donate{ background:#059669; color:#fff; transition:background .18s; }
@@ -343,7 +345,7 @@ $ogImageUrl = !empty($details['image_path'])
           <?php echo htmlspecialchars($creatorInitial); ?>
         </div>
         <div class="min-w-0">
-          <p class="truncate text-base font-bold text-slate-900"><?php echo $creatorName; ?></p>
+          <p class="truncate text-sm font-bold text-slate-900 sm:text-base"><?php echo $creatorName; ?></p>
           <p class="mt-0.5 text-sm text-slate-500"><?php echo htmlspecialchars(ucfirst($details['category'])); ?></p>
         </div>
       </div>
@@ -396,7 +398,78 @@ $ogImageUrl = !empty($details['image_path'])
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
             </svg>
           </button>
+          <a href="mailto:support@crofund.org?subject=<?php echo rawurlencode('Report campaign: ' . $details['title']); ?>&amp;body=<?php echo rawurlencode('I would like to report this campaign: ' . BASE_URL . '/campaigns/public-view.php?id=' . (int) $details['id']); ?>"
+             class="mt-3 block w-fit text-sm text-slate-500 underline underline-offset-2 transition hover:text-emerald-700">
+            Report this campaign
+          </a>
         </div>
+      </div>
+
+      <!-- Recent Donors -->
+      <div class="card p-5 sm:p-6 md:p-7">
+        <h2 class="mb-5 text-lg font-bold text-slate-900 sm:text-xl">Recent donors</h2>
+
+        <?php if (!empty($donors)): ?>
+        <div class="space-y-2.5">
+          <?php
+          $avatarGradients = [
+            'from-emerald-400 to-teal-500',
+            'from-blue-400 to-indigo-500',
+            'from-violet-400 to-purple-500',
+            'from-amber-400 to-orange-500',
+            'from-rose-400 to-pink-500',
+            'from-cyan-400 to-blue-500',
+          ];
+          foreach ($donors as $index => $donor):
+            $isAnon = !isset($donor['donor_name']) || empty($donor['donor_name']) || (isset($donor['anonymous']) && $donor['anonymous'] == 1);
+            $donorInitial = $isAnon ? 'A' : strtoupper(substr($donor['donor_name'], 0, 1));
+            $donorName    = $isAnon ? 'Anonymous Donor' : htmlspecialchars($donor['donor_name']);
+            $grad         = $avatarGradients[$index % count($avatarGradients)];
+          ?>
+          <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-3 transition-colors hover:bg-slate-100 sm:gap-4 sm:p-4">
+            <div class="donor-avatar h-10 w-10 bg-gradient-to-br text-sm <?php echo $grad; ?>">
+              <?php echo $donorInitial; ?>
+            </div>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-xs font-semibold text-slate-900 sm:text-sm"><?php echo $donorName; ?></p>
+              <p class="mt-0.5 text-xs font-bold text-emerald-700 sm:text-sm">$<?php echo number_format($donor['amount'], 2); ?></p>
+            </div>
+          </div>
+          <?php endforeach; ?>
+        </div>
+
+        <!-- Pagination -->
+        <?php if ($totalPages > 1): ?>
+        <div class="mt-8 flex items-center justify-center gap-2 flex-wrap">
+          <?php if ($page > 1): ?>
+            <a href="?id=<?php echo $campaignId; ?>&page=<?php echo $page-1; ?>"
+               class="px-4 py-2 text-sm font-semibold text-emerald-700 bg-white border-2 border-emerald-200 rounded-xl hover:bg-emerald-50 transition-all">
+              <i class="fas fa-chevron-left mr-1"></i> Prev
+            </a>
+          <?php endif; ?>
+          <?php for ($i = max(1,$page-2); $i <= min($totalPages,$page+2); $i++): ?>
+            <a href="?id=<?php echo $campaignId; ?>&page=<?php echo $i; ?>"
+               class="px-4 py-2 text-sm font-semibold rounded-xl transition-all border-2 <?php echo $i==$page ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300 hover:bg-slate-50'; ?>">
+              <?php echo $i; ?>
+            </a>
+          <?php endfor; ?>
+          <?php if ($page < $totalPages): ?>
+            <a href="?id=<?php echo $campaignId; ?>&page=<?php echo $page+1; ?>"
+               class="px-4 py-2 text-sm font-semibold text-emerald-700 bg-white border-2 border-emerald-200 rounded-xl hover:bg-emerald-50 transition-all">
+              Next <i class="fas fa-chevron-right ml-1"></i>
+            </a>
+          <?php endif; ?>
+        </div>
+        <?php endif; ?>
+
+        <?php else: ?>
+        <div class="text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-200">
+          <div class="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
+            <i class="fas fa-heart text-slate-300 text-xl"></i>
+          </div>
+          <p class="font-semibold text-slate-700">No donations yet</p>
+        </div>
+        <?php endif; ?>
       </div>
 
       <!-- Updates -->
@@ -493,78 +566,6 @@ $ogImageUrl = !empty($details['image_path'])
       </div>
       <?php endif; ?>
 
-      <!-- Recent Donors -->
-      <div class="card p-5 sm:p-6 md:p-7">
-        <h2 class="mb-5 text-lg font-bold text-slate-900 sm:text-xl">Recent donors</h2>
-
-        <?php if (!empty($donors)): ?>
-        <div class="space-y-2.5">
-          <?php
-          $avatarGradients = [
-            'from-emerald-400 to-teal-500',
-            'from-blue-400 to-indigo-500',
-            'from-violet-400 to-purple-500',
-            'from-amber-400 to-orange-500',
-            'from-rose-400 to-pink-500',
-            'from-cyan-400 to-blue-500',
-          ];
-          foreach ($donors as $index => $donor):
-            $isAnon = !isset($donor['donor_name']) || empty($donor['donor_name']) || (isset($donor['anonymous']) && $donor['anonymous'] == 1);
-            $donorInitial = $isAnon ? 'A' : strtoupper(substr($donor['donor_name'], 0, 1));
-            $donorName    = $isAnon ? 'Anonymous Donor' : htmlspecialchars($donor['donor_name']);
-            $grad         = $avatarGradients[$index % count($avatarGradients)];
-
-            $timeAgo = formatRelativeTime($donor['donated_at'] ?? null);
-          ?>
-          <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-3 transition-colors hover:bg-slate-100 sm:gap-4 sm:p-4">
-            <div class="donor-avatar h-10 w-10 bg-gradient-to-br text-sm <?php echo $grad; ?>">
-              <?php echo $donorInitial; ?>
-            </div>
-            <div class="min-w-0 flex-1">
-              <p class="truncate text-xs font-semibold text-slate-900 sm:text-sm"><?php echo $donorName; ?></p>
-              <p class="text-[10px] text-slate-500 sm:text-xs"><?php echo $timeAgo; ?></p>
-            </div>
-            <div class="text-right shrink-0">
-              <p class="text-xs font-bold text-emerald-700 sm:text-sm">$<?php echo number_format($donor['amount'], 2); ?></p>
-            </div>
-          </div>
-          <?php endforeach; ?>
-        </div>
-
-        <!-- Pagination -->
-        <?php if ($totalPages > 1): ?>
-        <div class="mt-8 flex items-center justify-center gap-2 flex-wrap">
-          <?php if ($page > 1): ?>
-            <a href="?id=<?php echo $campaignId; ?>&page=<?php echo $page-1; ?>"
-               class="px-4 py-2 text-sm font-semibold text-emerald-700 bg-white border-2 border-emerald-200 rounded-xl hover:bg-emerald-50 transition-all">
-              <i class="fas fa-chevron-left mr-1"></i> Prev
-            </a>
-          <?php endif; ?>
-          <?php for ($i = max(1,$page-2); $i <= min($totalPages,$page+2); $i++): ?>
-            <a href="?id=<?php echo $campaignId; ?>&page=<?php echo $i; ?>"
-               class="px-4 py-2 text-sm font-semibold rounded-xl transition-all border-2 <?php echo $i==$page ? 'bg-emerald-600 text-white border-emerald-600' : 'bg-white text-slate-700 border-slate-200 hover:border-emerald-300 hover:bg-slate-50'; ?>">
-              <?php echo $i; ?>
-            </a>
-          <?php endfor; ?>
-          <?php if ($page < $totalPages): ?>
-            <a href="?id=<?php echo $campaignId; ?>&page=<?php echo $page+1; ?>"
-               class="px-4 py-2 text-sm font-semibold text-emerald-700 bg-white border-2 border-emerald-200 rounded-xl hover:bg-emerald-50 transition-all">
-              Next <i class="fas fa-chevron-right ml-1"></i>
-            </a>
-          <?php endif; ?>
-        </div>
-        <?php endif; ?>
-
-        <?php else: ?>
-        <div class="text-center py-10 bg-slate-50 rounded-xl border border-dashed border-slate-200">
-          <div class="w-14 h-14 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-3">
-            <i class="fas fa-heart text-slate-300 text-xl"></i>
-          </div>
-          <p class="font-semibold text-slate-700">No donations yet</p>
-        </div>
-        <?php endif; ?>
-      </div>
-
     </div><!-- /left column -->
 
     <!-- ════ RIGHT COLUMN (sticky sidebar) ════ -->
@@ -648,6 +649,31 @@ $ogImageUrl = !empty($details['image_path'])
       <p class="mobile-cta-donors"><?php echo (int)$details['donor_count']; ?> donations</p>
     </div>
   </div>
+  <?php if (!empty($mobileDonors)): ?>
+  <?php
+    $firstMobileDonor = $mobileDonors[0];
+    $firstMobileDonorIsAnonymous = !empty($firstMobileDonor['anonymous']) || empty($firstMobileDonor['donor_name']);
+    $firstMobileDonorName = $firstMobileDonorIsAnonymous
+        ? 'Anonymous Donor'
+        : htmlspecialchars($firstMobileDonor['donor_name'], ENT_QUOTES, 'UTF-8');
+  ?>
+  <p id="mobileDonorUpdate" class="mobile-cta-donor-update" role="status" aria-live="polite" aria-atomic="true">
+    <?php echo $firstMobileDonorName; ?> donated $<?php echo number_format((float) $firstMobileDonor['amount'], 0); ?>
+  </p>
+  <?php if (count($mobileDonors) > 1): ?>
+  <div id="mobileDonorMessages" hidden>
+    <?php foreach ($mobileDonors as $mobileDonor): ?>
+    <?php
+      $mobileDonorIsAnonymous = !empty($mobileDonor['anonymous']) || empty($mobileDonor['donor_name']);
+      $mobileDonorName = $mobileDonorIsAnonymous
+          ? 'Anonymous Donor'
+          : htmlspecialchars($mobileDonor['donor_name'], ENT_QUOTES, 'UTF-8');
+    ?>
+    <span><?php echo $mobileDonorName; ?> donated $<?php echo number_format((float) $mobileDonor['amount'], 0); ?></span>
+    <?php endforeach; ?>
+  </div>
+  <?php endif; ?>
+  <?php endif; ?>
   <div class="mobile-cta-actions">
     <?php if ($campaignUnderReview): ?>
     <button type="button" disabled class="mobile-cta-donate cursor-not-allowed border border-amber-200 bg-amber-50 text-amber-700 opacity-90" style="grid-column:1 / -1">
@@ -687,6 +713,21 @@ $ogImageUrl = !empty($details['image_path'])
 </div>
 
 <?php include __DIR__ . '/../components/public-footer.php'; ?>
+<script>
+  (() => {
+    const donorUpdate = document.getElementById('mobileDonorUpdate');
+    const donorMessages = document.querySelectorAll('#mobileDonorMessages span');
+    if (!donorUpdate || donorMessages.length < 2) {
+      return;
+    }
+
+    let donorIndex = 0;
+    window.setInterval(() => {
+      donorIndex = (donorIndex + 1) % donorMessages.length;
+      donorUpdate.textContent = donorMessages[donorIndex].textContent;
+    }, 4500);
+  })();
+</script>
 </body>
 </html>
 <script>

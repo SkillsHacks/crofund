@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/config/config.php';
+require_once __DIR__ . '/config/CampaignDraft.php';
 require_once __DIR__ . '/config/User.php';
 require_once __DIR__ . '/config/Mail.php';
 require_once __DIR__ . '/config/PhoneRestrictionUtils.php';
@@ -61,6 +62,7 @@ if ($user->isLoggedIn()) {
     header("Location: " . BASE_URL . "/dashboard.php");
     exit();
 }
+$hasCampaignDraft = CampaignDraft::get() !== null;
 
 // Handle OTP-related requests via AJAX
 if (isset($_SERVER['HTTP_X_REQUESTED_WITH']) && $_SERVER['HTTP_X_REQUESTED_WITH'] === 'XMLHttpRequest') {
@@ -570,6 +572,12 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <?php echo htmlspecialchars($error); ?>
+                    </div>
+                    <?php endif; ?>
+
+                    <?php if ($hasCampaignDraft): ?>
+                    <div class="mb-6 rounded-xl border border-emerald-200 bg-emerald-50 p-4 text-sm leading-6 text-emerald-900" role="status">
+                        Your fundraiser draft is saved in this browser session for up to 24 hours. After registering, sign in and you’ll return to review and publish it.
                     </div>
                     <?php endif; ?>
 

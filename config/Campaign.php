@@ -1,5 +1,6 @@
 <?php
 require_once __DIR__ . '/Database.php';
+require_once __DIR__ . '/CampaignDraft.php';
 
 class Campaign {
     private $db;
@@ -135,6 +136,51 @@ class Campaign {
         }
     }
 
+    public function createFromDraft($data, string $stagedImagePath) {
+        try {
+            $this->validateCampaignData($data);
+            $userId = (int) ($_SESSION['user_id'] ?? 0);
+            if ($userId < 1) {
+                throw new Exception('Please sign in before publishing your campaign.');
+            }
+            $this->validateCampaignCreation($userId);
+
+            if (!CampaignDraft::isStagedImagePath($stagedImagePath)) {
+                throw new Exception('The saved campaign image is no longer available.');
+            }
+
+            $realImagePath = realpath($stagedImagePath);
+            $imageSize = $realImagePath !== false ? filesize($realImagePath) : false;
+            if ($realImagePath === false || $imageSize === false) {
+                throw new Exception('The saved campaign image is no longer available.');
+            }
+
+            $imagePath = $this->handleImageUpload([
+                'name' => basename($realImagePath),
+                'tmp_name' => $realImagePath,
+                'size' => $imageSize,
+                'error' => UPLOAD_ERR_OK,
+            ], true);
+
+            $sql = "INSERT INTO campaigns (
+                user_id, title, category, goal_amount,
+                description, image_path, created_at, status
+            ) VALUES (?, ?, ?, ?, ?, ?, NOW(), 'active')";
+
+            return $this->db->insert($sql, [
+                $userId,
+                $data['title'],
+                $data['category'],
+                $data['goal'],
+                $data['description'],
+                $imagePath,
+            ]);
+        } catch (Exception $e) {
+            error_log("[Campaign::createFromDraft] Exception: " . $e->getMessage());
+            throw new Exception("Failed to create campaign: " . $e->getMessage());
+        }
+    }
+
     private function validateCampaignData($data) {
         if (empty($data['title'])) {
             throw new Exception("Campaign title is required");
@@ -154,7 +200,7 @@ class Campaign {
         }
     }
 
-    private function handleImageUpload($file) {
+    private function handleImageUpload($file, bool $isStagedDraft = false) {
         error_log("[Campaign::handleImageUpload] Starting image upload handling");
         if (!$file) {
             throw new Exception("Campaign image is required");
@@ -173,7 +219,10 @@ class Campaign {
             }
         }
 
-        if (!is_uploaded_file($file['tmp_name'])) {
+        $isValidTemporaryFile = $isStagedDraft
+            ? CampaignDraft::isStagedImagePath((string) $file['tmp_name'])
+            : is_uploaded_file($file['tmp_name']);
+        if (!$isValidTemporaryFile) {
             error_log("[Campaign::handleImageUpload] tmp_name is not a valid uploaded file: " . ($file['tmp_name'] ?? 'null'));
             throw new Exception("Failed to upload image");
         }
@@ -1447,7 +1496,7 @@ public function getBrowseCampaigns($category = 'all', $sort = '', $page = 1, $pe
 
     public function getCampaignDonors($campaignId, $limit = 10, $offset = 0) {
         try {
-            $sql = "SELECT donor_name, amount, donated_at, status 
+            $sql = "SELECT donor_name, amount, donated_at, status, anonymous
                     FROM donations 
                     WHERE campaign_id = ? AND status = 'completed' 
                     ORDER BY donated_at DESC 

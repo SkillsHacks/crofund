@@ -4,20 +4,17 @@ if (session_status() === PHP_SESSION_NONE) {
 }
 require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../config/Campaign.php';
+require_once __DIR__ . '/../config/CampaignDraft.php';
 require_once __DIR__ . '/../config/User.php';
 
-if (!isset($_SESSION['user_id'])) {
-    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header("Location: " . BASE_URL . "/login.php?message=" . urlencode('Please login to create a campaign'));
-    exit();
-}
-
 $user = new User();
-if (!$user->isLoggedIn()) {
-    $_SESSION['redirect_after_login'] = $_SERVER['REQUEST_URI'];
-    header("Location: " . BASE_URL . "/login.php?message=" . urlencode('Please login to create a campaign'));
-    exit();
-}
+$isAuthenticated = isset($_SESSION['user_id']) && $user->isLoggedIn();
+$draft = CampaignDraft::get();
+$draftId = $draft['id'] ?? '';
+$draftPreviewUrl = $draft ? BASE_URL . '/api/campaign-draft-image.php' : '';
+$draftNotice = $draft
+    ? 'Your fundraiser draft is saved in this browser session for up to 24 hours. Review it below and publish when you are ready.'
+    : (isset($_GET['resume']) ? 'Your saved fundraiser draft is no longer available. Please start again.' : '');
 
 $error = null;
 $success = null;
@@ -28,7 +25,10 @@ $oldInput = [
     'goal' => '',
     'description' => '',
 ];
-$canCreateCampaign = (new Campaign())->canCreateCampaign((int) $_SESSION['user_id']);
+if ($draft) {
+    $oldInput = array_merge($oldInput, $draft['data']);
+}
+$canCreateCampaign = !$isAuthenticated || (new Campaign())->canCreateCampaign((int) $_SESSION['user_id']);
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $oldInput = [
@@ -77,7 +77,16 @@ if ($isAjaxRequest) {
     ob_start();
 }
 
-function renderCreateCampaignContent(?string $error = null, array $fieldErrors = [], array $oldInput = [], bool $canCreateCampaign = true): void {
+function renderCreateCampaignContent(
+    ?string $error = null,
+    array $fieldErrors = [],
+    array $oldInput = [],
+    bool $canCreateCampaign = true,
+    bool $isAuthenticated = true,
+    string $draftId = '',
+    string $draftPreviewUrl = '',
+    string $draftNotice = ''
+): void {
 $initialStep = 0;
 foreach (['title' => 0, 'category' => 0, 'goal' => 1, 'description' => 2, 'campaign_image' => 2] as $field => $step) {
     if (!empty($fieldErrors[$field])) {
@@ -94,6 +103,14 @@ if ($error && empty($fieldErrors)) {
         <section class="mb-4 flex flex-col gap-3 rounded-lg border border-slate-200 bg-white px-4 py-4 shadow-sm sm:mb-5 sm:flex-row sm:items-center sm:justify-between sm:gap-4 sm:rounded-2xl sm:px-6 sm:py-5">
             <div class="min-w-0">
                 <h1 class="text-xl font-bold tracking-tight text-slate-900 sm:text-3xl">Create campaign</h1>
+                <?php if (!$isAuthenticated && $draftId === ''): ?>
+                    <p class="mt-1.5 max-w-2xl text-xs leading-5 text-slate-600 sm:text-sm">
+                        Build your fundraiser first. We’ll ask you to create an account before it is published; drafts stay in this browser session for up to 24 hours.
+                    </p>
+                <?php endif; ?>
+                <?php if ($draftNotice !== ''): ?>
+                    <p class="mt-1.5 max-w-2xl text-xs leading-5 text-emerald-800 sm:text-sm" role="status"><?php echo htmlspecialchars($draftNotice, ENT_QUOTES, 'UTF-8'); ?></p>
+                <?php endif; ?>
                 <?php if (!$canCreateCampaign): ?>
                     <p class="mt-1.5 flex flex-wrap items-center gap-x-1.5 text-xs leading-5 text-slate-600 sm:text-sm" role="status" aria-labelledby="campaign-limit-title">
                         <svg class="h-4 w-4 shrink-0 text-amber-600" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
@@ -101,39 +118,39 @@ if ($error && empty($fieldErrors)) {
                         </svg>
                         <span id="campaign-limit-title" class="font-semibold text-slate-800">Campaign limit reached.</span>
                         <span>Your plan allows one campaign.</span>
-                        <a href="<?php echo BASE_URL; ?>/account/premium.php" class="font-semibold text-[#4c1d95] underline decoration-[#4c1d95]/30 underline-offset-2 transition hover:text-[#3b1675] hover:decoration-[#3b1675] focus:outline-none focus-visible:ring-2 focus-visible:ring-violet-500">
+                        <a href="<?php echo BASE_URL; ?>/account/premium.php" class="font-semibold text-emerald-800 underline decoration-emerald-800/30 underline-offset-2 transition hover:text-emerald-900 hover:decoration-emerald-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500">
                             Upgrade to premium
                         </a>
                     </p>
                 <?php endif; ?>
             </div>
-            <a href="<?php echo BASE_URL; ?>/campaigns/"
+            <a href="<?php echo $isAuthenticated ? BASE_URL . '/campaigns/' : BASE_URL . '/campaigns/view_compaigns.php'; ?>"
                class="inline-flex min-h-10 items-center justify-center rounded-md border border-slate-200 bg-white px-3 py-2 text-sm font-semibold text-slate-700 transition hover:border-emerald-200 hover:bg-emerald-50 hover:text-emerald-700 sm:rounded-xl">
                 <svg class="mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/>
                 </svg>
-                My campaigns
+                <?php echo $isAuthenticated ? 'My campaigns' : 'Browse campaigns'; ?>
             </a>
         </section>
 
         <div class="grid grid-cols-1 gap-4 sm:gap-5 xl:grid-cols-[260px_minmax(0,1fr)]">
-            <aside class="rounded-lg bg-[#4c1d95] p-4 text-white shadow-sm sm:rounded-2xl sm:p-5 xl:sticky xl:top-24 xl:self-start">
-                <p class="text-xs font-semibold uppercase tracking-wide text-violet-200" data-step-counter>Step 1 of 3</p>
+            <aside class="rounded-lg bg-emerald-800 p-4 text-white shadow-sm sm:rounded-2xl sm:p-5 xl:sticky xl:top-24 xl:self-start">
+                <p class="text-xs font-semibold uppercase tracking-wide text-emerald-100" data-step-counter>Step 1 of 3</p>
                 <h2 class="mt-1 text-lg font-bold tracking-tight sm:mt-2 sm:text-xl" data-step-title>Campaign details</h2>
-                <p class="mt-2 hidden text-sm leading-5 text-violet-100 sm:block" data-step-description>Start with a clear title and category.</p>
+                <p class="mt-2 hidden text-sm leading-5 text-emerald-100 sm:block" data-step-description>Start with a clear title and category.</p>
                 <div class="mt-3 h-1.5 overflow-hidden rounded-full bg-white/20 sm:mt-5" role="progressbar" aria-label="Campaign creation progress" aria-valuemin="1" aria-valuemax="3" aria-valuenow="1">
                     <span class="block h-full rounded-full bg-white transition-all duration-300" data-step-progress style="width: 33.333%"></span>
                 </div>
                 <ol class="mt-3 grid grid-cols-3 gap-1 text-xs sm:mt-5 sm:gap-2 xl:grid-cols-1 xl:gap-3">
                     <li class="flex items-center gap-2 font-semibold text-white" data-step-indicator="0" aria-current="step">
-                        <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white text-[#4c1d95]">1</span>
+                        <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full bg-white text-emerald-800">1</span>
                         <span>Details</span>
                     </li>
-                    <li class="flex items-center gap-2 text-violet-200" data-step-indicator="1">
+                    <li class="flex items-center gap-2 text-emerald-100" data-step-indicator="1">
                         <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-white/40">2</span>
                         <span>Goal</span>
                     </li>
-                    <li class="flex items-center gap-2 text-violet-200" data-step-indicator="2">
+                    <li class="flex items-center gap-2 text-emerald-100" data-step-indicator="2">
                         <span class="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border border-white/40">3</span>
                         <span>Story & image</span>
                     </li>
@@ -147,13 +164,17 @@ if ($error && empty($fieldErrors)) {
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
                     </svg>
                     <div>
-                        <p class="text-sm font-semibold">Couldn’t create campaign</p>
+                        <p class="text-sm font-semibold"><?php echo !$isAuthenticated && $draftId === '' ? 'Couldn’t save your draft' : ($draftId !== '' ? 'Couldn’t publish campaign' : 'Couldn’t create campaign'); ?></p>
                         <p class="mt-1 text-sm" data-form-alert-message><?php echo htmlspecialchars($error ?? ''); ?></p>
                     </div>
                 </div>
             </div>
 
-            <form method="POST" action="<?php echo BASE_URL; ?>/api/dashboard/create_campaign.php" enctype="multipart/form-data" class="space-y-5" data-campaign-create-form="true" data-initial-step="<?php echo $initialStep; ?>">
+            <form method="POST" action="<?php echo BASE_URL; ?>/api/dashboard/create_campaign.php" enctype="multipart/form-data" class="space-y-5" data-campaign-create-form="true" data-initial-step="<?php echo $initialStep; ?>" data-draft-id="<?php echo htmlspecialchars($draftId, ENT_QUOTES, 'UTF-8'); ?>" data-image-preview-url="<?php echo htmlspecialchars($draftPreviewUrl, ENT_QUOTES, 'UTF-8'); ?>" data-submit-label="<?php echo !$isAuthenticated ? 'Saving draft...' : 'Creating...'; ?>">
+                <?php if ($draftId !== ''): ?>
+                    <input type="hidden" name="campaign_draft_id" value="<?php echo htmlspecialchars($draftId, ENT_QUOTES, 'UTF-8'); ?>">
+                    <input type="hidden" name="remove_campaign_image" value="0" data-remove-campaign-image>
+                <?php endif; ?>
                 <div data-campaign-step="0" class="overflow-hidden rounded-lg border border-slate-200 bg-white shadow-sm sm:rounded-2xl">
                     <div class="hidden border-b border-slate-200 px-4 py-3 sm:block sm:px-6 sm:py-4">
                         <div>
@@ -232,12 +253,12 @@ if ($error && empty($fieldErrors)) {
                         <div>
                             <label for="campaign_image" class="block text-sm font-semibold text-slate-700">Campaign image</label>
                             <div id="campaign-image-dropzone" class="mt-2 rounded-lg border-2 border-dashed border-slate-300 bg-slate-50 p-4 text-center transition hover:border-emerald-400 hover:bg-emerald-50/40 sm:rounded-2xl sm:p-6">
-                                <input id="campaign_image" name="campaign_image" type="file" class="sr-only" accept="image/*" required>
+                                <input id="campaign_image" name="campaign_image" type="file" class="sr-only" accept="image/*"<?php echo $draftId === '' ? ' required' : ''; ?>>
 
                                 <div id="image-preview" class="hidden">
                                     <img src="" alt="Preview" class="mx-auto max-h-64 rounded-2xl object-cover shadow-sm">
                                     <div class="mt-4 flex flex-col items-center justify-center gap-2 sm:flex-row">
-                                        <label for="campaign_image" class="inline-flex cursor-pointer items-center rounded-2xl bg-[#4c1d95] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3b1675] focus-within:outline-none focus-within:ring-4 focus-within:ring-violet-500/20">
+                                        <label for="campaign_image" class="inline-flex cursor-pointer items-center rounded-2xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus-within:outline-none focus-within:ring-4 focus-within:ring-emerald-500/20">
                                             Change image
                                         </label>
                                         <button type="button" id="remove-campaign-image" class="inline-flex items-center rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 shadow-sm transition hover:border-red-200 hover:bg-red-50 hover:text-red-700">
@@ -255,7 +276,7 @@ if ($error && empty($fieldErrors)) {
                                     <p class="mt-3 text-sm font-semibold text-slate-800">Add a cover image</p>
                                     <p class="mt-1 hidden max-w-md text-xs text-slate-500 sm:block">Use a clear, relevant photo.</p>
                                     <div class="mt-3 flex flex-col items-center gap-2 sm:flex-row">
-                                        <label for="campaign_image" class="inline-flex cursor-pointer items-center rounded-2xl bg-[#4c1d95] px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-[#3b1675] focus-within:outline-none focus-within:ring-4 focus-within:ring-violet-500/20">
+                                        <label for="campaign_image" class="inline-flex cursor-pointer items-center rounded-2xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-800 focus-within:outline-none focus-within:ring-4 focus-within:ring-emerald-500/20">
                                             <span>Choose image</span>
                                         </label>
                                         <span class="hidden text-sm text-slate-500 sm:inline">or drag and drop</span>
@@ -263,7 +284,7 @@ if ($error && empty($fieldErrors)) {
                                 </div>
 
                                 <p class="mt-3 text-sm text-red-600 <?php echo empty($fieldErrors['campaign_image']) ? 'hidden' : ''; ?>" data-field-error="campaign_image"><?php echo htmlspecialchars($fieldErrors['campaign_image'] ?? ''); ?></p>
-                                <p class="mt-3 text-xs text-slate-500">PNG, JPG or GIF · up to 10MB</p>
+                                <p class="mt-3 text-xs text-slate-500">JPG, PNG, GIF or WEBP · up to 10MB</p>
                             </div>
                         </div>
                     </div>
@@ -271,21 +292,26 @@ if ($error && empty($fieldErrors)) {
                 </div>
                 <div class="sticky bottom-16 z-10 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm sm:bottom-4 sm:rounded-2xl sm:p-3 sm:px-4">
                     <p class="mb-3 hidden text-xs leading-5 text-slate-500 sm:text-sm" data-campaign-terms>
-                        By creating this campaign, you confirm these details are accurate and agree to our terms and privacy policy.
+                        <?php echo $draftId !== '' ? 'Review your details carefully. Publishing will make this fundraiser visible to supporters.' : 'By continuing, you confirm these details are accurate. You can review your saved draft after creating an account.'; ?>
                     </p>
                     <div class="flex items-center gap-3">
-                        <button type="button" class="hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-violet-500 sm:rounded-xl" data-step-back aria-label="Go to previous step">
+                        <button type="button" class="hidden h-11 w-11 flex-shrink-0 items-center justify-center rounded-md border border-slate-200 bg-white text-slate-700 transition hover:bg-slate-50 focus:outline-none focus:ring-2 focus:ring-emerald-500 sm:rounded-xl" data-step-back aria-label="Go to previous step">
                             <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                         </button>
-                        <button type="button" class="hidden min-h-11 flex-1 items-center justify-center rounded-md border border-[#4c1d95] bg-transparent px-5 py-2.5 text-sm font-semibold text-[#4c1d95] transition hover:bg-violet-50 focus:outline-none focus:ring-4 focus:ring-violet-500/20 sm:rounded-xl" data-step-next>
+                        <button type="button" class="hidden min-h-11 flex-1 items-center justify-center rounded-md border border-emerald-700 bg-transparent px-5 py-2.5 text-sm font-semibold text-emerald-800 transition hover:bg-emerald-50 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 sm:rounded-xl" data-step-next>
                             Continue
                         </button>
                         <button type="submit"
-                                class="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-[#4c1d95] px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-[#3b1675] focus:outline-none focus:ring-4 focus:ring-violet-500/20 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:hover:bg-slate-300 sm:w-auto sm:rounded-xl"
+                                class="inline-flex min-h-11 w-full items-center justify-center rounded-md bg-emerald-700 px-5 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800 focus:outline-none focus:ring-4 focus:ring-emerald-500/20 disabled:cursor-not-allowed disabled:bg-slate-300 disabled:text-slate-600 disabled:hover:bg-slate-300 sm:w-auto sm:rounded-xl"
                                 <?php echo $canCreateCampaign ? '' : 'disabled aria-describedby="campaign-limit-title"'; ?>
                                 data-step-submit>
-                            <?php echo $canCreateCampaign ? 'Create campaign' : 'Campaign limit reached'; ?>
+                            <?php echo !$canCreateCampaign ? 'Campaign limit reached' : ($draftId !== '' ? 'Publish campaign' : (!$isAuthenticated ? 'Continue to sign up' : 'Create campaign')); ?>
                         </button>
+                        <?php if ($draftId !== ''): ?>
+                            <button type="button" class="min-h-11 shrink-0 rounded-md px-3 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-100 hover:text-slate-900 sm:rounded-xl" data-discard-campaign-draft>
+                                Discard draft
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             </form>
@@ -302,6 +328,7 @@ if ($error && empty($fieldErrors)) {
         const imagePreview = form ? form.querySelector('#image-preview') : null;
         const imagePreviewImg = imagePreview ? imagePreview.querySelector('img') : null;
         const uploadPlaceholder = form ? form.querySelector('#upload-placeholder') : null;
+        const removeImageField = form ? form.querySelector('[data-remove-campaign-image]') : null;
         const dropZone = form ? form.querySelector('#campaign-image-dropzone') : null;
         const alertBox = container ? container.querySelector('[data-form-alert]') : null;
         const alertMessage = container ? container.querySelector('[data-form-alert-message]') : null;
@@ -315,6 +342,7 @@ if ($error && empty($fieldErrors)) {
         const backButton = form ? form.querySelector('[data-step-back]') : null;
         const nextButton = form ? form.querySelector('[data-step-next]') : null;
         const submitButton = form ? form.querySelector('[data-step-submit]') : null;
+        const discardDraftButton = form ? form.querySelector('[data-discard-campaign-draft]') : null;
         const terms = form ? form.querySelector('[data-campaign-terms]') : null;
 
         if (!form || !container || steps.length === 0 || !stepPanel) {
@@ -363,7 +391,7 @@ if ($error && empty($fieldErrors)) {
                 const number = indicator.querySelector('span');
                 indicator.classList.toggle('font-semibold', isCurrent);
                 indicator.classList.toggle('text-white', isCurrent);
-                indicator.classList.toggle('text-violet-200', !isCurrent);
+                indicator.classList.toggle('text-emerald-100', !isCurrent);
                 if (isCurrent) {
                     indicator.setAttribute('aria-current', 'step');
                 } else {
@@ -371,7 +399,7 @@ if ($error && empty($fieldErrors)) {
                 }
                 if (number) {
                     number.classList.toggle('bg-white', isCurrent);
-                    number.classList.toggle('text-[#4c1d95]', isCurrent);
+                    number.classList.toggle('text-emerald-800', isCurrent);
                     number.classList.toggle('border', !isCurrent);
                     number.classList.toggle('border-white/40', !isCurrent);
                 }
@@ -409,6 +437,34 @@ if ($error && empty($fieldErrors)) {
                 }
             }
         });
+        discardDraftButton?.addEventListener('click', async () => {
+            discardDraftButton.disabled = true;
+            try {
+                const response = await fetch(form.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'X-Requested-With': 'XMLHttpRequest'
+                    },
+                    body: 'action=discard_draft'
+                });
+                const result = await response.json();
+                if (!response.ok || !result.success) {
+                    throw new Error(result.message || 'Unable to discard this draft.');
+                }
+                sessionStorage.removeItem('campaign-create-image-preview');
+                window.location.reload();
+            } catch (discardError) {
+                console.error('[campaign-create] Unable to discard draft', discardError);
+                discardDraftButton.disabled = false;
+                if (alertBox) {
+                    alertBox.classList.remove('hidden');
+                }
+                if (alertMessage) {
+                    alertMessage.textContent = 'Unable to discard this draft right now. Please try again.';
+                }
+            }
+        });
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             if (!validateCurrentStep()) {
@@ -423,7 +479,7 @@ if ($error && empty($fieldErrors)) {
             const submitLabel = submitButton ? submitButton.textContent : '';
             if (submitButton) {
                 submitButton.disabled = true;
-                submitButton.textContent = 'Creating...';
+                submitButton.textContent = form.dataset.draftId ? 'Publishing...' : (form.dataset.submitLabel || 'Saving...');
                 submitButton.classList.add('cursor-wait', 'opacity-70');
             }
 
@@ -439,7 +495,7 @@ if ($error && empty($fieldErrors)) {
 
                 if (!response.ok || !result.success) {
                     if (response.status === 401) {
-                        window.location.assign('<?php echo BASE_URL; ?>/login.php');
+                        window.location.assign(result.redirect_url || '<?php echo BASE_URL; ?>/login.php');
                         return;
                     }
 
@@ -481,7 +537,7 @@ if ($error && empty($fieldErrors)) {
                     alertBox.classList.remove('hidden');
                 }
                 if (alertMessage) {
-                    alertMessage.textContent = 'Unable to create the campaign right now. Please try again.';
+                    alertMessage.textContent = 'Unable to continue right now. Please try again.';
                 }
                 alertBox?.scrollIntoView({behavior: 'smooth', block: 'center'});
             } finally {
@@ -510,6 +566,14 @@ if ($error && empty($fieldErrors)) {
 
         const restoreImagePreviewState = () => {
             if (!imageInput || !imagePreview || !imagePreviewImg || !uploadPlaceholder) {
+                return;
+            }
+
+            const draftPreviewUrl = form.dataset.imagePreviewUrl;
+            if (draftPreviewUrl) {
+                imagePreviewImg.src = draftPreviewUrl;
+                imagePreview.classList.remove('hidden');
+                uploadPlaceholder.classList.add('hidden');
                 return;
             }
 
@@ -565,6 +629,10 @@ if ($error && empty($fieldErrors)) {
                 imagePreviewImg.src = '';
                 imagePreview.classList.add('hidden');
                 uploadPlaceholder.classList.remove('hidden');
+                imageInput.required = true;
+                if (removeImageField) {
+                    removeImageField.value = '1';
+                }
                 saveImagePreviewState('');
             };
 
@@ -593,6 +661,10 @@ if ($error && empty($fieldErrors)) {
                     imagePreviewImg.src = dataUrl;
                     imagePreview.classList.remove('hidden');
                     uploadPlaceholder.classList.add('hidden');
+                    imageInput.required = false;
+                    if (removeImageField) {
+                        removeImageField.value = '0';
+                    }
                     saveImagePreviewState(dataUrl);
                 };
                 reader.readAsDataURL(file);
@@ -664,7 +736,9 @@ if ($error && empty($fieldErrors)) {
 }
 
 if (!$isAjaxRequest) {
-    include __DIR__ . '/../components/header.php';
+    if ($isAuthenticated) {
+        include __DIR__ . '/../components/header.php';
+    }
 ?>
 <!DOCTYPE html>
 <html lang="en">
@@ -700,16 +774,24 @@ if (!$isAjaxRequest) {
     </script>
 </head>
 <body class="bg-gray-50 min-h-screen">
-    <div class="flex min-h-screen pt-2 sm:pt-3 lg:pt-4">
-        <?php include __DIR__ . '/../components/sidebar.php'; ?>
-        <main class="app-main flex-1 min-w-0 bg-gray-50 lg:ml-64">
-            <?php renderCreateCampaignContent($error, $fieldErrors, $oldInput, $canCreateCampaign); ?>
+    <?php if (!$isAuthenticated): ?>
+        <?php include __DIR__ . '/../components/public-header.php'; ?>
+    <?php endif; ?>
+    <div class="<?php echo $isAuthenticated ? 'flex min-h-screen pt-2 sm:pt-3 lg:pt-4' : 'min-h-screen pt-16'; ?>">
+        <?php if ($isAuthenticated): ?>
+            <?php include __DIR__ . '/../components/sidebar.php'; ?>
+        <?php endif; ?>
+        <main class="app-main flex-1 min-w-0 bg-gray-50<?php echo $isAuthenticated ? ' lg:ml-64' : ''; ?>">
+            <?php renderCreateCampaignContent($error, $fieldErrors, $oldInput, $canCreateCampaign, $isAuthenticated, $draftId, $draftPreviewUrl, $draftNotice); ?>
         </main>
     </div>
+    <?php if (!$isAuthenticated): ?>
+        <?php include __DIR__ . '/../components/public-footer.php'; ?>
+    <?php endif; ?>
 </body>
 </html>
 <?php
 } else {
-    renderCreateCampaignContent($error, $fieldErrors, $oldInput, $canCreateCampaign);
+    renderCreateCampaignContent($error, $fieldErrors, $oldInput, $canCreateCampaign, $isAuthenticated, $draftId, $draftPreviewUrl, $draftNotice);
     echo ob_get_clean();
 }

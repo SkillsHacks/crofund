@@ -2,6 +2,28 @@
 session_start();
 require_once __DIR__ . '/config/config.php';
 
+function clearTwoFactorSessionPreservingCampaignDraft(): void {
+    $campaignDraft = $_SESSION['campaign_creation_draft'] ?? null;
+    session_unset();
+    session_destroy();
+
+    if (!is_array($campaignDraft)) {
+        return;
+    }
+
+    if (!session_start()) {
+        error_log('Unable to restart session while preserving campaign draft after 2FA failure.');
+        return;
+    }
+
+    if (!session_regenerate_id(true)) {
+        error_log('Unable to rotate session while preserving campaign draft after 2FA failure.');
+    }
+
+    $_SESSION['campaign_creation_draft'] = $campaignDraft;
+    $_SESSION['redirect_after_login'] = '/campaigns/create.php?resume=1';
+}
+
 if (isset($_SESSION['user_id'])) {
     header('Location: ' . BASE_URL . '/dashboard.php');
     exit;
@@ -20,8 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if (!isset($_SESSION['2fa_code_time']) || (time() - $_SESSION['2fa_code_time'] > 300)) {
         $error = 'Verification code expired. Please login again.';
-        session_unset();
-        session_destroy();
+        clearTwoFactorSessionPreservingCampaignDraft();
+        header('Location: ' . BASE_URL . '/login.php?message=' . urlencode($error));
+        exit;
     } else {
         if (!isset($_SESSION['2fa_attempts'])) {
             $_SESSION['2fa_attempts'] = 0;
@@ -29,8 +52,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         if ($_SESSION['2fa_attempts'] >= 3) {
             $error = 'Too many failed attempts. Please login again.';
-            session_unset();
-            session_destroy();
+            clearTwoFactorSessionPreservingCampaignDraft();
             header('Location: ' . BASE_URL . '/login.php?message=' . urlencode($error));
             exit;
         } elseif ($inputCode == ($_SESSION['2fa_code'] ?? '')) {

@@ -11,7 +11,7 @@
                 <p class="mt-3 max-w-lg text-sm leading-6 text-emerald-100 sm:text-base">
                     Share your cause, invite your community, and keep supporters updated along the way.
                 </p>
-                <a href="<?php echo BASE_URL; ?>/register.php" class="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50 focus:outline-none focus:ring-4 focus:ring-white/30">
+                <a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="mt-6 inline-flex min-h-11 items-center justify-center rounded-xl bg-white px-5 py-3 text-sm font-semibold text-emerald-900 transition hover:bg-emerald-50 focus:outline-none focus:ring-4 focus:ring-white/30">
                     Start a fundraiser
                     <svg class="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
                         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/>
@@ -57,7 +57,7 @@
                 <div>
                     <h3 class="text-xs font-bold uppercase tracking-[0.14em] text-slate-900">Fundraise</h3>
                     <ul class="mt-4 space-y-3">
-                        <li><a href="<?php echo BASE_URL; ?>/register.php" class="text-sm text-slate-600 transition hover:text-emerald-700">Start a fundraiser</a></li>
+                        <li><a href="<?php echo BASE_URL; ?>/campaigns/create.php" class="text-sm text-slate-600 transition hover:text-emerald-700">Start a fundraiser</a></li>
                         <li><a href="<?php echo BASE_URL; ?>/how-it-works.php" class="text-sm text-slate-600 transition hover:text-emerald-700">How it works</a></li>
                         <li><a href="<?php echo BASE_URL; ?>/success-stories.php" class="text-sm text-slate-600 transition hover:text-emerald-700">Success stories</a></li>
                     </ul>
