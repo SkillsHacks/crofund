@@ -156,11 +156,11 @@ function renderAccountSettingsContent(array $currentUser, string $csrfToken, str
                                class="mt-1.5 block min-h-11 w-full rounded-xl border border-slate-200 bg-white px-3 py-2.5 text-sm text-slate-900 transition focus:border-emerald-700 focus:outline-none focus:ring-2 focus:ring-emerald-700/15">
                     </div>
                     <?php if (!empty($currentUser['paypal_email'])): ?>
-                        <button type="submit" name="remove_paypal_email" value="1" formnovalidate class="inline-flex min-h-11 items-center justify-center rounded-xl border border-red-200 bg-white px-4 py-2.5 text-sm font-semibold text-red-700 transition hover:bg-red-50">
+                        <button type="submit" name="remove_paypal_email" value="1" formnovalidate class="min-h-11 px-2 text-sm font-semibold text-emerald-700 underline decoration-emerald-300 underline-offset-4 transition hover:text-emerald-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">
                             Remove
                         </button>
                     <?php endif; ?>
-                    <button type="submit" name="save_paypal_email" value="1" class="inline-flex min-h-11 items-center justify-center rounded-xl bg-emerald-700 px-4 py-2.5 text-sm font-semibold text-white transition hover:bg-emerald-800">
+                    <button type="submit" name="save_paypal_email" value="1" class="min-h-11 px-2 text-sm font-semibold text-emerald-700 underline decoration-emerald-300 underline-offset-4 transition hover:text-emerald-900 focus:outline-none focus-visible:ring-2 focus-visible:ring-emerald-700 focus-visible:ring-offset-2">
                         Save email
                     </button>
                 </form>
