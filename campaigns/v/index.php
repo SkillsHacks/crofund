@@ -53,11 +53,7 @@ $pageUrl = (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? 'https' : '
     <section class="bg-[#f7f6f3] px-4 pb-10 pt-24 sm:px-6 sm:pb-12 sm:pt-28 lg:px-8">
       <div class="mx-auto max-w-7xl">
         <div class="mx-auto max-w-3xl text-center">
-          <span class="inline-flex items-center gap-2 rounded-full border border-emerald-100 bg-white px-3.5 py-1.5 text-xs font-semibold text-emerald-800">
-            <span class="h-1.5 w-1.5 rounded-full bg-emerald-600"></span>
-            Verified fundraisers
-          </span>
-          <h1 class="mt-4 text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
+          <h1 class="text-3xl font-extrabold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-5xl">
             Support a cause that matters.
           </h1>
           <p class="mx-auto mt-3 max-w-xl text-sm leading-6 text-slate-600 sm:text-base">
