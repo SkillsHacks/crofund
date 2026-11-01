@@ -252,6 +252,9 @@ $ogImageUrl = !empty($details['image_path'])
     .status-active{ background:#ecfdf5; color:#047857; }
     .status-completed{ background:#eff6ff; color:#1d4ed8; }
     .status-other{ background:#f1f5f9; color:#475569; }
+    @media(max-width:380px){
+      .badge{ gap:.2rem; padding:.12rem .32rem; font-size:.52rem; letter-spacing:.01em; }
+    }
   </style>
 </head>
 <body>
@@ -282,7 +285,7 @@ $ogImageUrl = !empty($details['image_path'])
   <!-- Campaign title block -->
   <div class="card mb-6 p-4 sm:p-5">
     <div class="flex-1 min-w-0">
-      <div class="mb-2 flex flex-wrap items-center gap-2">
+      <div class="mb-2 flex flex-nowrap items-center gap-1.5 overflow-hidden">
         <span class="badge <?php
           if ($details['status']==='active') echo 'status-active';
           elseif ($details['status']==='completed') echo 'status-completed';
@@ -297,16 +300,17 @@ $ogImageUrl = !empty($details['image_path'])
         </span>
         <span class="badge" style="background:#f1f5f9;color:#475569;">
           <i class="far fa-calendar-alt text-[9px]"></i>
-          Started <?php echo date('M j, Y', strtotime($details['created_at'])); ?>
+          <?php echo date('M j, Y', strtotime($details['created_at'])); ?>
         </span>
         <?php if (!empty($details['is_premium_owner'])): ?>
         <span class="badge" style="background:#dbeafe;color:#1d4ed8;">
           <i class="fas fa-certificate text-[9px]"></i>
-          Premium Verified
+          <span class="sm:hidden">Premium</span>
+          <span class="hidden sm:inline">Premium Verified</span>
         </span>
         <?php endif; ?>
       </div>
-      <h1 class="text-xl font-bold leading-snug text-slate-900 sm:text-2xl lg:text-3xl">
+      <h1 class="text-lg font-bold leading-snug text-slate-900 sm:text-xl lg:text-2xl">
         <?php echo htmlspecialchars($details['title']); ?>
       </h1>
     </div>
@@ -482,12 +486,12 @@ $ogImageUrl = !empty($details['image_path'])
             <div class="donor-avatar h-10 w-10 bg-gradient-to-br text-sm <?php echo $grad; ?>">
               <?php echo $donorInitial; ?>
             </div>
-            <div class="flex-1 min-w-0">
-              <p class="font-semibold text-slate-900 text-sm truncate"><?php echo $donorName; ?></p>
-              <p class="text-xs text-slate-500"><?php echo $timeAgo; ?></p>
+            <div class="min-w-0 flex-1">
+              <p class="truncate text-xs font-semibold text-slate-900 sm:text-sm"><?php echo $donorName; ?></p>
+              <p class="text-[10px] text-slate-500 sm:text-xs"><?php echo $timeAgo; ?></p>
             </div>
             <div class="text-right shrink-0">
-              <p class="text-sm font-bold text-emerald-700 sm:text-base">$<?php echo number_format($donor['amount'], 2); ?></p>
+              <p class="text-xs font-bold text-emerald-700 sm:text-sm">$<?php echo number_format($donor['amount'], 2); ?></p>
             </div>
           </div>
           <?php endforeach; ?>
