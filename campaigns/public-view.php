@@ -192,7 +192,7 @@ $ogImageUrl = !empty($details['image_path'])
     .progress-fill{ height:100%; border-radius:999px; background:linear-gradient(90deg,#059669,#10b981); transition:width 1.2s cubic-bezier(.4,0,.2,1); }
 
     /* ── Donor avatar ── */
-    .donor-avatar{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; color:#fff; flex-shrink:0; }
+    .donor-avatar{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; color:#047857; background:rgba(4,120,87,.12); flex-shrink:0; }
 
     /* ── Social share ── */
     .share-btn{ display:flex; align-items:center; justify-content:center; gap:.4rem; border-radius:.75rem; padding:.55rem; font-size:.78rem; font-weight:600; transition:all .18s; border:1.5px solid; }
@@ -412,22 +412,13 @@ $ogImageUrl = !empty($details['image_path'])
         <?php if (!empty($donors)): ?>
         <div class="space-y-2.5">
           <?php
-          $avatarGradients = [
-            'from-emerald-400 to-teal-500',
-            'from-blue-400 to-indigo-500',
-            'from-violet-400 to-purple-500',
-            'from-amber-400 to-orange-500',
-            'from-rose-400 to-pink-500',
-            'from-cyan-400 to-blue-500',
-          ];
-          foreach ($donors as $index => $donor):
+          foreach ($donors as $donor):
             $isAnon = !isset($donor['donor_name']) || empty($donor['donor_name']) || (isset($donor['anonymous']) && $donor['anonymous'] == 1);
             $donorInitial = $isAnon ? 'A' : strtoupper(substr($donor['donor_name'], 0, 1));
             $donorName    = $isAnon ? 'Anonymous Donor' : htmlspecialchars($donor['donor_name']);
-            $grad         = $avatarGradients[$index % count($avatarGradients)];
           ?>
           <div class="flex items-center gap-3 rounded-xl bg-slate-50 p-3 transition-colors hover:bg-slate-100 sm:gap-4 sm:p-4">
-            <div class="donor-avatar h-10 w-10 bg-gradient-to-br text-sm <?php echo $grad; ?>">
+            <div class="donor-avatar h-10 w-10 text-sm">
               <?php echo $donorInitial; ?>
             </div>
             <div class="min-w-0 flex-1">
