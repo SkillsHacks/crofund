@@ -90,6 +90,13 @@
         </div>
 
         <nav class="min-h-0 flex-1 overflow-y-auto px-0 pb-4" aria-label="Mobile navigation">
+            <a href="<?php echo BASE_URL; ?>/" class="group flex items-start justify-between gap-4 border-b border-slate-100 px-6 py-5 transition hover:bg-slate-50">
+                <span>
+                    <span class="block text-lg font-bold tracking-tight text-slate-900">Homepage</span>
+                    <span class="mt-1 block text-sm leading-5 text-slate-500">Return to the CroFunding homepage</span>
+                </span>
+                <svg class="mt-1 h-5 w-5 shrink-0 text-slate-400 transition group-hover:translate-x-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+            </a>
             <a href="<?php echo BASE_URL; ?>/login.php" class="group flex items-start justify-between gap-4 bg-slate-50 px-6 py-5 transition hover:bg-slate-100">
                 <span>
                     <span class="block text-lg font-bold tracking-tight text-slate-900">Manage your activity</span>
