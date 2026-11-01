@@ -408,7 +408,7 @@ if ($error && empty($fieldErrors)) {
                     </div>
                 </div>
 
-                <div class="sticky bottom-16 z-10 rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm sm:bottom-4 sm:rounded-2xl sm:p-3 sm:px-4">
+                <div class="rounded-lg border border-slate-200 bg-white p-2.5 shadow-sm sm:rounded-2xl sm:p-3 sm:px-4">
                     <p class="mb-3 hidden text-xs leading-5 text-slate-500 sm:text-sm" data-campaign-terms>
                         <?php echo $isAuthenticated ? 'Publishing will make this fundraiser visible to supporters.' : 'Your account will be created after email verification, and your fundraiser will publish immediately.'; ?>
                     </p>
