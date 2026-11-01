@@ -142,10 +142,26 @@ try {
               <label for="category-filter" class="mb-2 block text-xs font-semibold uppercase tracking-[0.24em] text-slate-500">Category</label>
               <select id="category-filter" class="w-full rounded-2xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 shadow-sm transition focus:border-emerald-500 focus:bg-white focus:outline-none focus:ring-4 focus:ring-emerald-500/10" onchange="filterCampaigns()">
                 <option value="all" <?= $category === 'all' ? 'selected' : '' ?>>All Categories</option>
-                <option value="medical" <?= $category === 'medical' ? 'selected' : '' ?>>Medical</option>
-                <option value="education" <?= $category === 'education' ? 'selected' : '' ?>>Education</option>
-                <option value="emergency" <?= $category === 'emergency' ? 'selected' : '' ?>>Emergency</option>
+                <option value="animals" <?= $category === 'animals' ? 'selected' : '' ?>>Animals</option>
+                <option value="business" <?= $category === 'business' ? 'selected' : '' ?>>Business</option>
                 <option value="community" <?= $category === 'community' ? 'selected' : '' ?>>Community</option>
+                <option value="competitions" <?= $category === 'competitions' ? 'selected' : '' ?>>Competitions</option>
+                <option value="creative" <?= $category === 'creative' ? 'selected' : '' ?>>Creative</option>
+                <option value="education" <?= $category === 'education' ? 'selected' : '' ?>>Education</option>
+                <option value="emergency" <?= $category === 'emergency' ? 'selected' : '' ?>>Emergencies</option>
+                <option value="environment" <?= $category === 'environment' ? 'selected' : '' ?>>Environment</option>
+                <option value="events" <?= $category === 'events' ? 'selected' : '' ?>>Events</option>
+                <option value="faith" <?= $category === 'faith' ? 'selected' : '' ?>>Faith</option>
+                <option value="family" <?= $category === 'family' ? 'selected' : '' ?>>Family</option>
+                <option value="funerals" <?= $category === 'funerals' ? 'selected' : '' ?>>Funerals &amp; Memorials</option>
+                <option value="medical" <?= $category === 'medical' ? 'selected' : '' ?>>Medical</option>
+                <option value="monthly_bills" <?= $category === 'monthly_bills' ? 'selected' : '' ?>>Monthly Bills</option>
+                <option value="newlyweds" <?= $category === 'newlyweds' ? 'selected' : '' ?>>Newlyweds</option>
+                <option value="other" <?= $category === 'other' ? 'selected' : '' ?>>Other</option>
+                <option value="sports" <?= $category === 'sports' ? 'selected' : '' ?>>Sports</option>
+                <option value="travel" <?= $category === 'travel' ? 'selected' : '' ?>>Travel</option>
+                <option value="volunteer" <?= $category === 'volunteer' ? 'selected' : '' ?>>Volunteer</option>
+                <option value="wishes" <?= $category === 'wishes' ? 'selected' : '' ?>>Wishes</option>
               </select>
             </div>
             <div>

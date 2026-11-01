@@ -113,14 +113,21 @@ class Campaign {
             error_log("[Campaign::create] Image uploaded successfully to " . $imagePath);
 
             $sql = "INSERT INTO campaigns (
-                user_id, title, category, goal_amount, 
-                description, image_path, created_at, status
-            ) VALUES (?, ?, ?, ?, ?, ?,  NOW(), 'active')";
+                user_id, title, category, campaign_country_code, campaign_city,
+                campaign_postal_code, beneficiary_type, beneficiary_name, beneficiary_relationship,
+                goal_amount, description, image_path, created_at, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'active')";
 
             $params = [
                 $_SESSION['user_id'],
                 $data['title'],
                 $data['category'],
+                $data['campaign_country_code'],
+                $data['campaign_city'],
+                $data['campaign_postal_code'],
+                $data['beneficiary_type'],
+                $data['beneficiary_name'] ?? null,
+                $data['beneficiary_relationship'] ?? null,
                 $data['goal'],
                 $data['description'],
                 $imagePath
@@ -163,14 +170,21 @@ class Campaign {
             ], true);
 
             $sql = "INSERT INTO campaigns (
-                user_id, title, category, goal_amount,
-                description, image_path, created_at, status
-            ) VALUES (?, ?, ?, ?, ?, ?, NOW(), 'active')";
+                user_id, title, category, campaign_country_code, campaign_city,
+                campaign_postal_code, beneficiary_type, beneficiary_name, beneficiary_relationship,
+                goal_amount, description, image_path, created_at, status
+            ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, NOW(), 'active')";
 
             return $this->db->insert($sql, [
                 $userId,
                 $data['title'],
                 $data['category'],
+                $data['campaign_country_code'],
+                $data['campaign_city'],
+                $data['campaign_postal_code'],
+                $data['beneficiary_type'],
+                $data['beneficiary_name'] ?? null,
+                $data['beneficiary_relationship'] ?? null,
                 $data['goal'],
                 $data['description'],
                 $imagePath,
@@ -197,6 +211,23 @@ class Campaign {
 
         if (empty($data['description'])) {
             throw new Exception("Campaign description is required");
+        }
+
+        if (empty($data['campaign_country_code']) || !preg_match('/^[A-Z]{2}$/', (string) $data['campaign_country_code'])) {
+            throw new Exception("A valid fundraiser country is required");
+        }
+
+        if (empty($data['campaign_city']) || empty($data['campaign_postal_code'])) {
+            throw new Exception("Fundraiser city and ZIP or postal code are required");
+        }
+
+        if (!in_array($data['beneficiary_type'] ?? '', ['self', 'individual', 'organization'], true)) {
+            throw new Exception("Please choose who the fundraiser is for");
+        }
+
+        if ($data['beneficiary_type'] !== 'self'
+            && (empty($data['beneficiary_name']) || empty($data['beneficiary_relationship']))) {
+            throw new Exception("Beneficiary name and relationship are required");
         }
     }
 

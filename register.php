@@ -281,28 +281,31 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         
         $submittedPhone = trim($_POST['phone'] ?? '');
         $phoneCountryCode = strtoupper(trim($_POST['country_code'] ?? ''));
+        $normalizedPhone = null;
 
-        if ($submittedPhone === '') {
+        if ($submittedPhone === '' && !$hasCampaignDraft) {
             throw new Exception('Phone number is required');
         }
 
-        $phoneValidationResult = $phoneValidationService->validateForCountry($submittedPhone, $phoneCountryCode);
+        if ($submittedPhone !== '') {
+            $phoneValidationResult = $phoneValidationService->validateForCountry($submittedPhone, $phoneCountryCode);
 
-        if (!$phoneValidationResult['valid']) {
-            throw new Exception($phoneValidationResult['message']);
-        }
+            if (!$phoneValidationResult['valid']) {
+                throw new Exception($phoneValidationResult['message']);
+            }
 
-        $normalizedPhone = $phoneValidationResult['normalized_phone'];
+            $normalizedPhone = $phoneValidationResult['normalized_phone'];
         
-        // Check phone uniqueness
-        $db = Database::getInstance();
-        $existingPhone = $db->fetchOne(
-            "SELECT id FROM users WHERE phone = ?",
-            [$normalizedPhone]
-        );
+            // Check phone uniqueness
+            $db = Database::getInstance();
+            $existingPhone = $db->fetchOne(
+                "SELECT id FROM users WHERE phone = ?",
+                [$normalizedPhone]
+            );
         
-        if ($existingPhone) {
-            throw new Exception('Phone number already registered');
+            if ($existingPhone) {
+                throw new Exception('Phone number already registered');
+            }
         }
 
         $countryCode = strtoupper(trim($_POST['country'] ?? ''));
@@ -336,7 +339,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
             'email' => $_POST['email'] ?? '',
             'password' => $_POST['password'] ?? '',
             'phone' => $normalizedPhone,
-            'phone_country_code' => $phoneCountryCode,
+            'phone_country_code' => $submittedPhone !== '' ? $phoneCountryCode : null,
             'nin' => $_POST['nin'] ?? '',
             'country' => $countryCode,
             'nationality' => $selectedCountry['nationality'] ?? $nationality,
@@ -747,8 +750,8 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                             </div>
                             
                             <div>
-                                <label for="phone" class="block text-sm font-semibold text-slate-700 mb-2">Phone Number</label>
-                                <input type="tel" id="phone" name="phone" required class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200" placeholder="Enter phone number">
+                                <label for="phone" class="block text-sm font-semibold text-slate-700 mb-2"><?php echo $hasCampaignDraft ? 'WhatsApp Number (Optional)' : 'Phone Number'; ?></label>
+                                <input type="tel" id="phone" name="phone"<?php echo $hasCampaignDraft ? '' : ' required'; ?> class="w-full px-4 py-3 border border-slate-200 rounded-xl bg-slate-50 placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all duration-200" placeholder="Enter phone number">
                                 <div id="phone-hint" class="text-xs text-slate-500 mt-2"></div>
                                 <div id="phone-error" class="text-red-600 text-sm mt-1 hidden"></div>
                                 <div id="phone-success" class="text-emerald-600 text-sm mt-1 hidden"></div>
@@ -921,6 +924,7 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
         const phoneRules = <?php echo json_encode($phoneRuleMap); ?>;
         const unsupportedDialCodes = <?php echo json_encode($unsupportedDialCodes); ?>;
         const unsupportedCountryMessage = <?php echo json_encode($unsupportedCountryMessage); ?>;
+        const phoneOptional = <?php echo $hasCampaignDraft ? 'true' : 'false'; ?>;
         const cityCache = {};
         let currentStep = 1;
         const totalSteps = 5;
@@ -1211,14 +1215,15 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                     return;
                 }
 
-                if (!phoneValid || !latestNormalizedPhone) {
+                const phoneIsOptionalAndEmpty = phoneOptional && !document.getElementById('phone').value.trim();
+                if (!phoneIsOptionalAndEmpty && (!phoneValid || !latestNormalizedPhone)) {
                     e.preventDefault();
                     showError('phone-error', 'Please enter a valid phone number');
                     return;
                 }
 
-                document.getElementById('phone-hidden').value = latestNormalizedPhone;
-                document.getElementById('phone-country-code-hidden').value = document.getElementById('country_code').value;
+                document.getElementById('phone-hidden').value = phoneIsOptionalAndEmpty ? '' : latestNormalizedPhone;
+                document.getElementById('phone-country-code-hidden').value = phoneIsOptionalAndEmpty ? '' : document.getElementById('country_code').value;
                 isSubmitting = true;
                 const submitBtn = document.querySelector('button[type="submit"]');
                 submitBtn.disabled = true;
@@ -1401,10 +1406,10 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
                 const phone = document.getElementById('phone').value.trim();
                 const nin = document.getElementById('nin').value.trim();
                 
-                if (!phone) {
+                if (!phone && !phoneOptional) {
                     showError('phone-error', 'Phone number is required');
                     isValid = false;
-                } else if (!phoneValid) {
+                } else if (phone && !phoneValid) {
                     showError('phone-error', 'Please use a valid mobile number supported by our services.');
                     isValid = false;
                 }
@@ -1792,7 +1797,9 @@ if ($_SERVER["REQUEST_METHOD"] == "POST") {
 
         function updateStep3ContinueButton() {
             const btn = document.getElementById('next-step-3');
-            if (phoneValid) {
+            const phoneInput = document.getElementById('phone');
+            const canContinueWithoutPhone = phoneOptional && !phoneInput.value.trim();
+            if (phoneValid || canContinueWithoutPhone) {
                 btn.disabled = false;
                 btn.classList.remove('opacity-50', 'cursor-not-allowed');
             } else {
