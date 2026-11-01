@@ -270,7 +270,7 @@ if (!$isAjaxRequest) {
 
         body.campaigns-index-page #app-brand-link > span:last-child {
             display: inline;
-            color: #047857;
+            color: #274a32;
             font-size: 1rem;
             font-weight: 700;
             letter-spacing: -0.02em;

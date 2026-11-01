@@ -160,7 +160,7 @@ $ogImageUrl = !empty($details['image_path'])
       theme: {
         extend: {
           colors: {
-            emerald: { 50:'#ecfdf5',100:'#d1fae5',200:'#a7f3d0',300:'#6ee7b7',400:'#34d399',500:'#10b981',600:'#059669',700:'#047857',800:'#065f46',900:'#064e3b' }
+            emerald: { 50:'#f5ffe7',100:'#eaffcc',200:'#d9f9a5',300:'#cafa8c',400:'#aee871',500:'#8bcf57',600:'#3e7843',700:'#274a32',800:'#1f3e29',900:'#193623' }
           },
           fontFamily: { sans: ['Inter', 'sans-serif'] },
           boxShadow: {
@@ -189,17 +189,19 @@ $ogImageUrl = !empty($details['image_path'])
 
     /* ── Progress bar ── */
     .progress-track{ height:10px; background:#e2e8f0; border-radius:999px; overflow:hidden; }
-    .progress-fill{ height:100%; border-radius:999px; background:linear-gradient(90deg,#059669,#10b981); transition:width 1.2s cubic-bezier(.4,0,.2,1); }
+    .progress-fill{ height:100%; border-radius:999px; background:linear-gradient(90deg,#274a32,#cafa8c); transition:width 1.2s cubic-bezier(.4,0,.2,1); }
 
     /* ── Donor avatar ── */
-    .donor-avatar{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; color:#047857; background:rgba(4,120,87,.12); flex-shrink:0; }
+    .donor-avatar{ width:44px; height:44px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:.9rem; color:#274a32; background:rgba(39,74,50,.12); flex-shrink:0; }
 
     /* ── Social share ── */
     .share-btn{ display:flex; align-items:center; justify-content:center; gap:.4rem; border-radius:.75rem; padding:.55rem; font-size:.78rem; font-weight:600; transition:all .18s; border:1.5px solid; }
+    .campaign-donate-button{ background:#cafa8c; color:#274a32; box-shadow:0 4px 14px rgba(39,74,50,.18); }
+    .campaign-donate-button:hover{ background:#baf276; }
 
     /* ── Update timeline ── */
     .timeline-line{ position:absolute; left:18px; top:44px; bottom:0; width:2px; background:#e2e8f0; }
-    .timeline-dot{ width:12px; height:12px; border-radius:50%; background:#059669; border:2px solid #fff; box-shadow:0 0 0 3px #d1fae5; flex-shrink:0; margin-top:4px; }
+    .timeline-dot{ width:12px; height:12px; border-radius:50%; background:#274a32; border:2px solid #fff; box-shadow:0 0 0 3px #eaffcc; flex-shrink:0; margin-top:4px; }
 
     /* ── Sticky sidebar ── */
     @media(min-width:1024px){ .sticky-sidebar{ position:sticky; top:88px; } }
@@ -237,7 +239,7 @@ $ogImageUrl = !empty($details['image_path'])
       box-shadow: inset 0 1px 2px rgba(15,23,42,0.02);
     }
     .donation-textarea{ min-height: 5.5rem; }
-    .donation-amount-btn.active{ border-color:#059669 !important; background:#059669 !important; color:#fff !important; }
+    .donation-amount-btn.active{ border-color:#274a32 !important; background:#274a32 !important; color:#fff !important; }
     .gateway-option{ transition:all .18s; cursor:pointer; }
 
     /* ── Mobile bottom bar ── */
@@ -258,7 +260,7 @@ $ogImageUrl = !empty($details['image_path'])
       .campaign-story-card h2{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
       .mobile-cta-bar{ display:grid; grid-template-columns:minmax(0,1fr); position:fixed; bottom:calc(.75rem + env(safe-area-inset-bottom)); left:.75rem; right:.75rem; z-index:200; gap:1rem; padding:1.15rem 1.25rem; background:#fff; border:1px solid #e2e8f0; border-radius:1.6rem; box-shadow:0 12px 32px rgba(15,23,42,.16); }
       .mobile-cta-summary{ display:flex; align-items:center; gap:1rem; min-width:0; }
-      .mobile-progress-ring{ display:flex; width:4rem; height:4rem; align-items:center; justify-content:center; flex:0 0 auto; border-radius:50%; background:conic-gradient(#059669 var(--progress),#e5e7eb 0); }
+      .mobile-progress-ring{ display:flex; width:4rem; height:4rem; align-items:center; justify-content:center; flex:0 0 auto; border-radius:50%; background:conic-gradient(#274a32 var(--progress),#e5e7eb 0); }
       .mobile-progress-ring span{ display:flex; width:3.1rem; height:3.1rem; align-items:center; justify-content:center; border-radius:50%; background:#fff; font-size:.88rem; font-weight:800; color:#0f172a; }
       .mobile-cta-amount{ min-width:0; font-size:1.12rem; font-weight:800; line-height:1.4; color:#0f172a; }
       .mobile-cta-amount span{ color:#64748b; font-size:.95rem; font-weight:500; }
@@ -266,17 +268,17 @@ $ogImageUrl = !empty($details['image_path'])
       .mobile-cta-donor-update{ overflow:hidden; color:#475569; font-size:.82rem; font-weight:600; text-overflow:ellipsis; white-space:nowrap; }
       .mobile-cta-actions{ display:grid; grid-template-columns:1fr 1fr; gap:.75rem; }
       .mobile-cta-actions button{ min-height:3.6rem; border-radius:999px; font-size:1.08rem; font-weight:700; }
-      .mobile-cta-donate{ background:#059669; color:#fff; transition:background .18s; }
-      .mobile-cta-donate:hover{ background:#047857; }
-      .mobile-cta-share{ border:1px solid #d1d5db; background:#fff; color:#0f172a; transition:background .18s; }
-      .mobile-cta-share:hover{ background:#f8fafc; }
+      .mobile-cta-donate:not(:disabled){ background:#cafa8c; color:#274a32; transition:background .18s; }
+      .mobile-cta-donate:not(:disabled):hover{ background:#baf276; }
+      .mobile-cta-share{ border:1px solid #274a32; background:#274a32; color:#cafa8c; transition:background .18s; }
+      .mobile-cta-share:hover{ background:#1f3e29; }
       body{ padding-bottom:230px; }
     }
 
     /* ── Badge ── */
     .badge{ display:inline-flex; align-items:center; gap:.25rem; padding:.2rem .55rem; border-radius:999px; font-size:.62rem; font-weight:700; letter-spacing:.03em; text-transform:uppercase; white-space:nowrap; }
 
-    .status-active{ background:#ecfdf5; color:#047857; }
+    .status-active{ background:#f5ffe7; color:#274a32; }
     .status-completed{ background:#eff6ff; color:#1d4ed8; }
     .status-other{ background:#f1f5f9; color:#475569; }
     @media(max-width:380px){
@@ -573,8 +575,7 @@ $ogImageUrl = !empty($details['image_path'])
           </button>
           <?php else: ?>
           <button onclick="openDonationModal()"
-            class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-4 rounded-xl text-base transition-all active:scale-[.98] mb-3"
-            style="box-shadow:0 4px 14px rgba(5,150,105,.4)">
+            class="campaign-donate-button w-full font-bold py-4 rounded-xl text-base transition-all active:scale-[.98] mb-3">
             <i class="fas fa-heart mr-2"></i> Donate Now
           </button>
           <?php endif; ?>

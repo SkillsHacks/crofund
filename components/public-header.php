@@ -1,5 +1,6 @@
 <?php
 ?>
+<link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/brand-palette.css">
 <style>
     button:not([data-close-mobile-menu]),
     input[type="button"],

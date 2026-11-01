@@ -43,6 +43,7 @@ try {
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://rsms.me/inter/inter.css" rel="stylesheet">
     <link rel="icon" href="<?php echo BASE_URL; ?>/assets/images/logo.svg" type="image/svg+xml">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/brand-palette.css">
 </head>
 <body class="bg-gray-100 font-sans">
     

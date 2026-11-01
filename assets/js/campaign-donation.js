@@ -394,7 +394,7 @@
       title: 'Payment method unavailable',
       text: 'Credit and debit card payments are not supported in your region. We are redirecting you to PayPal so you can complete your donation securely.',
       confirmButtonText: 'Continue with PayPal',
-      confirmButtonColor: '#059669',
+      confirmButtonColor: '#274A32',
       allowOutsideClick: false,
       allowEscapeKey: false,
       timer: 5000,
@@ -485,7 +485,7 @@
           .then(r => r.json())
           .then(data => {
             if (data.success) {
-              Swal.fire({ title: 'Posted!', text: 'Update posted successfully.', icon: 'success', confirmButtonColor: '#059669' }).then(() => location.reload());
+              Swal.fire({ title: 'Posted!', text: 'Update posted successfully.', icon: 'success', confirmButtonColor: '#274A32' }).then(() => location.reload());
             } else {
               Swal.fire({ title: 'Error', text: data.error || 'Failed to post update', icon: 'error', confirmButtonColor: '#dc2626' });
             }
@@ -500,13 +500,13 @@
     const m = cfg.messages || {};
 
     if (m.success) {
-      Swal.fire({ title: 'Success!', text: m.success, icon: 'success', confirmButtonColor: '#059669' });
+      Swal.fire({ title: 'Success!', text: m.success, icon: 'success', confirmButtonColor: '#274A32' });
     }
     if (m.error) {
       Swal.fire({ title: 'Error', text: m.error, icon: 'error', confirmButtonColor: '#dc2626' });
     }
     if (m.donationSuccess) {
-      Swal.fire({ title: 'Thank You!', text: m.donationSuccess, icon: 'success', confirmButtonColor: '#059669', timer: 5000 });
+      Swal.fire({ title: 'Thank You!', text: m.donationSuccess, icon: 'success', confirmButtonColor: '#274A32', timer: 5000 });
     }
     if (m.donationError) {
       Swal.fire({ title: 'Payment Issue', text: m.donationError, icon: 'error', confirmButtonColor: '#dc2626' });
@@ -514,7 +514,7 @@
 
     const p = new URLSearchParams(window.location.search);
     if (p.get('payment') === 'success') {
-      Swal.fire({ title: 'Thank You!', text: 'Your donation was processed successfully.', icon: 'success', confirmButtonColor: '#059669' });
+      Swal.fire({ title: 'Thank You!', text: 'Your donation was processed successfully.', icon: 'success', confirmButtonColor: '#274A32' });
       window.history.replaceState({}, document.title, window.location.pathname);
     }
   }

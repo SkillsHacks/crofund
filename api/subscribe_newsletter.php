@@ -42,7 +42,7 @@ try {
     <title>Welcome to $company_name Newsletter</title>
     <style>
         body { font-family: Arial, sans-serif; line-height: 1.6; margin: 0; padding: 0; color: #333; }
-        .banner { background-color: #059669; text-align: center; padding: 30px; color: white; }
+        .banner { background-color: #3e7843; text-align: center; padding: 30px; color: white; }
         .banner h1 { margin: 0; font-size: 28px; font-weight: 600; }
         .content { max-width: 600px; margin: 0 auto; padding: 30px 20px; }
         .footer { background-color: #f3f4f6; text-align: center; padding: 20px; font-size: 12px; color: #666; }

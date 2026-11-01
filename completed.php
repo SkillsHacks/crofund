@@ -25,6 +25,7 @@ if (!$donationId) {
     <link rel="icon" type="image/svg+xml" href="<?php echo BASE_URL; ?>/assets/images/logo.svg">
     <link rel="shortcut icon" type="image/svg+xml" href="<?php echo BASE_URL; ?>/assets/images/logo.svg">
     <link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>/assets/images/logo.svg">
+    <link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/brand-palette.css">
 </head>
 <body class="bg-gray-100 font-sans">
     

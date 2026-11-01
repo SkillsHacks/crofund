@@ -400,7 +400,7 @@ if (!$isAjaxRequest) {
 
             body.withdrawal-initiate-page #app-brand-link > span:last-child {
                 display: inline;
-                color: #047857;
+                color: #274a32;
                 font-size: 0.9rem;
             }
 

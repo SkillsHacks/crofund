@@ -198,7 +198,7 @@ if (!$isAjaxRequest) {
 
         body.account-verification-page #app-brand-link > span:last-child {
             display: inline;
-            color: #047857;
+            color: #274a32;
             font-size: 1rem;
             font-weight: 700;
         }

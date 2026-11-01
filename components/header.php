@@ -50,6 +50,7 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
 <link rel="icon" type="image/svg+xml" href="<?php echo BASE_URL; ?>/assets/images/logo.svg">
 <link rel="shortcut icon" type="image/svg+xml" href="<?php echo BASE_URL; ?>/assets/images/logo.svg">
 <link rel="apple-touch-icon" href="<?php echo BASE_URL; ?>/assets/images/logo.svg">
+<link rel="stylesheet" href="<?php echo BASE_URL; ?>/assets/css/brand-palette.css">
 
 <style>
     body.sidebar-collapsed #sidebar .sidebar-label,
@@ -103,8 +104,8 @@ $avatarUrl = getUserAvatar($currentUser['avatar'] ?? null);
                     <span class="<?php echo $isDashboardShell ? 'dashboard-brand-mark' : 'flex h-10 w-10 items-center justify-center rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 text-white shadow-lg shadow-emerald-900/20'; ?>">
                         <?php if ($isDashboardShell): ?>
                             <svg class="h-9 w-9" viewBox="0 0 128 128" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="CroFunding logo">
-                                <path d="M64 84C59.6 84 56 80.4 56 76V65.2C49.5 71.7 42.7 74.7 35.4 74.7C31.7 74.7 28.7 71.7 28.7 68C28.7 64.3 31.7 61.3 35.4 61.3C42.5 61.3 49 57.1 55.5 48.7C48.6 48.7 42.9 46.5 38.1 42C35.4 39.4 35.2 35.1 37.8 32.4C40.3 29.7 44.6 29.5 47.3 32.1C49.8 34.5 53.3 35.6 57.8 35.6C58.6 29.4 63.8 24.7 70.2 24.7C73.9 24.7 77.6 26.3 80.6 29.2C83.7 32.3 85.3 35.9 85.3 39.7C85.3 50.6 76.5 59.4 65.6 59.4H64V76C64 80.4 68.4 84 64 84Z" fill="#047857"/>
-                                <path d="M67.1 49.3H65.6C70.1 49.3 73.8 45.6 73.8 41.1C73.8 39.3 73.1 37.6 71.8 36.3C70.8 35.3 69.4 34.7 68 34.7C65.1 34.7 62.7 37.1 62.7 40V44C62.7 46.9 64.9 49.3 67.1 49.3Z" fill="#10B981"/>
+                                <path d="M64 84C59.6 84 56 80.4 56 76V65.2C49.5 71.7 42.7 74.7 35.4 74.7C31.7 74.7 28.7 71.7 28.7 68C28.7 64.3 31.7 61.3 35.4 61.3C42.5 61.3 49 57.1 55.5 48.7C48.6 48.7 42.9 46.5 38.1 42C35.4 39.4 35.2 35.1 37.8 32.4C40.3 29.7 44.6 29.5 47.3 32.1C49.8 34.5 53.3 35.6 57.8 35.6C58.6 29.4 63.8 24.7 70.2 24.7C73.9 24.7 77.6 26.3 80.6 29.2C83.7 32.3 85.3 35.9 85.3 39.7C85.3 50.6 76.5 59.4 65.6 59.4H64V76C64 80.4 68.4 84 64 84Z" fill="#274a32"/>
+                                <path d="M67.1 49.3H65.6C70.1 49.3 73.8 45.6 73.8 41.1C73.8 39.3 73.1 37.6 71.8 36.3C70.8 35.3 69.4 34.7 68 34.7C65.1 34.7 62.7 37.1 62.7 40V44C62.7 46.9 64.9 49.3 67.1 49.3Z" fill="#8bcf57"/>
                             </svg>
                         <?php else: ?>
                             <img src="<?php echo BASE_URL; ?>/assets/images/logo.svg" alt="CroFunding logo" class="h-6 w-6">

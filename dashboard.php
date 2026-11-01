@@ -212,16 +212,16 @@ include 'components/header.php';
                 extend: {
                     colors: {
                         emerald: {
-                            50: '#ecfdf5',
-                            100: '#d1fae5',
-                            200: '#a7f3d0',
-                            300: '#6ee7b7',
-                            400: '#34d399',
-                            500: '#10b981',
-                            600: '#059669',
-                            700: '#047857',
-                            800: '#065f46',
-                            900: '#064e3b',
+                            50: '#f5ffe7',
+                            100: '#eaffcc',
+                            200: '#d9f9a5',
+                            300: '#cafa8c',
+                            400: '#aee871',
+                            500: '#8bcf57',
+                            600: '#3e7843',
+                            700: '#274a32',
+                            800: '#1f3e29',
+                            900: '#193623',
                         }
                     }
                 }
@@ -255,11 +255,11 @@ include 'components/header.php';
             box-shadow: none;
         }
         .dashboard-mobile-link[aria-current="page"] {
-            color: #047857;
-            background: #ecfdf5;
+            color: #274a32;
+            background: #f5ffe7;
         }
         .dashboard-mobile-link:focus-visible {
-            outline: 2px solid #10b981;
+            outline: 2px solid #8bcf57;
             outline-offset: 2px;
         }
         .dashboard-mobile-nav {
@@ -317,7 +317,7 @@ include 'components/header.php';
         }
         body.dashboard-page #app-brand-link > span:last-child {
             display: inline;
-            color: #047857;
+            color: #274a32;
             font-size: 1rem;
             font-weight: 700;
             letter-spacing: -0.02em;
@@ -496,7 +496,7 @@ include 'components/header.php';
                 height: 34px;
             }
             body.dashboard-page #app-brand-link > span:last-child {
-                color: #047857;
+                color: #274a32;
                 font-size: 0.9rem;
             }
             body.dashboard-page .dashboard-app-header > div > div > div:nth-child(2) {
