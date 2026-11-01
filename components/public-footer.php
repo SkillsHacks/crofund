@@ -99,7 +99,7 @@
                     <a href="https://x.com/CroFunding1?t=T1lGpFRl_OiDVJ5wAnzONQ&amp;s=09" target="_blank" rel="noopener noreferrer" class="transition hover:text-emerald-700">X</a>
                     <a href="https://www.instagram.com/crofunding?igsh=eWF3OTR3cmNhaHI=" target="_blank" rel="noopener noreferrer" class="transition hover:text-emerald-700">Instagram</a>
                     <a href="https://www.facebook.com/profile.php?id=61577868655483" target="_blank" rel="noopener noreferrer" class="transition hover:text-emerald-700">Facebook</a>
-                    <a href="https://www.tiktok.com/@crofunding?_t=ZM-8xc9rW6a3CI&amp;_r=1" target="_blank" rel="noopener noreferrer" class="transition hover:text-emerald-700">TikTok</a>
+                    <a href="https://www.tiktok.com/@crofunding" target="_blank" rel="noopener noreferrer" class="transition hover:text-emerald-700">TikTok</a>
                 </nav>
             </div>
         </div>
