@@ -597,6 +597,7 @@ class Campaign {
                             THEN u.organization_name
                         ELSE u.name
                     END as creator_name,
+                    u.is_verified as creator_is_verified,
                     COUNT(DISTINCT CASE WHEN d.status = 'completed' THEN d.id END) as donor_count,
                     COALESCE(SUM(CASE WHEN d.status = 'completed' THEN d.amount ELSE 0 END), 0) as current_amount,
                     CASE WHEN pm.status = 'active' AND pm.expires_at > CURRENT_TIMESTAMP THEN 1 ELSE 0 END as is_premium_owner
@@ -614,7 +615,7 @@ class Campaign {
 
             $sql .= " GROUP BY c.id, c.title, c.description, c.goal_amount, 
                            c.image_path, c.category, c.status, c.created_at, 
-                           c.user_id, u.name, u.account_type, u.organization_name, pm.status, pm.expires_at";
+                           c.user_id, u.name, u.account_type, u.organization_name, u.is_verified, pm.status, pm.expires_at";
 
             // Add sorting
             switch ($sort) {
