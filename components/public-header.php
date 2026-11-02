@@ -20,7 +20,7 @@
                         <img src="<?php echo BASE_URL; ?>/assets/images/logo.svg" alt="CroFunding logo" class="h-6 w-6">
                     </div>
                     <div class="min-w-0">
-                        <span class="block truncate text-lg font-bold tracking-tight text-slate-900 sm:text-xl">CroFunding</span>
+                        <span class="block truncate text-lg font-bold tracking-tight text-emerald-700 sm:text-xl">CroFunding</span>
                         <span class="hidden text-xs font-medium text-slate-500 sm:block">Fundraising made simple</span>
                     </div>
                 </a>
