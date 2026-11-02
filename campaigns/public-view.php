@@ -260,8 +260,8 @@ $ogImageUrl = !empty($details['image_path'])
       .campaign-story-card h2{ position:absolute; width:1px; height:1px; padding:0; margin:-1px; overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0; }
       .mobile-cta-bar{ display:grid; grid-template-columns:minmax(0,1fr); position:fixed; bottom:calc(.75rem + env(safe-area-inset-bottom)); left:.75rem; right:.75rem; z-index:200; gap:1rem; padding:1.15rem 1.25rem; background:#fff; border:1px solid #e2e8f0; border-radius:1.6rem; box-shadow:0 12px 32px rgba(15,23,42,.16); }
       .mobile-cta-summary{ display:flex; align-items:center; gap:1rem; min-width:0; }
-      .mobile-progress-ring{ display:flex; width:4rem; height:4rem; align-items:center; justify-content:center; flex:0 0 auto; border-radius:50%; background:conic-gradient(#274a32 var(--progress),#cafa8c 0); }
-      .mobile-progress-ring span{ display:flex; width:3.1rem; height:3.1rem; align-items:center; justify-content:center; border-radius:50%; background:#fff; font-size:.88rem; font-weight:800; color:#0f172a; }
+      .mobile-progress-ring{ display:flex; width:4rem; height:4rem; align-items:center; justify-content:center; flex:0 0 auto; border-radius:50%; background:conic-gradient(#274a32 var(--progress),#fff 0); }
+      .mobile-progress-ring span{ display:flex; width:3.1rem; height:3.1rem; align-items:center; justify-content:center; border-radius:50%; background:#fff; font-size:.88rem; font-weight:800; color:#274a32; }
       .mobile-cta-amount{ min-width:0; font-size:1.12rem; font-weight:800; line-height:1.4; color:#0f172a; }
       .mobile-cta-amount span{ color:#64748b; font-size:.95rem; font-weight:500; }
       .mobile-cta-donors{ margin-top:.2rem; font-size:.9rem; color:#64748b; }
