@@ -418,6 +418,7 @@ $ogImageUrl = !empty($details['image_path'])
             $isAnon = !isset($donor['donor_name']) || empty($donor['donor_name']) || (isset($donor['anonymous']) && $donor['anonymous'] == 1);
             $donorInitial = $isAnon ? 'A' : strtoupper(substr($donor['donor_name'], 0, 1));
             $donorName    = $isAnon ? 'Anonymous Donor' : htmlspecialchars($donor['donor_name']);
+            $donationTimestamp = !empty($donor['donated_at']) ? strtotime($donor['donated_at']) : false;
           ?>
           <div class="flex items-center gap-3 rounded-xl p-3 sm:gap-4 sm:p-4">
             <div class="donor-avatar h-10 w-10 text-sm">
@@ -427,6 +428,12 @@ $ogImageUrl = !empty($details['image_path'])
               <p class="truncate text-xs font-semibold text-slate-900 sm:text-sm"><?php echo $donorName; ?></p>
               <p class="mt-0.5 text-xs font-bold text-slate-900 sm:text-sm">$<?php echo number_format($donor['amount'], 2); ?></p>
             </div>
+            <?php if ($donationTimestamp !== false): ?>
+            <time class="shrink-0 text-right text-[10px] leading-4 text-slate-500 sm:text-xs"
+                  datetime="<?php echo htmlspecialchars(date(DATE_ATOM, $donationTimestamp), ENT_QUOTES, 'UTF-8'); ?>">
+              <?php echo htmlspecialchars(formatRelativeTime($donor['donated_at']), ENT_QUOTES, 'UTF-8'); ?>
+            </time>
+            <?php endif; ?>
           </div>
           <?php endforeach; ?>
         </div>
