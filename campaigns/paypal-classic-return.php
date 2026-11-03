@@ -90,7 +90,7 @@ function verifyWithPayPalPDT(string $tx, string $identityToken, bool $sandbox): 
 //    URL (no tx, no custom) from reaching the database at all.
 // ---------------------------------------------------------------------
 $tx = trim((string)($_GET['tx'] ?? ''));
-$custom = trim((string)($_GET['custom'] ?? ''));
+$custom = trim((string)($_GET['custom'] ?? $_GET['cm'] ?? ''));
 
 if ($tx === '' || $custom === '') {
     http_response_code(400);
