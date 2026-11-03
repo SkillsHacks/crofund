@@ -5,11 +5,7 @@ require_once __DIR__ . '/../config/Withdrawal.php';
 require_once __DIR__ . '/../config/User.php';
 require_once __DIR__ . '/../config/Database.php';
 require_once __DIR__ . '/../config/PremiumAccountService.php';
-
-use PHPMailer\PHPMailer\PHPMailer;
-use PHPMailer\PHPMailer\Exception;
-
-require '../vendor/autoload.php';
+require_once __DIR__ . '/../config/Mail.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     // CSRF Token Validation
@@ -97,62 +93,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             default:       $methodLabel = ucfirst($method); break;
         }
 
-        // Optional method-specific disclaimer
-        $disclaimer = '';
-        if ($method === 'paypal') {
-            $disclaimer = '<div style="background-color:#fff3cd;padding:15px;border-left:4px solid #ffc107;margin:20px 0;">
-                <strong>Note:</strong> PayPal withdrawals may take longer to process due to additional verification. Ensure your email is correct.
-            </div>';
-        } elseif ($method === 'bank') {
-            $disclaimer = '<div style="background-color:#fff3cd;padding:15px;border-left:4px solid #ffc107;margin:20px 0;">
-                <strong>Note:</strong> Ensure your bank details are correct. Transfers may take 1–3 business days depending on your bank.
-            </div>';
-        }
-
         // Fetch user email
         $userObj = new User();
         $user = $userObj->getUserById($user_id);
 
         if ($user && !empty($user['email'])) {
-            $to = $user['email'];
-            $subject = "Withdrawal Request Received";
-
-            // Load email template and replace placeholders
-            $templatePath = __DIR__ . '/withdrawal_initiated.html';
-            $template = file_get_contents($templatePath);
-            $message = str_replace(
-                ['{name}', '{amount}', '{company_name}', '{current_year}', '{method}', '{disclaimer}'],
-                [
-                    htmlspecialchars($user['name'] ?? 'User'),
-                    number_format($amount, 2),
-                    'CroFunding',
-                    date('Y'),
-                    $methodLabel,
-                    $disclaimer
-                ],
-                $template
-            );
-
-            // Send email using PHPMailer
-            $mail = new PHPMailer(true);
             try {
-                $mail->isSMTP();
-                $mail->Host       = 'mail.crofund.org';
-                $mail->SMTPAuth   = true;
-                $mail->Username   = 'oppeminc@crofund.org';
-                $mail->Password   = 'Ihateu123#@!';
-                $mail->SMTPSecure = 'tls';
-                $mail->Port       = 587;
-
-                $mail->setFrom('oppeminc@crofund.org', 'CroFunding');
-                $mail->addAddress($to);
-                $mail->isHTML(true);
-                $mail->Subject = $subject;
-                $mail->Body    = $message;
-
-                $mail->send();
-            } catch (Exception $e) {
-                // Optional: Log or notify admin
+                (new Mail())->sendWithdrawalInitiatedEmail(
+                    (string) $user['email'],
+                    (string) ($user['name'] ?? 'User'),
+                    (float) $amount,
+                    $methodLabel
+                );
+            } catch (Throwable $e) {
+                error_log('Withdrawal confirmation email failed for user ' . (int) $user_id . ': ' . $e->getMessage());
             }
         }
 

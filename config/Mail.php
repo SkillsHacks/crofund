@@ -223,6 +223,54 @@ class Mail {
         }
     }
 
+    public function sendWithdrawalInitiatedEmail(string $to, string $name, float $amount, string $method): bool {
+        try {
+            $templatePath = __DIR__ . '/../withdrawals/withdrawal_initiated.html';
+            $template = file_get_contents($templatePath);
+            if ($template === false) {
+                throw new RuntimeException('Unable to load the withdrawal confirmation email template.');
+            }
+
+            $disclaimer = match ($method) {
+                'PayPal' => '<div style="background-color:#fff3cd;padding:15px;border-left:4px solid #ffc107;margin:20px 0;">'
+                    . '<strong>Note:</strong> PayPal withdrawals may take longer to process due to additional verification. Ensure your email is correct.'
+                    . '</div>',
+                'Bank Transfer' => '<div style="background-color:#fff3cd;padding:15px;border-left:4px solid #ffc107;margin:20px 0;">'
+                    . '<strong>Note:</strong> Ensure your bank details are correct. Transfers may take 1–3 business days depending on your bank.'
+                    . '</div>',
+                default => '',
+            };
+
+            $html = str_replace(
+                ['{name}', '{amount}', '{company_name}', '{current_year}', '{method}', '{disclaimer}'],
+                [
+                    htmlspecialchars($name, ENT_QUOTES, 'UTF-8'),
+                    number_format($amount, 2),
+                    htmlspecialchars(SITE_NAME, ENT_QUOTES, 'UTF-8'),
+                    date('Y'),
+                    htmlspecialchars($method, ENT_QUOTES, 'UTF-8'),
+                    $disclaimer,
+                ],
+                $template
+            );
+            $text = "Hi {$name},\n\n"
+                . "We received your withdrawal request.\n\n"
+                . 'Amount: $' . number_format($amount, 2) . "\n"
+                . "Withdrawal method: {$method}\n\n"
+                . "Funds are typically credited within 4 to 6 business days. We will notify you when the transaction is complete.\n\n"
+                . 'Thank you for choosing ' . SITE_NAME . '.';
+
+            return $this->sendEmail(
+                $to,
+                'Withdrawal Request Received',
+                $html,
+                $text
+            );
+        } catch (Throwable $e) {
+            $this->throwUserSafeMailException('Withdrawal confirmation email could not be sent', $e);
+        }
+    }
+
     private function getDonationAdminNotificationEmailTemplate(array $donationData): string {
         $campaignTitle = htmlspecialchars($donationData['campaign_title'] ?? 'Unknown campaign', ENT_QUOTES, 'UTF-8');
         $donorName = htmlspecialchars($donationData['donor_name'] ?? 'Anonymous donor', ENT_QUOTES, 'UTF-8');
