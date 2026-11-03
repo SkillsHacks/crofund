@@ -271,6 +271,50 @@ class Mail {
         }
     }
 
+    public function sendWithdrawalCompletedEmail(string $to, string $name, float $amount, string $method): bool {
+        try {
+            $safeName = htmlspecialchars($name, ENT_QUOTES, 'UTF-8');
+            $safeMethod = htmlspecialchars($method, ENT_QUOTES, 'UTF-8');
+            $formattedAmount = number_format($amount, 2);
+            $html = '<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Your withdrawal has been completed</title>
+</head>
+<body style="margin:0;padding:24px;background-color:#ffffff;color:#111827;font-family:Arial,sans-serif;line-height:1.6;">
+    <div style="max-width:560px;margin:0 auto;">
+        ' . $this->getEmailBrandHeader('Withdrawal Completed') . '
+        <p style="margin:0 0 16px 0;">Hi ' . $safeName . ',</p>
+        <p style="margin:0 0 16px 0;">Your withdrawal request has been completed and the payout has been sent.</p>
+        <div style="background-color:#f9fafb;padding:16px;border-radius:8px;margin:20px 0;">
+            <p style="margin:8px 0;"><strong>Amount:</strong> $' . $formattedAmount . '</p>
+            <p style="margin:8px 0;"><strong>Method:</strong> ' . $safeMethod . '</p>
+        </div>
+        <p style="margin:0 0 16px 0;">Your bank or payment provider may need additional time to credit the funds.</p>
+        <p style="margin:0;">Thank you for choosing ' . htmlspecialchars(SITE_NAME, ENT_QUOTES, 'UTF-8') . '.</p>
+    </div>
+</body>
+</html>';
+            $text = "Hi {$name},\n\n"
+                . "Your withdrawal request has been completed and the payout has been sent.\n\n"
+                . "Amount: \${$formattedAmount}\n"
+                . "Method: {$method}\n\n"
+                . "Your bank or payment provider may need additional time to credit the funds.\n\n"
+                . 'Thank you for choosing ' . SITE_NAME . '.';
+
+            return $this->sendEmail(
+                $to,
+                'Your withdrawal has been completed',
+                $html,
+                $text
+            );
+        } catch (Throwable $e) {
+            $this->throwUserSafeMailException('Withdrawal completion email could not be sent', $e);
+        }
+    }
+
     private function getDonationAdminNotificationEmailTemplate(array $donationData): string {
         $campaignTitle = htmlspecialchars($donationData['campaign_title'] ?? 'Unknown campaign', ENT_QUOTES, 'UTF-8');
         $donorName = htmlspecialchars($donationData['donor_name'] ?? 'Anonymous donor', ENT_QUOTES, 'UTF-8');
