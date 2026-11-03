@@ -28,8 +28,7 @@ require_once __DIR__ . '/../config/Mail.php';
 $raw = file_get_contents('php://input');
 parse_str($raw, $posted);
 
-// Independent of `paypal_mode` (the live Orders API toggle) -- see the note
-// in campaigns/paypal-classic-donate.php.
+// Use the dedicated Classic PayPal mode; see campaigns/paypal-classic-donate.php.
 $classicMode = getSetting('paypal_classic_mode') ?: 'sandbox';
 $sandbox = $classicMode !== 'live';
 $verifyUrl = $sandbox

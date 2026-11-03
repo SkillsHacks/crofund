@@ -7,8 +7,8 @@ require_once __DIR__ . '/../config/TrustRiskService.php';
  * Legacy PayPal "Standard" donate form (posts to https://www.paypal.com/cgi-bin/webscr).
  *
  * IMPORTANT CONTEXT FOR WHOEVER MAINTAINS THIS:
- * This is the old hosted-button / HTML-form integration, distinct from the
- * PayPal Orders v2 REST flow already used in campaigns/api/paypal/capture-order.php.
+ * This is the hosted-button / HTML-form integration, distinct from PayPal's
+ * Smart Buttons / Orders API.
  * PayPal's own docs mark "Website Payments Standard" as legacy in favor of
  * Smart Buttons / Orders API. Only use this path if you specifically need a
  * no-JS-SDK, personal-account, form-POST integration.
@@ -48,9 +48,8 @@ try {
 // The receiving PayPal account. Store this in `settings` (see getSetting() in
 // config/config.php) rather than hardcoding a personal email in source control.
 $paypalBusinessEmail = getSetting('paypal_business_email') ?: 'your-paypal-account@example.com';
-// Deliberately a SEPARATE setting from `paypal_mode` (which drives the live
-// Orders API flow elsewhere in the app) so testing this flow in sandbox can
-// never accidentally flip live donations over to PayPal's sandbox API.
+// Keep this setting dedicated to Classic PayPal so sandbox testing cannot
+// accidentally change the mode used by other payment integrations.
 $classicMode = getSetting('paypal_classic_mode') ?: 'sandbox';
 $paypalCgiUrl = ($classicMode !== 'live')
     ? 'https://www.sandbox.paypal.com/cgi-bin/webscr'

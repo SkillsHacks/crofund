@@ -35,7 +35,10 @@ try {
         $_SESSION['csrf_token'] = bin2hex(random_bytes(32));
     }
 
-    $paymentGateways = getEnabledPaymentGateways();
+    $paymentGateways = array_values(array_filter(
+        getEnabledPaymentGateways(),
+        static fn(array $gateway): bool => (string) ($gateway['code'] ?? '') !== 'paypal'
+    ));
 
     // PayPal Classic is the default method, so the selector is hidden. It stays
     // visible when PayPal Classic is disabled, otherwise a donor could be
@@ -93,7 +96,7 @@ try {
                     $gatewayCode = (string) $gw['code'];
                     $gatewayIcon = $gatewayCode === 'stripe'
                         ? 'fas fa-credit-card'
-                        : (in_array($gatewayCode, ['paypal', 'paypal_classic'], true) ? 'fab fa-paypal' : 'fas fa-wallet');
+                        : ($gatewayCode === 'paypal_classic' ? 'fab fa-paypal' : 'fas fa-wallet');
                     $gatewayIconColor = $gatewayCode === 'stripe' ? 'text-indigo-600' : 'text-sky-600';
                 ?>
                 <label class="flex items-center p-3.5 border-2 rounded-2xl cursor-pointer transition-all gateway-option border-slate-200 bg-white hover:border-emerald-300"
@@ -231,9 +234,6 @@ try {
 
         <div class="hidden mb-4" id="showDonationMessages"></div>
 
-        <!-- PayPal button container -->
-        <div id="paypal-button-container" class="w-full mt-4 hidden"></div>
-
         <!-- Stripe / default submit -->
         <button type="submit" id="buttonDonation"
             class="w-full bg-gradient-to-br from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white py-4 px-4 rounded-xl font-bold text-sm shadow-lg hover:shadow-xl transition-all active:scale-[0.98]">
@@ -249,8 +249,6 @@ try {
     echo json_encode([
         'success'          => true,
         'html'             => $formHtml,
-        'paypal_client_id' => PAYPAL_CLIENT_ID,
-        'paypal_mode'      => PAYPAL_MODE,
     ]);
 
 } catch (Throwable $e) {

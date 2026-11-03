@@ -109,9 +109,8 @@ if (!$identityToken) {
 // 2. Ask PayPal directly whether tx really happened. Everything from here
 //    on uses $verified (from PayPal) rather than raw $_GET values.
 // ---------------------------------------------------------------------
-// Same dedicated setting as paypal-classic-donate.php -- kept independent of
-// `paypal_mode` (the live Orders API toggle) so this flow can be tested in
-// sandbox without touching real donations elsewhere on the site.
+// Use the dedicated Classic PayPal mode so this flow can be tested in sandbox
+// without changing the mode used by other payment integrations.
 $classicMode = getSetting('paypal_classic_mode') ?: 'sandbox';
 $verified = verifyWithPayPalPDT($tx, $identityToken, $classicMode !== 'live');
 

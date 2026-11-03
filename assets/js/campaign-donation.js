@@ -37,10 +37,6 @@
   });
 
   // ── Donation Modal ──
-  let paypalConfig          = null;
-  let paypalButtonsLoaded   = false;
-  let paypalButtonsInstance = null;
-
   function openDonationModal() {
     if (cfg.campaignUnderReview) {
       return;
@@ -53,12 +49,6 @@
     modal.classList.add('active');
     document.body.style.overflow = 'hidden';
 
-    if (paypalButtonsInstance) {
-      paypalButtonsInstance.close();
-      paypalButtonsInstance = null;
-      paypalButtonsLoaded   = false;
-    }
-
     formContainer.classList.add('hidden');
     formLoader.classList.remove('hidden');
     formContainer.innerHTML = '';
@@ -69,7 +59,6 @@
       dataType: 'json',
       success: function (response) {
         if (response.success) {
-          paypalConfig = { clientId: response.paypal_client_id, mode: response.paypal_mode };
           formLoader.classList.add('hidden');
           formContainer.innerHTML = response.html;
           formContainer.classList.remove('hidden');
@@ -91,7 +80,6 @@
   function closeDonationModal() {
     document.getElementById('donationModal').classList.remove('active');
     document.body.style.overflow = '';
-    paypalButtonsLoaded = false;
   }
 
   document.addEventListener('click', function (e) {
@@ -111,7 +99,6 @@
     $('.non-stripe-fields').addClass('hidden');
     $('#card-fields').addClass('hidden');
     $('#buttonDonation').addClass('hidden');
-    $('#paypal-button-container').addClass('hidden');
   }
 
   function selectGateway($option) {
@@ -127,22 +114,14 @@
 
     const gw = $option.data('gateway');
     $('.non-stripe-fields input, .non-stripe-fields select').prop('disabled', gw === 'stripe');
-    if (gw === 'paypal') {
-      $('.non-stripe-fields').removeClass('hidden');
-      $('#card-fields').addClass('hidden');
-      $('#buttonDonation').addClass('hidden');
-      $('#paypal-button-container').removeClass('hidden');
-      loadPayPalButtons();
-    } else if (gw === 'stripe') {
+    if (gw === 'stripe') {
       $('.non-stripe-fields').addClass('hidden');
       $('#card-fields').removeClass('hidden');
       $('#buttonDonation').removeClass('hidden');
-      $('#paypal-button-container').addClass('hidden');
     } else {
       $('.non-stripe-fields').removeClass('hidden');
       $('#card-fields').addClass('hidden');
       $('#buttonDonation').removeClass('hidden');
-      $('#paypal-button-container').addClass('hidden');
     }
   }
 
@@ -323,54 +302,6 @@
     return sum % 10 === 0;
   }
 
-  // ── PayPal ──
-  function renderPayPalButtons() {
-    paypalButtonsInstance = paypal.Buttons({
-      createOrder: function () {
-        const amount = $('#onlyNumber').val();
-        const name   = $('#cardholder-name').val();
-        const email  = $('#cardholder-email').val();
-        if (!validateBasicFields(amount, name, email)) return Promise.reject('Validation failed');
-        return $.ajax({
-          url: URL_BASE + '/paypal/create-order.php', type: 'POST',
-          data: {
-            campaign_id: campaignId, amount, full_name: name, email,
-            country: $('#country').val(), postal_code: $('#postal_code').val(),
-            comment: $('#comment').val(), anonymous: $('input[name="anonymous"]').val() || '0',
-            csrf_token: $('input[name="csrf_token"]').val()
-          },
-          dataType: 'json'
-        }).then(function (r) {
-          if (r.success) return r.orderId;
-          throw new Error(r.error || 'Failed to create PayPal order');
-        });
-      },
-      onApprove: function (data) {
-        // Capture happens server-side in success.php
-        window.location.href = URL_BASE + '/paypal/success.php?token=' + data.orderID;
-      },
-      onError: function (err) {
-        showError('An error occurred with PayPal. Please try again.');
-        console.error('PayPal error:', err);
-      }
-    });
-    paypalButtonsInstance.render('#paypal-button-container');
-    paypalButtonsLoaded = true;
-  }
-
-  function loadPayPalButtons() {
-    if (paypalButtonsLoaded) return;
-    if (!paypalConfig || !paypalConfig.clientId) {
-      showError('PayPal is not configured correctly.');
-      return;
-    }
-    if (window.paypal) { renderPayPalButtons(); return; }
-    const s = document.createElement('script');
-    s.src = `https://www.paypal.com/sdk/js?client-id=${encodeURIComponent(paypalConfig.clientId)}&currency=USD&intent=capture`;
-    s.onload = function () { if (window.paypal) renderPayPalButtons(); };
-    document.body.appendChild(s);
-  }
-
   // ── Validation ──
   function validateBasicFields(amount, name, email) {
     if (!amount || parseFloat(amount) < donationMinimum) {
@@ -405,7 +336,7 @@
   }
 
   function continueWithPayPal() {
-    const paypalOption = $('.gateway-option[data-gateway="paypal_classic"], .gateway-option[data-gateway="paypal"]').first();
+    const paypalOption = $('.gateway-option[data-gateway="paypal_classic"]').first();
     if (!paypalOption.length) {
       showError('PayPal is not currently available. Please try again later.');
       return;
