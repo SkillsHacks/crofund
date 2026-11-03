@@ -16,13 +16,17 @@ require_once __DIR__ . '/../config/Mail.php';
  * Dashboard requirement: Account Settings -> Instant Payment Notifications ->
  * ON, with this file's full URL. No identity token is needed here -- IPN is
  * verified by posting the payload back to PayPal (below), not with a token.
+ *
+ * Receiver check: donations are sent to the account chosen by
+ * getDonationReceiverPaypalEmail() -- the campaign owner's own PayPal account
+ * for premium owners, otherwise the site-wide `paypal_business_email`. So a
+ * payment is accepted when PayPal's receiver_email is either the site-wide
+ * account or the PayPal email saved on this campaign's owner. Any other
+ * receiver is ignored.
  */
 
 $raw = file_get_contents('php://input');
 parse_str($raw, $posted);
-
-// Always answer PayPal's POST immediately-ish with 200 so it doesn't keep retrying
-// once we've handled (or rejected) it; do the real work before this in either case.
 
 // Independent of `paypal_mode` (the live Orders API toggle) -- see the note
 // in campaigns/paypal-classic-donate.php.
@@ -43,7 +47,7 @@ curl_setopt_array($ch, [
     CURLOPT_SSL_VERIFYPEER => true,
 ]);
 $result = curl_exec($ch);
-curl_close($ch);
+// curl_close() removed on purpose: deprecated in PHP 8.5 and a no-op since PHP 8.0.
 
 if ($result !== 'VERIFIED') {
     error_log('PayPal IPN not verified (result=' . var_export($result, true) . '): ' . $raw);
@@ -56,18 +60,11 @@ $paymentStatus = $posted['payment_status'] ?? '';
 $txnId = $posted['txn_id'] ?? '';
 $mcGross = (float)($posted['mc_gross'] ?? 0);
 $mcCurrency = $posted['mc_currency'] ?? '';
-$receiverEmail = $posted['receiver_email'] ?? '';
+$receiverEmail = trim($posted['receiver_email'] ?? '');
 
 if ($custom === '' || $txnId === '') {
     error_log('PayPal IPN missing custom/txn_id, ignoring.');
     http_response_code(200); // acknowledge so PayPal stops retrying a malformed/irrelevant hit
-    exit;
-}
-
-$paypalBusinessEmail = getSetting('paypal_business_email');
-if ($paymentStatus !== 'Completed' || strcasecmp($receiverEmail, (string)$paypalBusinessEmail) !== 0) {
-    error_log("PayPal IPN status={$paymentStatus} receiver={$receiverEmail} txn={$txnId} -- not crediting.");
-    http_response_code(200);
     exit;
 }
 
@@ -77,6 +74,38 @@ $pending = $stmt->fetch(PDO::FETCH_ASSOC);
 
 if (!$pending) {
     error_log('PayPal IPN custom token not found: ' . $custom);
+    http_response_code(200);
+    exit;
+}
+
+if ($paymentStatus !== 'Completed') {
+    error_log("PayPal IPN status={$paymentStatus} txn={$txnId} -- not crediting.");
+    http_response_code(200);
+    exit;
+}
+
+// Receivers allowed for THIS campaign: the site-wide account and the owner's own account.
+$allowedReceivers = [];
+
+$globalEmail = trim((string) getSetting('paypal_business_email'));
+if ($globalEmail !== '') {
+    $allowedReceivers[] = strtolower($globalEmail);
+}
+
+$ownerStmt = $pdo->prepare(
+    "SELECT u.paypal_email
+     FROM campaigns c
+     INNER JOIN users u ON u.id = c.user_id
+     WHERE c.id = ? LIMIT 1"
+);
+$ownerStmt->execute([$pending['campaign_id']]);
+$ownerEmail = trim((string) $ownerStmt->fetchColumn());
+if ($ownerEmail !== '' && filter_var($ownerEmail, FILTER_VALIDATE_EMAIL)) {
+    $allowedReceivers[] = strtolower($ownerEmail);
+}
+
+if (!in_array(strtolower($receiverEmail), $allowedReceivers, true)) {
+    error_log("PayPal IPN receiver={$receiverEmail} is not allowed for campaign {$pending['campaign_id']} txn={$txnId} -- not crediting.");
     http_response_code(200);
     exit;
 }
@@ -98,26 +127,26 @@ try {
     $pdo->beginTransaction();
 
     $originalAmount = $mcGross;
-        $recordedAmount = $originalAmount * 0.7;
+    $recordedAmount = $originalAmount * 0.7;
 
-        $pdo->prepare(
-            "UPDATE pending_donations SET status = 'completed', transaction_id = ?, amount_requested = ?, completed_at = NOW() WHERE id = ?"
-        )->execute([$txnId, $mcGross, $pending['id']]);
+    $pdo->prepare(
+        "UPDATE pending_donations SET status = 'completed', transaction_id = ?, amount_requested = ?, completed_at = NOW() WHERE id = ?"
+    )->execute([$txnId, $mcGross, $pending['id']]);
 
-        $pdo->prepare(
-            "INSERT INTO donations (campaign_id, donor_name, donor_email, amount, original_amount, payment_gateway, status, transaction_id, gateway_response, created_at)
-             VALUES (?, ?, ?, ?, ?, 'paypal_standard', 'completed', ?, ?, NOW())"
-        )->execute([
-            $pending['campaign_id'],
-            $pending['donor_name'],
-            $pending['donor_email'],
-            $recordedAmount,
-            $originalAmount,
-            $txnId,
-            json_encode($posted)
-        ]);
+    $pdo->prepare(
+        "INSERT INTO donations (campaign_id, donor_name, donor_email, amount, original_amount, payment_gateway, status, transaction_id, gateway_response, created_at)
+         VALUES (?, ?, ?, ?, ?, 'paypal_standard', 'completed', ?, ?, NOW())"
+    )->execute([
+        $pending['campaign_id'],
+        $pending['donor_name'],
+        $pending['donor_email'],
+        $recordedAmount,
+        $originalAmount,
+        $txnId,
+        json_encode($posted)
+    ]);
 
-        (new Campaign())->updateCampaignAmount($pending['campaign_id'], $recordedAmount);
+    (new Campaign())->updateCampaignAmount($pending['campaign_id'], $recordedAmount);
 
     $pdo->commit();
 
@@ -143,7 +172,9 @@ try {
         error_log('Failed to send PayPal IPN admin donation notification: ' . $e->getMessage());
     }
 } catch (Exception $e) {
-    $pdo->rollBack();
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     error_log('IPN failed to record donation txn=' . $txnId . ': ' . $e->getMessage());
     // Return non-200 so PayPal retries this IPN later instead of losing it.
     http_response_code(500);
