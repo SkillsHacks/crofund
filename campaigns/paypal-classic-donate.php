@@ -47,7 +47,12 @@ try {
 
 // The receiving PayPal account. Store this in `settings` (see getSetting() in
 // config/config.php) rather than hardcoding a personal email in source control.
-$paypalBusinessEmail = getSetting('paypal_business_email') ?: 'your-paypal-account@example.com';
+$paypalBusinessEmail = getSitePaypalBusinessEmail();
+if ($paypalBusinessEmail === '' || !filter_var($paypalBusinessEmail, FILTER_VALIDATE_EMAIL)) {
+    error_log('Classic PayPal donation unavailable: site PayPal business email is not configured.');
+    http_response_code(503);
+    exit('PayPal donations are temporarily unavailable. Please try another payment method.');
+}
 // Keep this setting dedicated to Classic PayPal so sandbox testing cannot
 // accidentally change the mode used by other payment integrations.
 $classicMode = getSetting('paypal_classic_mode') ?: 'sandbox';
@@ -56,8 +61,8 @@ $paypalCgiUrl = ($classicMode !== 'live')
     : 'https://www.paypal.com/cgi-bin/webscr';
 
 /**
- * Create the server-side "source of truth" record BEFORE the donor ever
- * leaves our site. `token` is what we hand PayPal as `custom`.
+ * Create the server-side "source of truth" donation BEFORE the donor leaves
+ * our site. `payment_token` is what we hand PayPal as `custom`.
  *
  * Why not just pass campaign_id + amount as `custom` directly? Because
  * anything in the returned GET query string is fully attacker-controlled --
@@ -67,17 +72,17 @@ $paypalCgiUrl = ($classicMode !== 'live')
 $token = bin2hex(random_bytes(32));
 
 $insert = $pdo->prepare(
-    "INSERT INTO pending_donations (token, campaign_id, user_id, donor_name, donor_email, amount_requested, currency_code, status)
-     VALUES (?, ?, ?, ?, ?, ?, ?, 'pending')"
+    "INSERT INTO donations
+        (campaign_id, user_id, amount, payment_gateway, status, donor_name, donor_email, payment_token, created_at, currency)
+     VALUES (?, ?, ?, 'paypal_standard', 'pending', ?, ?, ?, NOW(), 'USD')"
 );
 $insert->execute([
-    $token,
     $campaignId,
-    $_SESSION['user_id'] ?? null,
+    !empty($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null,
+    1.00, // placeholder amount; PayPal's verified amount replaces it on confirmation
     $_SESSION['user_name'] ?? null,
     $_SESSION['user_email'] ?? null,
-    1.00, // placeholder amount; the real, donor-chosen amount is validated again server-side on return
-    'USD',
+    $token,
 ]);
 
 $returnUrl = BASE_URL . '/campaigns/paypal-classic-return.php';
@@ -102,7 +107,7 @@ $cancelUrl = BASE_URL . '/campaigns/donate.php?campaign_id=' . $campaignId . '&c
     <!-- This is the field the JS below rewrites right before submit -->
     <input type="hidden" name="amount" id="hidden-amount" value="1.00">
 
-    <!-- Round-trips through PayPal untouched; used to look up the pending_donations row on return -->
+    <!-- Round-trips through PayPal untouched; used to look up this pending donation on return -->
     <input type="hidden" name="custom" value="<?php echo htmlspecialchars($token); ?>">
 
     <input type="hidden" name="return" value="<?php echo htmlspecialchars($returnUrl); ?>">

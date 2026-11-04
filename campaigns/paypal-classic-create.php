@@ -6,7 +6,7 @@ require_once __DIR__ . '/../config/config.php';
 
 /**
  * Called from the donation modal in public-view.php when the donor picks the
- * "PayPal (Personal Account)" gateway option. Creates the pending_donations
+ * "PayPal (Personal Account)" gateway option. Creates a pending donation
  * row (server-side source of truth -- see paypal-classic-return.php for why)
  * and hands back a redirect URL to the auto-submitting hand-off page.
  */
@@ -62,16 +62,17 @@ if (!$campaign || $campaign['status'] !== 'active') {
 $token = bin2hex(random_bytes(32));
 
 $insert = $pdo->prepare(
-    "INSERT INTO pending_donations (token, campaign_id, user_id, donor_name, donor_email, amount_requested, currency_code, status)
-     VALUES (?, ?, ?, ?, ?, ?, 'USD', 'pending')"
+    "INSERT INTO donations
+        (campaign_id, user_id, amount, payment_gateway, status, donor_name, donor_email, payment_token, created_at, currency)
+     VALUES (?, ?, ?, 'paypal_standard', 'pending', ?, ?, ?, NOW(), 'USD')"
 );
 $insert->execute([
-    $token,
     $campaignId,
-    $_SESSION['user_id'] ?? null,
+    !empty($_SESSION['user_id']) ? (int) $_SESSION['user_id'] : null,
+    number_format($amount, 2, '.', ''),
     $fullName,
     $email,
-    number_format($amount, 2, '.', ''),
+    $token,
 ]);
 
 echo json_encode([

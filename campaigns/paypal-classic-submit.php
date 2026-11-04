@@ -18,24 +18,26 @@ if ($token === '') {
 }
 
 $stmt = $pdo->prepare(
-    "SELECT pd.*, c.title AS campaign_title, c.status AS campaign_status
-     FROM pending_donations pd
-     JOIN campaigns c ON c.id = pd.campaign_id
-     WHERE pd.token = ? LIMIT 1"
+    "SELECT d.*, c.title AS campaign_title, c.status AS campaign_status
+     FROM donations d
+     JOIN campaigns c ON c.id = d.campaign_id
+     WHERE d.payment_token = ?
+       AND d.payment_gateway = 'paypal_standard'
+     LIMIT 1"
 );
 $stmt->execute([$token]);
-$pending = $stmt->fetch(PDO::FETCH_ASSOC);
+$donation = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$pending || $pending['status'] !== 'pending' || $pending['campaign_status'] !== 'active') {
+if (!$donation || $donation['status'] !== 'pending' || $donation['campaign_status'] !== 'active') {
     http_response_code(404);
     exit('This donation link is invalid or has already been used.');
 }
 
-$paypalBusinessEmail = getDonationReceiverPaypalEmail((int) $pending['campaign_id']);
-error_log('paypal-classic-submit.php: donation campaign_id=' . (int) $pending['campaign_id'] . ' selected receiver=' . $paypalBusinessEmail);
+$paypalBusinessEmail = getSitePaypalBusinessEmail();
+error_log('paypal-classic-submit.php: donation campaign_id=' . (int) $donation['campaign_id'] . ' selected receiver=' . $paypalBusinessEmail);
 
-if (!$paypalBusinessEmail) {
-    error_log('paypal-classic-submit.php: no valid PayPal receiver configured for campaign ' . (int) $pending['campaign_id']);
+if ($paypalBusinessEmail === '' || !filter_var($paypalBusinessEmail, FILTER_VALIDATE_EMAIL)) {
+    error_log('paypal-classic-submit.php: no valid site PayPal receiver is configured.');
     http_response_code(500);
     exit('PayPal donations are temporarily unavailable. Please try another payment method.');
 }
@@ -57,13 +59,13 @@ $paypalCgiUrl = ($classicMode !== 'live')
 <form id="paypal-classic-handoff" action="<?php echo htmlspecialchars($paypalCgiUrl); ?>" method="post">
     <input type="hidden" name="cmd" value="_donations">
     <input type="hidden" name="business" value="<?php echo htmlspecialchars($paypalBusinessEmail); ?>">
-    <input type="hidden" name="item_name" value="<?php echo htmlspecialchars($pending['campaign_title']); ?>">
-    <input type="hidden" name="item_number" value="<?php echo (int)$pending['campaign_id']; ?>">
-    <input type="hidden" name="currency_code" value="<?php echo htmlspecialchars($pending['currency_code']); ?>">
-    <input type="hidden" name="amount" value="<?php echo htmlspecialchars(number_format((float)$pending['amount_requested'], 2, '.', '')); ?>">
+    <input type="hidden" name="item_name" value="<?php echo htmlspecialchars($donation['campaign_title']); ?>">
+    <input type="hidden" name="item_number" value="<?php echo (int)$donation['campaign_id']; ?>">
+    <input type="hidden" name="currency_code" value="<?php echo htmlspecialchars($donation['currency']); ?>">
+    <input type="hidden" name="amount" value="<?php echo htmlspecialchars(number_format((float)$donation['amount'], 2, '.', '')); ?>">
     <input type="hidden" name="custom" value="<?php echo htmlspecialchars($token); ?>">
     <input type="hidden" name="return" value="<?php echo htmlspecialchars(BASE_URL . '/campaigns/paypal-classic-return.php'); ?>">
-    <input type="hidden" name="cancel_return" value="<?php echo htmlspecialchars(BASE_URL . '/campaigns/public-view.php?id=' . $pending['campaign_id'] . '&cancelled=1'); ?>">
+    <input type="hidden" name="cancel_return" value="<?php echo htmlspecialchars(BASE_URL . '/campaigns/public-view.php?id=' . $donation['campaign_id'] . '&cancelled=1'); ?>">
     <input type="hidden" name="notify_url" value="<?php echo htmlspecialchars(BASE_URL . '/paypal/ipn-listener.php'); ?>">
     <noscript><button type="submit">Continue to PayPal</button></noscript>
 </form>

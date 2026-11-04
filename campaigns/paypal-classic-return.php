@@ -1,8 +1,8 @@
 <?php
 session_start();
 require_once __DIR__ . '/../config/config.php';
-require_once __DIR__ . '/../config/Campaign.php';
 require_once __DIR__ . '/../config/Mail.php';
+require_once __DIR__ . '/../config/ClassicPayPalDonation.php';
 
 /**
  * PDT (Payment Data Transfer) landing page for the classic PayPal Standard flow.
@@ -126,7 +126,7 @@ if (($verified['custom'] ?? '') !== $custom) {
     exit('Payment verification mismatch.');
 }
 
-$paypalBusinessEmail = getSetting('paypal_business_email');
+$paypalBusinessEmail = getSitePaypalBusinessEmail();
 if (!$paypalBusinessEmail || strcasecmp($verified['receiver_email'] ?? '', $paypalBusinessEmail) !== 0) {
     error_log('PDT receiver_email mismatch, possible spoofed transaction. tx=' . $tx);
     http_response_code(400);
@@ -138,27 +138,32 @@ if (!$paypalBusinessEmail || strcasecmp($verified['receiver_email'] ?? '', $payp
 //    verified payment back to a specific campaign -- never take
 //    campaign id/amount from the query string.
 // ---------------------------------------------------------------------
-$stmt = $pdo->prepare("SELECT * FROM pending_donations WHERE token = ? LIMIT 1");
+$stmt = $pdo->prepare(
+    "SELECT * FROM donations
+     WHERE payment_token = ?
+       AND payment_gateway = 'paypal_standard'
+     LIMIT 1"
+);
 $stmt->execute([$custom]);
-$pending = $stmt->fetch(PDO::FETCH_ASSOC);
+$donation = $stmt->fetch(PDO::FETCH_ASSOC);
 
-if (!$pending) {
-    error_log('PDT custom token not found in pending_donations: ' . $custom);
+if (!$donation) {
+    error_log('PDT custom token not found in donations: ' . $custom);
     http_response_code(404);
     exit('We could not match this payment to a donation on our records. Please contact support with your PayPal receipt.');
 }
 
 // Idempotency: PDT can re-fire if a donor refreshes/back-buttons this page.
 // Without this check they'd get credited twice for one payment.
-if ($pending['status'] === 'completed') {
-    header('Location: ' . BASE_URL . '/thank-you.php?campaign_id=' . $pending['campaign_id']);
+if ($donation['status'] === 'completed') {
+    header('Location: ' . BASE_URL . '/thank-you.php?campaign_id=' . $donation['campaign_id']);
     exit;
 }
 
 $verifiedAmount = (float)($verified['mc_gross'] ?? 0);
 $verifiedCurrency = $verified['mc_currency'] ?? '';
 
-if ($verifiedAmount <= 0 || $verifiedCurrency !== $pending['currency_code']) {
+if ($donation['status'] !== 'pending' || $verifiedAmount <= 0 || $verifiedCurrency !== $donation['currency']) {
     error_log('PDT amount/currency sanity check failed for token ' . $custom);
     http_response_code(400);
     exit('Payment verification mismatch.');
@@ -169,62 +174,25 @@ if ($verifiedAmount <= 0 || $verifiedCurrency !== $pending['currency_code']) {
 //    using PayPal's verified amount, not the donor-editable form value.
 // ---------------------------------------------------------------------
 try {
-    $pdo->beginTransaction();
-
-    $originalAmount = $verifiedAmount;
-        $recordedAmount = $originalAmount * 0.7;
-
-        $updatePending = $pdo->prepare(
-            "UPDATE pending_donations SET status = 'completed', transaction_id = ?, amount_requested = ?, completed_at = NOW() WHERE id = ?"
-        );
-        $updatePending->execute([$tx, $verifiedAmount, $pending['id']]);
-
-        $insertDonation = $pdo->prepare(
-            "INSERT INTO donations (campaign_id, donor_name, donor_email, amount, original_amount, payment_gateway, status, transaction_id, gateway_response, created_at)
-             VALUES (?, ?, ?, ?, ?, 'paypal_standard', 'completed', ?, ?, NOW())"
-        );
-        $insertDonation->execute([
-            $pending['campaign_id'],
-            $pending['donor_name'],
-            $pending['donor_email'],
-            $recordedAmount,
-            $originalAmount,
-            $tx,
-            json_encode($verified)
-        ]);
-
-        $campaign = new Campaign();
-        $campaign->updateCampaignAmount($pending['campaign_id'], $recordedAmount);
-
-    $pdo->commit();
-
-    try {
-        $campaignTitleStmt = $pdo->prepare("SELECT title FROM campaigns WHERE id = ? LIMIT 1");
-        $campaignTitleStmt->execute([$pending['campaign_id']]);
-        $campaignTitle = $campaignTitleStmt->fetchColumn() ?: 'Unknown campaign';
-
-        $mailer = new Mail();
-        $mailer->sendDonationAdminNotification([
-            'campaign_title' => $campaignTitle,
-            'donor_name' => $pending['donor_name'],
-            'donor_email' => $pending['donor_email'],
-            'amount' => $recordedAmount,
-            'original_amount' => $originalAmount,
-            'payment_gateway' => 'paypal_standard',
-            'transaction_id' => $tx,
-            'country' => null,
-            'comment' => null,
-            'created_at' => date('Y-m-d H:i:s'),
-        ]);
-    } catch (Throwable $e) {
-        error_log('Failed to send classic PayPal admin donation notification: ' . $e->getMessage());
+    $completed = completeClassicPayPalDonation($pdo, $donation, $tx, $verifiedAmount, $verified);
+    if (!$completed) {
+        $stmt = $pdo->prepare('SELECT status, campaign_id FROM donations WHERE id = ?');
+        $stmt->execute([$donation['id']]);
+        $currentDonation = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($currentDonation && $currentDonation['status'] === 'completed') {
+            header('Location: ' . BASE_URL . '/thank-you.php?campaign_id=' . $currentDonation['campaign_id']);
+            exit;
+        }
+        throw new RuntimeException('The verified PayPal donation was not in a pending state.');
     }
-} catch (Exception $e) {
-    $pdo->rollBack();
+} catch (Throwable $e) {
+    if ($pdo->inTransaction()) {
+        $pdo->rollBack();
+    }
     error_log('Failed to record verified PayPal donation tx=' . $tx . ': ' . $e->getMessage());
     http_response_code(500);
     exit('Your payment was verified but we hit an internal error recording it. Support has been notified; keep your PayPal receipt.');
 }
 
-header('Location: ' . BASE_URL . '/thank-you.php?campaign_id=' . $pending['campaign_id'] . '&amount=' . urlencode(number_format($verifiedAmount, 2)));
+header('Location: ' . BASE_URL . '/thank-you.php?campaign_id=' . $donation['campaign_id'] . '&amount=' . urlencode(number_format($verifiedAmount, 2)));
 exit;
