@@ -22,7 +22,7 @@ class Mail {
             return trim((string) ADMIN_EMAIL);
         }
 
-        return 'support@crofund.org';
+        return 'support@crofunding.org';
     }
 
     private function sendEmail(string $to, string $subject, string $html, string $text): bool {

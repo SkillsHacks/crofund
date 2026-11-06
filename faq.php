@@ -48,7 +48,7 @@ include __DIR__ . '/components/public-header.php';
         </div>
         <div>
             <h2 class="font-semibold text-lg text-gray-800">Need more help?</h2>
-            <p class="text-gray-700">Contact our support team at <a href="mailto:support@crofund.org" class="text-emerald-600 underline">support@crofund.org</a> or visit our <a href="contact.php" class="text-emerald-600 underline">Contact Us</a> page.</p>
+            <p class="text-gray-700">Contact our support team at <a href="mailto:support@crofunding.org" class="text-emerald-600 underline">support@crofunding.org</a> or visit our <a href="contact.php" class="text-emerald-600 underline">Contact Us</a> page.</p>
         </div>
     </div>
 </main>

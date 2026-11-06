@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $error = "Please enter a valid email address.";
     } else {
         // Send email using PHPMailer
-        $to = 'desputes@crofund.org';
+        $to = 'support@crofunding.org';
         $subject = "Contact Form Submission from $name";
         $body = "Name: $name\nEmail: $email\n\nMessage:\n$message";
 
@@ -80,7 +80,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             <span class="font-semibold">Phone:</span> <a href="tel:+14155552600" class="text-emerald-600 underline">+1 (415) 555-2600</a>
         </p>
         <p class="text-gray-700 mb-2">
-            <span class="font-semibold">Email:</span> <a href="mailto:contact@crofund.org" class="text-emerald-600 underline">contact@crofund.org</a>
+            <span class="font-semibold">Email:</span> <a href="mailto:support@crofunding.org" class="text-emerald-600 underline">support@crofunding.org</a>
         </p>
         <div class="flex space-x-4 mt-4">
             <a href="https://facebook.com/your-page" target="_blank" title="Facebook">
@@ -130,7 +130,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
         <button class="bg-emerald-600 text-white px-6 py-2 rounded hover:bg-emerald-700" type="submit">Send Message</button>
     </form>
-    <p class="mt-6 text-gray-600">Prefer email? Reach us at <a href="mailto:support@crofund.org" class="text-emerald-600 underline">contact@crofund.org</a></p>
+    <p class="mt-6 text-gray-600">Prefer email? Reach us at <a href="mailto:support@crofunding.org" class="text-emerald-600 underline">support@crofunding.org</a></p>
 </main>
 <?php include __DIR__ . '/components/public-footer.php'; ?>
 </body>

@@ -66,7 +66,7 @@ try {
                 </ul>
             </p>
         </div>
-        <p>We’re excited to have you with us. If you have any questions, feel free to contact our support team at <a href="mailto:support@crofund.org">support@crofund.org</a>.</p>
+        <p>We’re excited to have you with us. If you have any questions, feel free to contact our support team at <a href="mailto:support@crofunding.org">support@crofunding.org</a>.</p>
         <p>Thank you for joining us!<br>
         Sincerely,<br>
         The $company_name Team</p>

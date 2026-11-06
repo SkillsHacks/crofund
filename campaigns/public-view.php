@@ -400,7 +400,7 @@ $ogImageUrl = !empty($details['image_path'])
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
             </svg>
           </button>
-          <a href="mailto:support@crofund.org?subject=<?php echo rawurlencode('Report campaign: ' . $details['title']); ?>&amp;body=<?php echo rawurlencode('I would like to report this campaign: ' . BASE_URL . '/campaigns/public-view.php?id=' . (int) $details['id']); ?>"
+          <a href="mailto:support@crofunding.org?subject=<?php echo rawurlencode('Report campaign: ' . $details['title']); ?>&amp;body=<?php echo rawurlencode('I would like to report this campaign: ' . BASE_URL . '/campaigns/public-view.php?id=' . (int) $details['id']); ?>"
              class="mt-3 block w-fit text-sm text-slate-500 underline underline-offset-2 transition hover:text-emerald-700">
             Report this campaign
           </a>
